@@ -2,6 +2,8 @@
 
 these are just to cover my own most-used use cases
 
+no keybinds are set on install, you have to configure them yourself
+
 ## Go to previous/next heading
 
 - note: only works in edit mode
@@ -23,3 +25,29 @@ these are just to cover my own most-used use cases
 - the default language of the code block is configurable in settings
 
 ![](_resources/obs-inserting-codeblocks-headings.gif)
+
+
+# development
+
+## dependencies
+
+- dotnet 6.0 sdk
+- npm
+
+## ---
+
+installing node and dotnet dependencies
+```
+npm i
+npm run install
+```
+
+compiling F# to js
+```
+npm build
+```
+
+publishing to dist/
+```
+npm publish
+```

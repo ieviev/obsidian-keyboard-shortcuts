@@ -1831,14 +1831,12 @@ function Content_getCodeBlocks(app) {
   } else {
     const view_1 = value(view);
     const lines = split(view_1.getViewData(), ["\n"], null, 0);
-    const codeBlockSections = flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option)))));
-    const codeBlockTexts = map((optionalCodeblockSections) => toArray2(map3((f_1) => {
+    return map((optionalCodeblockSections) => toArray2(map3((f_1) => {
       const startLine = ~~f_1.position.start.line + 1 | 0;
       const endLine = ~~f_1.position.end.line - 1 | 0;
       const blockContent = lines.slice(startLine, endLine + 1);
       return new Content_CodeBlockContent(startLine, map((f_3) => f_3.slice("title:".length, f_3.length).trim(), tryFind((f_2) => f_2.indexOf("title:") === 0, blockContent)), join("\n", where((f_4) => !(f_4.indexOf("title:") === 0), blockContent)));
-    }, optionalCodeblockSections)), codeBlockSections);
-    return codeBlockTexts;
+    }, optionalCodeblockSections)), flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option))))));
   }
 }
 function Seq_skipSafe(num, source) {
@@ -1887,8 +1885,7 @@ var obsidian2 = __toModule(require("obsidian"));
 function createSettingForProperty(plugin, settingTab, propName) {
   new obsidian2.Setting(settingTab.containerEl).setName(propName).addText((txt) => {
     let arg_1;
-    const property = find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection()));
-    arg_1 = getValue(property, plugin.settings), txt.setValue(arg_1);
+    arg_1 = getValue(find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection())), plugin.settings), txt.setValue(arg_1);
     txt.onChange((value_1) => {
       plugin.settings = PluginSettingsModule_withDynamicProp(propName, value_1, plugin.settings);
       return void 0;
@@ -1902,12 +1899,10 @@ function createSettingDisplay(plugin, settingtab, unitVar) {
   containerEl.createEl("h2", some(((arg) => arg)({
     text: "Obsidian Keyboard Shortcuts"
   })));
-  const fields = getRecordElements(PluginSettings$reflection());
-  const buildSetting = (propName) => {
+  const array_1 = map2(name, getRecordElements(PluginSettings$reflection()));
+  array_1.forEach((propName) => {
     createSettingForProperty(plugin, settingtab, propName);
-  };
-  const array_1 = map2(name, fields);
-  array_1.forEach(buildSetting);
+  });
   return void 0;
 }
 function create(app, plugin) {
@@ -1929,8 +1924,7 @@ function doNone(f) {
 function goToPrevHeading(plugin) {
   return Command_forEditor("goToPrevHeading", "Go to previous heading", uncurry(2, (editor) => {
     const cursor = editor.getCursor();
-    const linesbefore = reverse(split(editor.getValue(), ["\n"], null, 0).slice(void 0, ~~cursor.line + 1));
-    const foundOpt = tryFindIndex((f) => match(/^(#+) /gu, f) != null, Seq_skipSafe(1, linesbefore));
+    const foundOpt = tryFindIndex((f) => match(/^(#+) /gu, f) != null, Seq_skipSafe(1, reverse(split(editor.getValue(), ["\n"], null, 0).slice(void 0, ~~cursor.line + 1))));
     if (foundOpt != null) {
       const moveby = foundOpt | 0;
       const newpos = ~~cursor.line - moveby - 1;
@@ -1944,8 +1938,7 @@ function goToPrevHeading(plugin) {
 function goToNextHeading(plugin) {
   return Command_forEditor("goToNextHeading", "Go to next heading", uncurry(2, (editor) => {
     const cursor = editor.getCursor();
-    const linesafter = split(editor.getValue(), ["\n"], null, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], null, 0).length);
-    const foundOpt = tryFindIndex((f) => match(/^(#+) /gu, f) != null, Seq_skipSafe(1, linesafter));
+    const foundOpt = tryFindIndex((f) => match(/^(#+) /gu, f) != null, Seq_skipSafe(1, split(editor.getValue(), ["\n"], null, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], null, 0).length)));
     if (foundOpt != null) {
       const moveby = foundOpt | 0;
       const newpos = ~~cursor.line + moveby + 1;
@@ -1994,11 +1987,11 @@ ${substring(f_3.content, 0, min(comparePrimitives, f_3.content.length, 50))}`, o
         elem.innerText = defaultArg(f_2.title, f_2.content);
       }, SuggestModal_withGetSuggestions((queryInput) => {
         const query = obsidian3.prepareQuery(queryInput);
-        const matches = map3((tuple) => tuple[0], where((f_1) => f_1[1] != null, map3((f) => {
+        const arg = map3((tuple) => tuple[0], where((f_1) => f_1[1] != null, map3((f) => {
           const text = defaultArg(f.title, f.content);
           return [f, obsidian3.fuzzySearch(query, text)];
         }, codeblocks_1)));
-        return Array.from(matches);
+        return Array.from(arg);
       }, SuggestModal_create(plugin.app))));
       modal.open();
       return void 0;
@@ -2060,7 +2053,6 @@ function Plugin2__init(this$) {
         this$.plugin.settings = v;
         return Promise.resolve();
       }).catch((_arg_2) => {
-        const e = _arg_2;
         this$.plugin.settings = PluginSettings_get_Default();
         return Promise.resolve();
       });
