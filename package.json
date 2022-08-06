@@ -1,0 +1,19 @@
+{
+  "name": "obsidian-keyboard-shortcuts",
+  "displayName": "obsidian keyboard shortcuts",
+  "description": "Obsidian Keyboard Shortcuts",
+  "version": "1.0.0",
+  "publisher": "aciq",
+  "type": "commonjs",
+  "scripts": {
+    "install": "dotnet tool restore",
+    "build": "dotnet fable src -o build --run npm run esbuild",
+    "publish": "esbuild ./build/Main.js --bundle --external:obsidian --outfile=./dist/main.js --format=cjs && pwsh ./exports.ps1 \"dist/main.js\"",
+    "start": "dotnet fable watch src -s -o build --runWatch npm run esbuild -- --watch",
+    "esbuild": "esbuild ./build/Main.js --bundle --external:obsidian --outfile=./test-obsidian-keyboard-shortcuts/.obsidian/plugins/dist/main.js --format=cjs && pwsh ./exports.ps1 \"./test-obsidian-keyboard-shortcuts/.obsidian/plugins/dist/main.js\"",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "esbuild": "^0.13.14"
+  }
+}
