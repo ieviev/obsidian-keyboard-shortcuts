@@ -44,7 +44,7 @@ npm run install
 
 compiling F# to js
 ```
-npm build
+npm run build
 ```
 
 publishing to dist/
