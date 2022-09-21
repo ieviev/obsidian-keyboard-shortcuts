@@ -1,10 +1,8 @@
 # Quick snippets and navigation for Obsidian
 
 - Keyboard navigation up/down for headings
-- Configurable default code block and callout
+- Configurable default code block and callout shortcuts
 - Copy code block via keyboard shortcut
-
-these are just to cover my own most-used use cases
 
 no keybinds are set on install, you have to configure them yourself
 
