@@ -91,13 +91,6 @@ function toIterator(en) {
     }
   };
 }
-function padWithZeros(i, length2) {
-  let str = i.toString(10);
-  while (str.length < length2) {
-    str = "0" + str;
-  }
-  return str;
-}
 function dateOffset(date) {
   const date1 = date;
   return typeof date1.offset === "number" ? date1.offset : date.kind === 1 ? 0 : date.getTimezoneOffset() * -6e4;
@@ -451,54 +444,6 @@ var FSharpRef = class {
 // build/Main.js
 var import_obsidian = __toModule(require("obsidian"));
 
-// build/fable_modules/fable-library.3.7.17/Numeric.js
-var symbol = Symbol("numeric");
-function isNumeric(x) {
-  return typeof x === "number" || (x === null || x === void 0 ? void 0 : x[symbol]);
-}
-function compare2(x, y) {
-  if (typeof x === "number") {
-    return x < y ? -1 : x > y ? 1 : 0;
-  } else {
-    return x.CompareTo(y);
-  }
-}
-function multiply(x, y) {
-  if (typeof x === "number") {
-    return x * y;
-  } else {
-    return x[symbol]().multiply(y);
-  }
-}
-function toFixed(x, dp) {
-  if (typeof x === "number") {
-    return x.toFixed(dp);
-  } else {
-    return x[symbol]().toFixed(dp);
-  }
-}
-function toPrecision(x, sd) {
-  if (typeof x === "number") {
-    return x.toPrecision(sd);
-  } else {
-    return x[symbol]().toPrecision(sd);
-  }
-}
-function toExponential(x, dp) {
-  if (typeof x === "number") {
-    return x.toExponential(dp);
-  } else {
-    return x[symbol]().toExponential(dp);
-  }
-}
-function toHex(x) {
-  if (typeof x === "number") {
-    return (Number(x) >>> 0).toString(16);
-  } else {
-    return x[symbol]().toHex();
-  }
-}
-
 // build/fable_modules/fable-library.3.7.17/Reflection.js
 var TypeInfo = class {
   constructor(fullname, generics, construct, parent, fields, cases, enumCases) {
@@ -691,117 +636,6 @@ function PromiseBuilder__Run_212F1D4B(_, p) {
 // build/fable_modules/Fable.Promise.3.1.3/PromiseImpl.fs.js
 var promise = PromiseBuilder_$ctor();
 
-// build/fable_modules/fable-library.3.7.17/Date.js
-function dateOffsetToString(offset) {
-  const isMinus = offset < 0;
-  offset = Math.abs(offset);
-  const hours = ~~(offset / 36e5);
-  const minutes = offset % 36e5 / 6e4;
-  return (isMinus ? "-" : "+") + padWithZeros(hours, 2) + ":" + padWithZeros(minutes, 2);
-}
-function dateToHalfUTCString(date, half) {
-  const str = date.toISOString();
-  return half === "first" ? str.substring(0, str.indexOf("T")) : str.substring(str.indexOf("T") + 1, str.length - 1);
-}
-function dateToISOString(d, utc) {
-  if (utc) {
-    return d.toISOString();
-  } else {
-    const printOffset = d.kind == null ? true : d.kind === 2;
-    return padWithZeros(d.getFullYear(), 4) + "-" + padWithZeros(d.getMonth() + 1, 2) + "-" + padWithZeros(d.getDate(), 2) + "T" + padWithZeros(d.getHours(), 2) + ":" + padWithZeros(d.getMinutes(), 2) + ":" + padWithZeros(d.getSeconds(), 2) + "." + padWithZeros(d.getMilliseconds(), 3) + (printOffset ? dateOffsetToString(d.getTimezoneOffset() * -6e4) : "");
-  }
-}
-function dateToISOStringWithOffset(dateWithOffset, offset) {
-  const str = dateWithOffset.toISOString();
-  return str.substring(0, str.length - 1) + dateOffsetToString(offset);
-}
-function dateToStringWithCustomFormat(date, format, utc) {
-  return format.replace(/(\w)\1*/g, (match2) => {
-    let rep = Number.NaN;
-    switch (match2.substring(0, 1)) {
-      case "y":
-        const y = utc ? date.getUTCFullYear() : date.getFullYear();
-        rep = match2.length < 4 ? y % 100 : y;
-        break;
-      case "M":
-        rep = (utc ? date.getUTCMonth() : date.getMonth()) + 1;
-        break;
-      case "d":
-        rep = utc ? date.getUTCDate() : date.getDate();
-        break;
-      case "H":
-        rep = utc ? date.getUTCHours() : date.getHours();
-        break;
-      case "h":
-        const h = utc ? date.getUTCHours() : date.getHours();
-        rep = h > 12 ? h % 12 : h;
-        break;
-      case "m":
-        rep = utc ? date.getUTCMinutes() : date.getMinutes();
-        break;
-      case "s":
-        rep = utc ? date.getUTCSeconds() : date.getSeconds();
-        break;
-      case "f":
-        rep = utc ? date.getUTCMilliseconds() : date.getMilliseconds();
-        break;
-    }
-    if (Number.isNaN(rep)) {
-      return match2;
-    } else {
-      return rep < 10 && match2.length > 1 ? "0" + rep : "" + rep;
-    }
-  });
-}
-function dateToStringWithOffset(date, format) {
-  var _a, _b, _c;
-  const d = new Date(date.getTime() + ((_a = date.offset) !== null && _a !== void 0 ? _a : 0));
-  if (typeof format !== "string") {
-    return d.toISOString().replace(/\.\d+/, "").replace(/[A-Z]|\.\d+/g, " ") + dateOffsetToString((_b = date.offset) !== null && _b !== void 0 ? _b : 0);
-  } else if (format.length === 1) {
-    switch (format) {
-      case "D":
-      case "d":
-        return dateToHalfUTCString(d, "first");
-      case "T":
-      case "t":
-        return dateToHalfUTCString(d, "second");
-      case "O":
-      case "o":
-        return dateToISOStringWithOffset(d, (_c = date.offset) !== null && _c !== void 0 ? _c : 0);
-      default:
-        throw new Error("Unrecognized Date print format");
-    }
-  } else {
-    return dateToStringWithCustomFormat(d, format, true);
-  }
-}
-function dateToStringWithKind(date, format) {
-  const utc = date.kind === 1;
-  if (typeof format !== "string") {
-    return utc ? date.toUTCString() : date.toLocaleString();
-  } else if (format.length === 1) {
-    switch (format) {
-      case "D":
-      case "d":
-        return utc ? dateToHalfUTCString(date, "first") : date.toLocaleDateString();
-      case "T":
-      case "t":
-        return utc ? dateToHalfUTCString(date, "second") : date.toLocaleTimeString();
-      case "O":
-      case "o":
-        return dateToISOString(date, utc);
-      default:
-        throw new Error("Unrecognized Date print format");
-    }
-  } else {
-    return dateToStringWithCustomFormat(date, format, utc);
-  }
-}
-function toString2(date, format, _provider) {
-  return date.offset != null ? dateToStringWithOffset(date, format) : dateToStringWithKind(date, format);
-}
-
 // build/fable_modules/fable-library.3.7.17/RegExp.js
 function escape(str) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
@@ -812,138 +646,8 @@ function match(reg, input, startAt = 0) {
 }
 
 // build/fable_modules/fable-library.3.7.17/String.js
-var fsFormatRegExp = /(^|[^%])%([0+\- ]*)(\*|\d+)?(?:\.(\d+))?(\w)/g;
-function isLessThan(x, y) {
-  return compare2(x, y) < 0;
-}
-function printf(input) {
-  return {
-    input,
-    cont: fsFormat(input)
-  };
-}
-function continuePrint(cont, arg) {
-  return typeof arg === "string" ? cont(arg) : arg.cont(cont);
-}
-function toConsole(arg) {
-  return continuePrint((x) => console.log(x), arg);
-}
-function formatReplacement(rep, flags, padLength, precision, format) {
-  let sign = "";
-  flags = flags || "";
-  format = format || "";
-  if (isNumeric(rep)) {
-    if (format.toLowerCase() !== "x") {
-      if (isLessThan(rep, 0)) {
-        rep = multiply(rep, -1);
-        sign = "-";
-      } else {
-        if (flags.indexOf(" ") >= 0) {
-          sign = " ";
-        } else if (flags.indexOf("+") >= 0) {
-          sign = "+";
-        }
-      }
-    }
-    precision = precision == null ? null : parseInt(precision, 10);
-    switch (format) {
-      case "f":
-      case "F":
-        precision = precision != null ? precision : 6;
-        rep = toFixed(rep, precision);
-        break;
-      case "g":
-      case "G":
-        rep = precision != null ? toPrecision(rep, precision) : toPrecision(rep);
-        break;
-      case "e":
-      case "E":
-        rep = precision != null ? toExponential(rep, precision) : toExponential(rep);
-        break;
-      case "x":
-        rep = toHex(rep);
-        break;
-      case "X":
-        rep = toHex(rep).toUpperCase();
-        break;
-      default:
-        rep = String(rep);
-        break;
-    }
-  } else if (rep instanceof Date) {
-    rep = toString2(rep);
-  } else {
-    rep = toString(rep);
-  }
-  padLength = typeof padLength === "number" ? padLength : parseInt(padLength, 10);
-  if (!isNaN(padLength)) {
-    const zeroFlag = flags.indexOf("0") >= 0;
-    const minusFlag = flags.indexOf("-") >= 0;
-    const ch = minusFlag || !zeroFlag ? " " : "0";
-    if (ch === "0") {
-      rep = pad(rep, padLength - sign.length, ch, minusFlag);
-      rep = sign + rep;
-    } else {
-      rep = pad(sign + rep, padLength, ch, minusFlag);
-    }
-  } else {
-    rep = sign + rep;
-  }
-  return rep;
-}
-function createPrinter(cont, _strParts, _matches, _result = "", padArg = -1) {
-  return (...args) => {
-    let result = _result;
-    const strParts = _strParts.slice();
-    const matches = _matches.slice();
-    for (const arg of args) {
-      const [, , flags, _padLength, precision, format] = matches[0];
-      let padLength = _padLength;
-      if (padArg >= 0) {
-        padLength = padArg;
-        padArg = -1;
-      } else if (padLength === "*") {
-        if (arg < 0) {
-          throw new Error("Non-negative number required");
-        }
-        padArg = arg;
-        continue;
-      }
-      result += strParts[0];
-      result += formatReplacement(arg, flags, padLength, precision, format);
-      strParts.splice(0, 1);
-      matches.splice(0, 1);
-    }
-    if (matches.length === 0) {
-      result += strParts[0];
-      return cont(result);
-    } else {
-      return createPrinter(cont, strParts, matches, result, padArg);
-    }
-  };
-}
-function fsFormat(str) {
-  return (cont) => {
-    fsFormatRegExp.lastIndex = 0;
-    const strParts = [];
-    const matches = [];
-    let strIdx = 0;
-    let match2 = fsFormatRegExp.exec(str);
-    while (match2) {
-      const matchIndex = match2.index + (match2[1] || "").length;
-      strParts.push(str.substring(strIdx, matchIndex).replace(/%%/g, "%"));
-      matches.push(match2);
-      strIdx = fsFormatRegExp.lastIndex;
-      fsFormatRegExp.lastIndex -= 1;
-      match2 = fsFormatRegExp.exec(str);
-    }
-    if (strParts.length === 0) {
-      return cont(str.replace(/%%/g, "%"));
-    } else {
-      strParts.push(str.substring(strIdx).replace(/%%/g, "%"));
-      return createPrinter(cont, strParts, matches);
-    }
-  };
+function isNullOrEmpty(str) {
+  return typeof str !== "string" || str.length === 0;
 }
 function join(delimiter, xs) {
   if (Array.isArray(xs)) {
@@ -951,14 +655,6 @@ function join(delimiter, xs) {
   } else {
     return Array.from(xs).join(delimiter);
   }
-}
-function pad(str, len, ch, isRight) {
-  ch = ch || " ";
-  len = len - str.length;
-  for (let i = 0; i < len; i++) {
-    str = isRight ? str + ch : ch + str;
-  }
-  return str;
 }
 function split(str, splitters, count, options) {
   count = typeof count === "number" ? count : void 0;
@@ -1011,6 +707,34 @@ function substring(str, startIndex, length2) {
 // build/Helpers.js
 var obsidian = __toModule(require("obsidian"));
 
+// build/fable_modules/fable-library.3.7.17/System.Text.js
+var StringBuilder = class {
+  constructor(value2, capacity) {
+    this.buf = [];
+    if (!isNullOrEmpty(value2)) {
+      void this.buf.push(value2);
+    }
+  }
+  toString() {
+    const __ = this;
+    return join("", __.buf);
+  }
+};
+function StringBuilder_$ctor_Z18115A39(value2, capacity) {
+  return new StringBuilder(value2, capacity);
+}
+function StringBuilder_$ctor_Z721C83C5(value2) {
+  return StringBuilder_$ctor_Z18115A39(value2, 16);
+}
+function StringBuilder__Append_Z721C83C5(x, s) {
+  void x.buf.push(s);
+  return x;
+}
+function StringBuilder__Append_244C7CD6(x, c) {
+  void x.buf.push(c);
+  return x;
+}
+
 // build/fable_modules/fable-library.3.7.17/FSharp.Core.js
 var LanguagePrimitives_GenericEqualityComparer = {
   ["System.Collections.IEqualityComparer.Equals541DA560"](x, y) {
@@ -1059,6 +783,18 @@ function singleton(value2, cons) {
   const ar = Helpers_allocateArrayFromCons(cons, 1);
   ar[0] = value2;
   return ar;
+}
+function pairwise(array) {
+  if (array.length < 2) {
+    return [];
+  } else {
+    const count = array.length - 1 | 0;
+    const result = new Array(count);
+    for (let i = 0; i <= count - 1; i++) {
+      result[i] = [array[i], array[i + 1]];
+    }
+    return result;
+  }
 }
 function reverse(array) {
   const array_2 = array.slice();
@@ -1562,6 +1298,9 @@ function empty() {
 function singleton2(x) {
   return delay(() => singleton(x));
 }
+function ofArray2(arr) {
+  return arr;
+}
 function toArray2(xs) {
   if (xs instanceof FSharpList) {
     return toArray(xs);
@@ -1709,6 +1448,9 @@ var CachedSeq$1 = class {
 function where(predicate, xs) {
   return filter(predicate, xs);
 }
+function pairwise2(xs) {
+  return delay(() => ofArray2(pairwise(toArray2(xs))));
+}
 
 // build/Helpers.js
 function Command_defaultCommand() {
@@ -1788,10 +1530,6 @@ function Command_forEditor(id, name2, callback) {
   cmd.editorCallback = callback;
   return cmd;
 }
-function printJson(x) {
-  const arg_1 = JSON.stringify(x);
-  toConsole(printf("%s"))(arg_1);
-}
 function SuggestModal_create(app) {
   return new obsidian.SuggestModal(app);
 }
@@ -1831,12 +1569,14 @@ function Content_getCodeBlocks(app) {
   } else {
     const view_1 = value(view);
     const lines = split(view_1.getViewData(), ["\n"], null, 0);
-    return map((optionalCodeblockSections) => toArray2(map3((f_1) => {
+    const codeBlockSections = flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option)))));
+    const codeBlockTexts = map((optionalCodeblockSections) => toArray2(map3((f_1) => {
       const startLine = ~~f_1.position.start.line + 1 | 0;
       const endLine = ~~f_1.position.end.line - 1 | 0;
       const blockContent = lines.slice(startLine, endLine + 1);
       return new Content_CodeBlockContent(startLine, map((f_3) => f_3.slice("title:".length, f_3.length).trim(), tryFind((f_2) => f_2.indexOf("title:") === 0, blockContent)), join("\n", where((f_4) => !(f_4.indexOf("title:") === 0), blockContent)));
-    }, optionalCodeblockSections)), flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option))))));
+    }, optionalCodeblockSections)), codeBlockSections);
+    return codeBlockTexts;
   }
 }
 function Seq_skipSafe(num, source) {
@@ -1850,22 +1590,29 @@ function Seq_skipSafe(num, source) {
   }));
 }
 var PluginSettings = class extends Record {
-  constructor(defaultCodeBlockLanguage) {
+  constructor(defaultCodeBlockLanguage, defaultCalloutType) {
     super();
     this.defaultCodeBlockLanguage = defaultCodeBlockLanguage;
+    this.defaultCalloutType = defaultCalloutType;
   }
 };
 function PluginSettings$reflection() {
-  return record_type("Fs.Obsidian.Helpers.PluginSettings", [], PluginSettings, () => [["defaultCodeBlockLanguage", string_type]]);
+  return record_type("Fs.Obsidian.Helpers.PluginSettings", [], PluginSettings, () => [["defaultCodeBlockLanguage", string_type], ["defaultCalloutType", string_type]]);
 }
 function PluginSettings_get_Default() {
-  return new PluginSettings("");
+  return new PluginSettings("bash", "info");
 }
 function PluginSettingsModule_withDynamicProp(key, value2, settings) {
-  if (key === "defaultCodeBlockLanguage") {
-    return new PluginSettings(value2);
-  } else {
-    throw new Error(`unknown property ${key}`);
+  switch (key) {
+    case "defaultCodeBlockLanguage": {
+      return new PluginSettings(value2, settings.defaultCalloutType);
+    }
+    case "defaultCalloutType": {
+      return new PluginSettings(settings.defaultCodeBlockLanguage, value2);
+    }
+    default: {
+      throw new Error(`unknown property ${key}`);
+    }
   }
 }
 function Clipboard_write(txt) {
@@ -1880,12 +1627,105 @@ function Clipboard_write(txt) {
   }
 }
 
+// build/fable_modules/fable-library.3.7.17/Unicode.13.0.0.js
+var rangeDeltas = "#C$&$&$$$$$$%-%&%=$$$$$$=$$$$D$$'$$$$$$$$$$$$%$$%$$$$&$:$*;$+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$&%$$$%$&%'$%$&&%$%$$$$$%$$%$$%$&$$$%%$$&'$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$%$$$$$&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*%$%%$$'$$$$$$$$h$>5'/1(*$$$4\x93$$$$$$$$%$&$$'%$$&$$$%$4$,F$%&&$$$$$$$$$$$$$$$$$$$$$$$($$$$$%%VS$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$(%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$I%$)L$$%%$$P$$$%$%$$+>''%.)&%$%%.$$$%C$-8-'%$\x86$$*$$)%%$'%-&%$1$$$$A>%|.$1-D,%$&$%$%9'$,$&$(%2$<&%$$.X8$5.2$C$Y$$$$&+'$%$*-%%-$$2$%$+%%%9$*$$&'%$$&'%%%%$$+$'%$&%%-%%)$$$$$%%$$)'%%9$*$%$%$%%$$&%'%%&&$*'$$*-%&$$-%$$,$&$9$*$%$(%$$&($%$$%$%$2%%%-$$*$)$$%$+%%%9$*$%$(%$$$$$'%%%%$*%$'%$&%%-$$)-$$$)&&$'&%$$$%&%&&&/'%$%&&$&$%$)$1-&)$$($&$+$&$:$3&$&'$&$'*%$&(%%%-*$*$$$%$+$&$:$-$(%$$$$($$%$%%*%*$$%%%-$%0%%,$&$L%$&'$&$&$$$'&$*&%%-,$)$$%$5&;$,$$%*&$'&&$$$+)-%%$/S$%*'$)$+$-%H%$$$($;$$$-$%,$%($$$)%-%'C$&2$$&%)--$$$$$$$$$$%+$G'1$($%(.$G$+$)$%('%HN%'$)$%%%$-))%%'&$&%*&'0$%%)$$$-&$%I$$($%N$$&\u016C$'%*$$$'%L$'%D$'%*$$$'%2$\\$'%f%&,7&3-)y%)%$\u028F$$4$=$$&n&&+*0$'&.5&%,5%/0$&$%/W%$*+$%.&$&$$$%-)-))$'&$$-)F$X*(%E$$(i-B$&'%&'%$)&'$&%-A%(.O'=)-$&E:%%$%%X$$$*$$$$%+)-%$-)-)*$)%1$%b'$R$$($$($%*'-*-,,&%$A$'%%$&%-O$$%&$$&%+'G++%%&(-&&-A)%,*N%&++&$0$*'$)$%$%$(Ob0$EH]$($$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$,$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$,+)%)%++++)%)%+$$$$$$$$++1%++++++($%'$$$&&$%'$&'%%'$&+(&%&$%'$%$.()%$$$%$$$+$$($,$$'%&$$$.$$$-$($-$$%)&$$$-&$$$0&C30'$&/2%$'$%$&%&$$$%$()$$$$$$'$$'$'$%%%($'$$%$$3F$$'$%'((%'$%$%$*$B%%$$$B\u012F+$$$$7%*$$t$A<K)h<.8_q9\xDA$,$Y+\x92$\u011B$$$$$$$$$$$$$$AO($$B$$$$$$$$$$3\u0123\xA6$$$$$$$$$$$$$$$$$$$$$$b$$$$C$$\u0125S8%)J%C$\x8CR$R$$$&%$$$$$$'$$%$)%&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%)$$$$&$$('$%I$$($%[*$$1$:,*$*$*$*$*$*$*$*$C%$$$$&$$$$$,$%$$$$%$$$$$$$$$$($-%'$$$0%$P=$|/\xF9=/'$&$$$$$$$$$$$$$$%$$$$$$$$$$%$,'%$(%&$$$%$y%%%%$$}$&$(N$\x81$%'-CG/3B$-A+$2C-J2\u0163\u19E3c\u5220&8$\u049A&Z,K)%\u012F$&3-%7$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$&$-$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%%i-%)+:,%$$$$$$$$$$$$$&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$+$$$$%$$$$$$$$$$%$$$$$$$$&$$$$$$$$$$$$$$$$$$$$($($$$$$$$$$$$%$$'$$$M$$$%$*$&$'$:%%$'$&)%$$)W'+%U3%+%-)5)&$$%$-?+%:.%.$@&&$R$%'%%&0$$-'%($$,-($L)%%%%,&$+$$%-%'3$)&$$$$U$$&%%(%$$$;%$%.$%%%$%$$-)%)%),*$*$N$',$%'sF%$%$%$$$%-)\u2BC7/:'T'\u0823\u1923\u0191%\x8DI*/(($$-$0$($$$%$%$\x8F34\u018E$$3c%YK/$$%3*$$$)3$%%$$$$$$$$$$$$$$$$%$$'&&$'$$$$$$$&$$&$$$%'($\xAA%$$&$&$$$$$$%-%&%=$$$$$$=$$$$$$$$$%-$P%B&)%)%)%&&%$$$%$$'%-&%%/$=$6$%$2%1E\x9E(&'P&,X'4%&$0&$RP$\xA5@&T2$>'C',7$+$(I((A$$G'+$(MKKq%-)G'G'K+W.$\xB3\u015A,9-+\xBB)%$$O$%&$%:$$+:%*B+,S6$%((9)&$=($c['%%3%Q$&$%(''$&$@%&'$,*,*@%$@&C+$?%'(*,Y&*9%+6(+5*'/*slZV0V*)G'+-\u0149B$M$%$%%q@-$+9.'(y8*7:,$$$X2*'7-2&$P&'%%%$'.$%<*-)&G($+$-'$%$+F$%$,%$S&,%'''$$$-$$$&$7.5$<&&%$$%)$d*$$$'$2$-$)R$&+(-)%%$+%%%9$*$%$($%$%$'%%%&%$)$((%%*&(\xAEX&+%&$$'(-%$$$&AS&)$$'%$%%$$+-\xC9R&'%'%$%:'%ES&+%$$%&$.-)06N$$$%)$$$*-Y>%&%'$('-%&$\xE3O&,$%$\x87CC-,/+%$%+$%$;)$%%%$$$$$$$&,-i+%J&'%%'$$$$$>$-K)$$'+$+$)%&Q0$%&$(@\\\u012A,$H$*$)$$$(--6&%A%9$$*$%$%l*$%$I)&$$%$*$$+-))$%$C($%$%$$$$*-\u01596%%%\xDA$28+'40$\u03BD\x89\x92$(.\xE7\u0ADF\u0452$,\u0FEA\u026A\u21DC\u025C*B$-'%\x83A%($-S*(''$$--$*$8(6\u02D3CC:'\x88n'$$Z*'0c%$$$.%1\u181B+\u04F9M,\u231A\u0142T&4'+\u01AF\u0927\x8E(0&,*-%$%$'\u137F\u0119-J%_%&&)++%*A'^:e&$\xBD7/z,<\xAA===*$5==$$%%$%%%'$+'$$$*$.==%$'%+$*$=%$'$($$&*$============?%<$<$)<$<$)<$<$)<$<$)<$<$)$$%U\u0223Z'U+$1$%(2($2\u0573*$4%*$%$(\xF8P&**%-'$$\u0193O'-($\u0523\xE8%,*LEE*$'-'%\u0334^$&$'oP$2\xE5'$>$%$$%$$-$'$$$$)$'$$$$$$&$%$$%$$$$$$$$$$%$$%'$*$'$'$$$-$4(&$($4W%\u0131O'\x87/2%2$2$H-0\xC4[@0O',*%1)\xBD\u011E(\u02FB+0&0&\x97/|*/7/'[+-)K+A%%q\x9C$u$\xAA/1%(&&(*,<**,&0*L\xB6$ZH-\u0429\uA701E\u1058.\u0101%\u16A51\u1D54\u0C42\u0241\u0605\u136E\u{AECD9}$A\x83\xA3\u0113\uFE33\u{10021}%\u{10021}";
+var categories = "1.;=;78;<;6;+;<;#7;8>5>$7<8<1.;=?;>?'9<2?>?<->$;>-':-;#<#$<$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'#$'#%$#%$#%$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#%$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'$&>&>&>&>&>(#$#$&>#$@&$;#@>#;#@#@#$#@#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$<#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$?(*#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#@&;$;6@?=@(6(;(;(;(@'@';@2<;=;?(;2@;'&'(+;'(';'(2?(&(?('+'?';@2'('(@'('@+'(&?;&@(='(&(&(&(@;@'(@;@'@'@'@(2()'()(')()()'('(;+;&'()@'@'@'@'@'@'@(')(@)@)('@)@'@'(@+'=-?=';(@()@'@'@'@'@'@'@'@(@)(@(@(@(@'@'@+('(;@()@'@'@'@'@'@'@(')(@()@)(@'@'(@+;=@'(@()@'@'@'@'@'@'@(')()(@)@)(@()@'@'(@+?'-@('@'@'@'@'@'@'@'@'@'@)()@)@)(@'@)@+-?=?@()('@'@'@'@'()@(@(@(@'@'(@+@;-?'();'@'@'@'@'@(')()@()@)(@)@'@'(@+@'@()'@'@'(')(@)@)('?@')-'(@+-?'@()@'@'@'@'@'@(@)(@(@)@+@);@'('(@='&(;+;@'@'@'@'@'@'('('@'@&@(@+@'@'?;?;?(?+-?(?(?(7878)'@'@()(;('(@(@?(?@?;?;@')()()()('+;')('(')')'('()()(')+)(?#@#@#@$;&$'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@(;-@'?@#@$@6'?;'.'78@';,'@'@'(@'(;@'(@'@'@(@'()()()(;&;='(@+@-@;6;(2@+@'&'@'('('@'@'@()()@)()(@?@;+'@'@'@'@+-@?'()(@;')()(@()()()(@(+@+@;&;@(*(@()'()()()()'@+;?(?@()')()()('+'()()()()@;')()(@;+@'+'&;$@#@#;@(;()('('(')('@$&$&$&(@(#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#@$#$#$@#@$@#@#@#@#$#$@$%$%$%$@$#%>$>$@$#%>$@$#@>$#>@$@$#%>@.26;9:79:79;/02.;9:;5;<78;<;5;.2@2-&@-<78&-<78@&@=@(*(*(@?#?#?$#$#$?#?<#?#?#?#?#?$#$'$?$#<#$?<?$?-,#$,-?@<?<?<?<?<?<?<?<?<?<?7878?<?78?<?<?<?@?@-?-?<?<?<?<?78787878787878-?<78<7878787878<?<7878787878787878787878<7878<78<?<?<?@?@?#@$@#$#$#$#$#$#$#$#$&#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$?#$#$(#$@;-;$@$@$@'@&;@('@'@'@'@'@'@'@'@'@(;9:9:;9:;9:;6;6;9:;9:78787878;&;6;6;7;?;@?@?@?@?@.;?&',7878787878?78787878678?,()6&?,&';?@'@(>&'6';&'@'@'@?-?'?@'?@-?-?-?-?-?'?'@'&'@?@'&;'&;'+'@#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'(*;(;&#$#$#$#$#$#$#$#$#$#$#$#$#$#$&(',(;@>&>#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$&$#$#$#$#$#$#$#$&>#$#$'#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#$#$#$@#$'&$'('('(')()?(@-?=?@';@)')(@;+@(';';'(+'(;'()@;'@()'()()();@&+@;'(&'+'@'()()(@'('()@+@;'&'?')()'('('('('('@'&;')();'&)(@'@'@'@'@'@$>&$&>@$')()();)(@+@'@'@'@34'@'@$@$@'('<'@'@'@'@'@'>@'87@'@'@'=?@(;78;@(;657878787878787878;78;5;@;6787878;<6<@;=;@'@'@2@;=;78;<;6;+;<;#7;8>5>$7<8<78;78;'&'&'@'@'@'@'@=<>?=@?<?@2?@'@'@'@'@'@'@'@;@-@?,-?-?@?@?@?(@'@'@(-@'-@',',@'(@'@;'@';,@#$'@+@#@$@'@'@;@'@'@'@'@'@'@'@'@'@;-'?-'@-@'@'@-'-@;'@;@'@-'-@-'(@(@('@'@'@(@(-@;@'-;'-@'?'(@-;@'@;'@-'@-'@;@-@'@#@$@-'(@+@-@'@(6@'@'-'@'(-;@'-@'@)()'(;@-+@()')()(;2;@2@'@+@('()(@+;')'@'(;'@()')()';(;)(+';';@-@'@')()()(;(@'@'@'@'@';@'()(@+@()@'@'@'@'@'@'@(')()@)@)@'@)@')@(@(@')()()(';+;@;('@')()()()(';'@+@')(@)()(;'(@')()()(;'@+@;@'()()()('@+@'@()()(@+-;?@')()(;@#$+-@'@'@'@'@')@)@()(')')(;@+@'@')(@()(';')@'('()'(;(@'()('()(;';@'@'@')(@()(';@+-@;'@(@)()()(@'@'@'(@(@(@('(@+@'@'@')@(@)()('@+@'();@'@-?=?@;'@,@;@'@'@2@'@'@'@+@;@'@(;@'(;?&;?@+@-@'@'@#$-;@'@(')@(&@&;&(@)@'@'@'@'@'@'@'@'@'@'@'@?(;2@?@?@?)(?)2(?(?(?@?(?@-@?@-@#$#$@$#$#@#@#@#@#@#$@$@$@$#$#@#@#@#@$#@#@#@#@#@$#$#$#$#$#$#$@#<$<$#<$<$#<$<$#<$<$#<$<$#$@+?(?(?(?(?;@(@(@(@(@(@(@(@'@(&@+@'?@'(+@=@'@-(@#$(&@+@;@-?-=-@-?-@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@<@?@?@?@?@?@?@-?@?@?@?@?@?@?>?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@+@'@'@'@'@'@'@'@2@2@(@4@4@";
+
+// build/fable_modules/fable-library.3.7.17/Char.js
+function getCategoryFunc() {
+  const offset = 35;
+  const a1 = [...rangeDeltas].map((ch) => {
+    var _a;
+    return ((_a = ch.codePointAt(0)) !== null && _a !== void 0 ? _a : 0) - offset;
+  });
+  const a2 = [...categories].map((ch) => {
+    var _a;
+    return ((_a = ch.codePointAt(0)) !== null && _a !== void 0 ? _a : 0) - offset;
+  });
+  const codepoints = new Uint32Array(a1);
+  const categories2 = new Uint8Array(a2);
+  for (let i = 1; i < codepoints.length; ++i) {
+    codepoints[i] += codepoints[i - 1];
+  }
+  return (cp) => {
+    let hi = codepoints.length;
+    let lo = 0;
+    while (hi - lo > 1) {
+      const mid = Math.floor((hi + lo) / 2);
+      const test = codepoints[mid];
+      if (cp < test) {
+        hi = mid;
+      } else if (cp === test) {
+        hi = lo = mid;
+        break;
+      } else if (test < cp) {
+        lo = mid;
+      }
+    }
+    return categories2[lo];
+  };
+}
+var isControlMask = 1 << 14;
+var isDigitMask = 1 << 8;
+var isLetterMask = 0 | 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4;
+var isLetterOrDigitMask = isLetterMask | isDigitMask;
+var isUpperMask = 1 << 0;
+var isLowerMask = 1 << 1;
+var isNumberMask = 0 | 1 << 8 | 1 << 9 | 1 << 10;
+var isPunctuationMask = 0 | 1 << 18 | 1 << 19 | 1 << 20 | 1 << 21 | 1 << 22 | 1 << 23 | 1 << 24;
+var isSeparatorMask = 0 | 1 << 11 | 1 << 12 | 1 << 13;
+var isSymbolMask = 0 | 1 << 25 | 1 << 26 | 1 << 27 | 1 << 28;
+var isWhiteSpaceMask = 0 | 1 << 11 | 1 << 12 | 1 << 13;
+var unicodeCategoryFunc = getCategoryFunc();
+function charCodeAt(s, index) {
+  if (index >= 0 && index < s.length) {
+    return s.charCodeAt(index);
+  } else {
+    throw new Error("Index out of range.");
+  }
+}
+var isUpper = (s) => isUpper2(s, 0);
+function getUnicodeCategory2(s, index) {
+  const cp = charCodeAt(s, index);
+  return unicodeCategoryFunc(cp);
+}
+function isUpper2(s, index) {
+  const test = 1 << getUnicodeCategory2(s, index);
+  return (test & isUpperMask) !== 0;
+}
+
 // build/SettingTab.js
 var obsidian2 = __toModule(require("obsidian"));
+function System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(str) {
+  let source_1;
+  return toString((source_1 = pairwise2(str.split("")), fold((sb, tupledArg) => {
+    const c1 = tupledArg[0];
+    const c2 = tupledArg[1];
+    const up = isUpper;
+    const matchValue = [up(c1), up(c2)];
+    let pattern_matching_result;
+    if (matchValue[0]) {
+      pattern_matching_result = 1;
+    } else if (matchValue[1]) {
+      pattern_matching_result = 0;
+    } else {
+      pattern_matching_result = 1;
+    }
+    switch (pattern_matching_result) {
+      case 0: {
+        return StringBuilder__Append_Z721C83C5(sb, ` ${c2.toLocaleLowerCase()}`);
+      }
+      case 1: {
+        return StringBuilder__Append_244C7CD6(sb, c2);
+      }
+    }
+  }, StringBuilder_$ctor_Z721C83C5(`${str[0].toLocaleUpperCase()}`), source_1)));
+}
 function createSettingForProperty(plugin, settingTab, propName) {
-  new obsidian2.Setting(settingTab.containerEl).setName(propName).addText((txt) => {
-    let arg_1;
-    arg_1 = getValue(find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection())), plugin.settings), txt.setValue(arg_1);
+  new obsidian2.Setting(settingTab.containerEl).setName(System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(propName)).addText((txt) => {
+    let arg_3;
+    const property = find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection()));
+    arg_3 = getValue(property, plugin.settings), txt.setValue(arg_3);
     txt.onChange((value_1) => {
       plugin.settings = PluginSettingsModule_withDynamicProp(propName, value_1, plugin.settings);
       return void 0;
@@ -1897,19 +1737,20 @@ function createSettingDisplay(plugin, settingtab, unitVar) {
   const containerEl = settingtab.containerEl;
   containerEl.empty();
   containerEl.createEl("h2", some(((arg) => arg)({
-    text: "Obsidian Keyboard Shortcuts"
+    text: "Quick snippets and navigation"
   })));
-  const array_1 = map2(name, getRecordElements(PluginSettings$reflection()));
-  array_1.forEach((propName) => {
+  const fields = getRecordElements(PluginSettings$reflection());
+  const buildSetting = (propName) => {
     createSettingForProperty(plugin, settingtab, propName);
-  });
+  };
+  const array_1 = map2(name, fields);
+  array_1.forEach(buildSetting);
   return void 0;
 }
 function create(app, plugin) {
   const settingtab = new obsidian2.PluginSettingTab(app, plugin);
   settingtab.display = () => createSettingDisplay(plugin, settingtab, void 0);
   settingtab.hide = (f) => {
-    printJson("saving settings");
     plugin.saveSettings(plugin.settings);
     return void 0;
   };
@@ -1924,7 +1765,8 @@ function doNone(f) {
 function goToPrevHeading(plugin) {
   return Command_forEditor("goToPrevHeading", "Go to previous heading", uncurry(2, (editor) => {
     const cursor = editor.getCursor();
-    const foundOpt = tryFindIndex((f) => match(/^(#+) /gu, f) != null, Seq_skipSafe(1, reverse(split(editor.getValue(), ["\n"], null, 0).slice(void 0, ~~cursor.line + 1))));
+    const linesbefore = reverse(split(editor.getValue(), ["\n"], null, 0).slice(void 0, ~~cursor.line + 1));
+    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, linesbefore));
     if (foundOpt != null) {
       const moveby = foundOpt | 0;
       const newpos = ~~cursor.line - moveby - 1;
@@ -1938,7 +1780,8 @@ function goToPrevHeading(plugin) {
 function goToNextHeading(plugin) {
   return Command_forEditor("goToNextHeading", "Go to next heading", uncurry(2, (editor) => {
     const cursor = editor.getCursor();
-    const foundOpt = tryFindIndex((f) => match(/^(#+) /gu, f) != null, Seq_skipSafe(1, split(editor.getValue(), ["\n"], null, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], null, 0).length)));
+    const linesafter = split(editor.getValue(), ["\n"], null, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], null, 0).length);
+    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, linesafter));
     if (foundOpt != null) {
       const moveby = foundOpt | 0;
       const newpos = ~~cursor.line + moveby + 1;
@@ -1987,11 +1830,11 @@ ${substring(f_3.content, 0, min(comparePrimitives, f_3.content.length, 50))}`, o
         elem.innerText = defaultArg(f_2.title, f_2.content);
       }, SuggestModal_withGetSuggestions((queryInput) => {
         const query = obsidian3.prepareQuery(queryInput);
-        const arg = map3((tuple) => tuple[0], where((f_1) => f_1[1] != null, map3((f) => {
+        const matches = map3((tuple) => tuple[0], where((f_1) => f_1[1] != null, map3((f) => {
           const text = defaultArg(f.title, f.content);
           return [f, obsidian3.fuzzySearch(query, text)];
         }, codeblocks_1)));
-        return Array.from(arg);
+        return Array.from(matches);
       }, SuggestModal_create(plugin.app))));
       modal.open();
       return void 0;
@@ -2004,11 +1847,9 @@ function insertHeading4(plugin) {
     return doNone;
   }));
 }
-function insertAdmonitionInfo(plugin) {
-  return Command_forEditor("insertAdmonitionInfo", "Insert Info Admonition", uncurry(2, (edit) => {
-    edit.replaceSelection("````ad-info\ntitle: \n````");
-    const cursor = edit.getCursor();
-    edit.setCursor(cursor.line - 1);
+function insertDefaultCallout(plugin) {
+  return Command_forEditor("insertDefaultCallout", "Insert Default Callout", uncurry(2, (edit) => {
+    edit.replaceSelection(`> [!${plugin.settings.defaultCalloutType}] `);
     return doNone;
   }));
 }
@@ -2053,6 +1894,7 @@ function Plugin2__init(this$) {
         this$.plugin.settings = v;
         return Promise.resolve();
       }).catch((_arg_2) => {
+        const e = _arg_2;
         this$.plugin.settings = PluginSettings_get_Default();
         return Promise.resolve();
       });
@@ -2067,13 +1909,12 @@ function Plugin2__init(this$) {
   }));
 }
 function Plugin2__onload(this$) {
-  printJson("aciq:Obsidian Keyboard Shortcuts loaded");
   this$.plugin.settings = this$.plugin.loadSettings();
   const arg = create(this$.app, this$.plugin);
   this$.plugin.addSettingTab(arg);
   iterate((cmd) => {
     let arg_1;
     arg_1 = cmd(this$.plugin), this$.plugin.addCommand(arg_1);
-  }, [copyCodeBlock, copyNextCodeBlock, insertCodeBlock, goToPrevHeading, goToNextHeading, insertHeading4, insertAdmonitionInfo]);
+  }, [copyCodeBlock, copyNextCodeBlock, insertCodeBlock, goToPrevHeading, goToNextHeading, insertHeading4, insertDefaultCallout]);
 }
 module.exports = Plugin2;
