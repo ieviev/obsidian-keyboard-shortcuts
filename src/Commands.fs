@@ -6,7 +6,7 @@ open Fable.Core
 open ObsidianBindings
 
 
-let [<Literal>] headingregex = """^(#+) """
+let [<Literal>] headingregex = """^(#{1,6}) """
 let doNone = (fun f -> None)
 
 let rec goToPrevHeading (plugin:ExtendedPlugin<PluginSettings>) =
@@ -107,68 +107,6 @@ let rec copyCodeBlock (plugin:ExtendedPlugin<PluginSettings>) =
             None
         )
     
-let rec createAdmonitionView (plugin:ExtendedPlugin<PluginSettings>) =
-    Command.forEditorCheck (nameof createAdmonitionView) "Create Code Block With Title"
-        (fun check editor view ->
-            
-            printJson "edit called"
-            
-            let v =
-                obsidian.MarkdownEditView
-                :?> Constructor<MarkdownEditView>
-                |> plugin.app.workspace.getActiveViewOfType
-            
-            printJson "edit called"
-            
-            let mutable result = ""
-            let mutable textElement = null
-            
-            let modal =
-                plugin.app
-                |> obsidian.Modal.Create
-        
-            modal.contentEl.createEl("h1",U2.Case2 "What's your name?") |> ignore
-            
-            let typesettings =
-                modal.contentEl
-                |> obsidian.Setting.Create
-                |> (fun f ->
-                    f.setName(U2.Case1 "name") |> ignore
-                    f.addText (fun txt ->
-                        txt.onChange(fun value ->
-                            result <- value
-                            None
-                            )|> ignore
-                        textElement <- txt
-                        None
-                    )
-                    |> ignore
-                    f
-                )
-            
-            
-            modal.contentEl
-            |> obsidian.Setting.Create
-            |> (fun f ->
-                f.addButton(fun btn ->
-                    btn
-                        .setButtonText("submit")
-                        .setCta()
-                        .onClick(fun _ ->
-                            modal.close()
-                            editor.replaceSelection(result)
-                            None
-                            )
-                    |> ignore
-                    None
-                ) |> ignore
-            )
-            
-            modal.``open``()
-            textElement.inputEl.focus()
-        
-            U2.Case2 ()
-        )
         
 let rec insertHeading4 (plugin:ExtendedPlugin<PluginSettings>) =
     Command.forEditor (nameof insertHeading4) "Insert heading 4"
@@ -177,12 +115,10 @@ let rec insertHeading4 (plugin:ExtendedPlugin<PluginSettings>) =
             doNone
         )            
    
-let rec insertAdmonitionInfo (plugin:ExtendedPlugin<PluginSettings>) =
-    Command.forEditor (nameof insertAdmonitionInfo) "Insert Info Admonition"
+let rec insertDefaultCallout (plugin:ExtendedPlugin<PluginSettings>) =
+    Command.forEditor (nameof insertDefaultCallout) "Insert Default Callout"
         (fun edit ->
-            edit.replaceSelection("````ad-info\ntitle: \n````")
-            let cursor = edit.getCursor()
-            edit.setCursor(U2.Case2 (cursor.line - 1.))
+            edit.replaceSelection($"> [!{plugin.settings.defaultCalloutType}] ")
             doNone
         )   
 let rec insertCodeBlock (plugin:ExtendedPlugin<PluginSettings>) =
@@ -196,9 +132,9 @@ let rec insertCodeBlock (plugin:ExtendedPlugin<PluginSettings>) =
         
 let rec insertTest (plugin:ExtendedPlugin<PluginSettings>) =
     
-    Command.forEditor "testcomand" "qqqqqq"
+    Command.forEditor "testtesttest" "qqqqqq"
         (fun edit ->
-            edit.replaceSelection("````\nhello\n````")
+            edit.replaceSelection("````\naaaaa\n````")
             let cursor = edit.getCursor()
             edit.setCursor(U2.Case2 (cursor.line - 1.))
             doNone

@@ -1,10 +1,10 @@
 {
-    "id": "aciq.obsidian-keyboard-shortcuts",
-    "name": "Obsidian Keyboard Shortcuts",
-    "version": "1.0.1",
-    "minAppVersion": "0.13.33",
-    "description": "",
-    "author": "aciq",
-    "authorUrl": "https://github.com/aciq/obsidian-keyboard-shortcuts",
-    "isDesktopOnly": false
+  "id": "quick-snippets-and-navigation",
+  "name": "Quick snippets and navigation",
+  "version": "1.0.2",
+  "minAppVersion": "0.13.33",
+  "description": "Keyboard navigation up/down for headings\n- Configurable default code block and callout\n- Copy code block via keyboard shortcut",
+  "author": "aciq",
+  "authorUrl": "https://github.com/aciq/obsidian-keyboard-shortcuts",
+  "isDesktopOnly": false
 }

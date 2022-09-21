@@ -229,11 +229,12 @@ module Seq =
 type PluginSettings =
     {
         defaultCodeBlockLanguage : string
+        defaultCalloutType : string
     }
     static member Default = {
-        defaultCodeBlockLanguage = ""
+        defaultCodeBlockLanguage = "bash"
+        defaultCalloutType = "info"
     }
-     
 
 
 
@@ -241,8 +242,12 @@ module PluginSettings =
     let withDynamicProp (key:string) (value:string) (settings:PluginSettings) =
         match key with
         | "defaultCodeBlockLanguage" ->  { settings with defaultCodeBlockLanguage = value }
+        | "defaultCalloutType" ->  { settings with defaultCalloutType = value }
         | _ -> failwith $"unknown property {key}"
-        
+
+    
+    
+
 type ExtendedPlugin<'TSettings> =
     inherit Plugin_2
     abstract settings: 'TSettings with get, set

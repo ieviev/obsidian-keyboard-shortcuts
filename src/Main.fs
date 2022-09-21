@@ -42,7 +42,7 @@ type Plugin2(app, manifest) as instance =
 
     let onload: unit -> unit =
         (fun _ ->
-            printJson "aciq:Obsidian Keyboard Shortcuts loaded"
+            // printJson "aciq:quick-snippets-and-navigation loaded"
             plugin.settings <- plugin.loadSettings ()
 
             SettingTab.create app plugin
@@ -55,7 +55,7 @@ type Plugin2(app, manifest) as instance =
                 Commands.goToPrevHeading
                 Commands.goToNextHeading
                 Commands.insertHeading4
-                Commands.insertAdmonitionInfo
+                Commands.insertDefaultCallout
                 // Commands.insertTest
             |]
             |> Seq.iter (fun cmd -> plugin |> cmd |> plugin.addCommand |> ignore)

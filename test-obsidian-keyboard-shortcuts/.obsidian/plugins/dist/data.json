@@ -1,3 +1,4 @@
 {
-  "defaultCodeBlockLanguage": "bash"
+  "defaultCodeBlockLanguage": "bash",
+  "defaultCalloutType": "info"
 }

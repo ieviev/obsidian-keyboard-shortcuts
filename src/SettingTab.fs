@@ -5,10 +5,28 @@ open Fs.Obsidian
 open Microsoft.FSharp.Reflection
 open ObsidianBindings
 open Fable.Core.JsInterop
+open System
+open System.Text
+
+
+type String with 
+    /// "defaultCalloutType" -> "Default callout type"
+    static member camelcaseToHumanReadable (str:string) =
+        str 
+        |> Seq.pairwise 
+        |> Seq.fold (fun (sb:StringBuilder) (c1:char,c2:char) -> 
+            let up = Char.IsUpper
+            match up c1, up c2 with 
+            | false, true -> 
+                $" {Char.ToLower c2}" |> sb.Append
+            | _ -> c2 |> sb.Append
+        ) (StringBuilder($"{Char.ToUpper(str[0])}"))
+        |> string
+
 
 let createSettingForProperty (plugin:ExtendedPlugin<PluginSettings>) (settingTab:SettingTab) (propName:string) =
     obsidian.Setting.Create(settingTab.containerEl)
-        .setName(U2.Case1 propName)
+        .setName(propName |> String.camelcaseToHumanReadable |> U2.Case1)
         .addText(fun txt ->
             let property =
                 typeof<PluginSettings>
@@ -33,7 +51,7 @@ let createSettingDisplay (plugin:ExtendedPlugin<PluginSettings>) (settingtab:Plu
     let containerEl = settingtab.containerEl
     containerEl.empty()
     containerEl.createEl( "h2",
-        unbox U2.Case1 {| text = "Obsidian Keyboard Shortcuts" |}) |> ignore
+        unbox U2.Case1 {| text = "Quick snippets and navigation" |}) |> ignore
     
     let fields = typeof<PluginSettings> |> FSharpType.GetRecordFields
     let buildSetting = createSettingForProperty plugin settingtab
@@ -50,7 +68,7 @@ let create (app:App) (plugin:ExtendedPlugin<PluginSettings>) =
     let settingtab = obsidian.PluginSettingTab.Create(app,plugin)
     settingtab?display <- (createSettingDisplay plugin settingtab)
     settingtab?hide <- (fun f ->
-        printJson "saving settings"
+        // printJson "saving settings"
         plugin.saveSettings(plugin.settings) |> ignore
         None    
     )

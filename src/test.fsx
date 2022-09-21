@@ -31,46 +31,54 @@ let generateDynamicSet (t:Type) =
 // typeof<PluginSettings> |> generateDynamicSet |> stdout.WriteLine
 
 
+module Manifest =
 
-open System
-open System.Collections.Generic
-open System.Text.Json
+    open System
+    open System.Collections.Generic
+    open System.Text.Json
 
-[<CLIMutable>]
-type Manifest = {
-    /// e.g. "nr-4.utils"
-    id : string
-    /// e.g. "Shortcuts"
-    name : string
-    /// e.g. "1.0.0"
-    version : string
-    /// e.g. "0.13.33"
-    minAppVersion : string
-    /// e.g. ""
-    description : string
-    /// e.g. "nr-4"
-    author : string
-    /// e.g. ""
-    authorUrl : string
-    /// e.g. false
-    isDesktopOnly : bool
-}
+    let trimDesc (desc:string) = 
+        desc |> (fun f -> f.Trim().Split("\n") |> Array.map (fun f -> f.Trim()) |> String.concat "\n")
 
-
-let appmanifest = 
-    {
-        id = "aciq.obsidian-keyboard-shortcuts"
-        name = "Obsidian Keyboard Shortcuts"
-        version = "1.0.0"
-        minAppVersion = "0.13.33"
-        description = ""
-        author = "aciq"
-        authorUrl = "https://github.com/aciq/obsidian-keyboard-shortcuts"
-        isDesktopOnly = false
+    [<CLIMutable>]
+    type Manifest = {
+        id : string
+        name : string
+        version : string
+        minAppVersion : string
+        description : string
+        author : string
+        authorUrl : string
+        isDesktopOnly : bool
     }
 
-open System.IO
-let genmanifest() =
-    appmanifest
-    |> JsonSerializer.Serialize
-    |> (fun f -> File.WriteAllText("./dist/manifest.json",f))
+
+    let appmanifest = 
+        {
+            id = "quick-snippets-and-navigation"
+            name = "Quick snippets and navigation"
+            version = "1.0.2"
+            minAppVersion = "0.13.33"
+            description = trimDesc """
+                Keyboard navigation up/down for headings
+                - Configurable default code block and callout
+                - Copy code block via keyboard shortcut
+                """ 
+            author = "aciq"
+            authorUrl = "https://github.com/aciq/obsidian-keyboard-shortcuts"
+            isDesktopOnly = false
+        }
+
+    open System.IO
+    let genmanifest() =
+        JsonSerializer.Serialize(appmanifest,
+            JsonSerializerOptions(WriteIndented=true))
+        |> (fun f -> 
+            let p1 = __SOURCE_DIRECTORY__ + "/../dist/manifest.json"
+            let p2 = __SOURCE_DIRECTORY__ + "/../manifest.json"
+            File.WriteAllText(p1,f)
+            File.WriteAllText(p2,f)
+        )
+
+
+// Manifest.genmanifest()

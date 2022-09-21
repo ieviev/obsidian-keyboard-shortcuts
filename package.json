@@ -1,8 +1,8 @@
 {
-  "name": "obsidian-keyboard-shortcuts",
-  "displayName": "obsidian keyboard shortcuts",
-  "description": "Obsidian Keyboard Shortcuts",
-  "version": "1.0.0",
+  "name": "quick-snippets-and-navigation",
+  "displayName": "quick snippets and navigation",
+  "description": "Quick snippets and navigation",
+  "version": "1.0.1",
   "publisher": "aciq",
   "type": "commonjs",
   "scripts": {

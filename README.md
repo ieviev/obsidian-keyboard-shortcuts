@@ -1,4 +1,8 @@
-# Obsidian Keyboard Shortcuts
+# Quick snippets and navigation for Obsidian
+
+- Keyboard navigation up/down for headings
+- Configurable default code block and callout
+- Copy code block via keyboard shortcut
 
 these are just to cover my own most-used use cases
 
@@ -19,10 +23,11 @@ no keybinds are set on install, you have to configure them yourself
 ![](_resources/obs-copying-codeblocks.gif)
 
 
-## Insert heading 4 / Insert code block / Insert info admonition
+## Insert heading 4 / Insert code block / Insert callout
 
 - also moves the cursor inside the code block / to the title after using
 - the default language of the code block is configurable in settings
+- the default callout type is also configurable in settings
 
 ![](_resources/obs-inserting-codeblocks-headings.gif)
 
@@ -49,5 +54,5 @@ npm run build
 
 publishing to dist/
 ```
-npm publish
+npm run publish
 ```

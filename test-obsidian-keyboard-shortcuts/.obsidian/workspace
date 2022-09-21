@@ -10,7 +10,7 @@
           "type": "markdown",
           "state": {
             "file": "doc1.md",
-            "mode": "preview",
+            "mode": "source",
             "source": false
           }
         }
