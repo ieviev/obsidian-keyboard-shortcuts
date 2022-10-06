@@ -4,6 +4,7 @@ open System.Text.RegularExpressions
 open Browser
 open Fable.Core
 open ObsidianBindings
+open Fable.Core.JsInterop
 
 
 let [<Literal>] headingregex = """^(#{1,6}) """
@@ -87,7 +88,7 @@ let rec copyCodeBlock (plugin:ExtendedPlugin<PluginSettings>) =
                     let matches =
                         codeblocks
                         |> Seq.map (fun f ->
-                            let text = f.title |> Option.defaultValue f.content
+                            let text = f.content
                             f, obsidian.fuzzySearch(query,text)
                         )
                         |> Seq.where (fun f -> snd f |> Option.isSome)
@@ -96,7 +97,7 @@ let rec copyCodeBlock (plugin:ExtendedPlugin<PluginSettings>) =
                     matches |> ResizeArray
                     )
                 |> SuggestModal.withRenderSuggestion (fun f elem ->
-                    elem.innerText <- f.title |> Option.defaultValue f.content)
+                    elem.innerText <- f.content)
                 |> SuggestModal.withOnChooseSuggestion (fun f ->
                     $"copied:\n{f.content.Substring(0, min (f.content.Length) 50)}"
                     |> U2.Case1 |> obsidian.Notice.Create |> ignore
@@ -107,6 +108,24 @@ let rec copyCodeBlock (plugin:ExtendedPlugin<PluginSettings>) =
             None
         )
     
+let rec openSwitcherWithTag1 (plugin:ExtendedPlugin<PluginSettings>) =
+    Command.forMenu (nameof openSwitcherWithTag1) "Open Switcher with Tag 1"
+        (fun _ ->
+            match plugin.app |> Content.getTags with 
+            | None -> Notice.show "no tags found"
+            | Some tags when tags.Count = 0 -> Notice.show "no tags found"
+            | Some tags -> 
+                let cmd = plugin.settings.defaultModalCommand
+                match plugin.app?commands?executeCommandById(cmd) with 
+                | false -> 
+                    Notice.show $"failed to run command: {cmd}, configure Default modal command in settings"
+                | true -> 
+                    let modalInput = document.querySelector("body > div.modal-container > div.prompt > input")
+                    modalInput?value <- $"%s{tags[0].tag} "
+                    let ev = Browser.Event.Event.Create("input",null)
+                    modalInput.dispatchEvent(ev) |> ignore
+            None
+        )    
         
 let rec insertHeading4 (plugin:ExtendedPlugin<PluginSettings>) =
     Command.forEditor (nameof insertHeading4) "Insert heading 4"

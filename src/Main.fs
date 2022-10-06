@@ -56,6 +56,7 @@ type Plugin2(app, manifest) as instance =
                 Commands.goToNextHeading
                 Commands.insertHeading4
                 Commands.insertDefaultCallout
+                Commands.openSwitcherWithTag1
                 // Commands.insertTest
             |]
             |> Seq.iter (fun cmd -> plugin |> cmd |> plugin.addCommand |> ignore)

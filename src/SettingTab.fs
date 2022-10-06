@@ -7,6 +7,7 @@ open ObsidianBindings
 open Fable.Core.JsInterop
 open System
 open System.Text
+open Fs.Obsidian.Gen
 
 
 type String with 
@@ -38,7 +39,7 @@ let createSettingForProperty (plugin:ExtendedPlugin<PluginSettings>) (settingTab
             txt.onChange(fun value ->
                 plugin.settings <-
                     plugin.settings
-                    |> PluginSettings.withDynamicProp propName value
+                    |> PluginSettings.setFieldByName propName value
                 None
             )
             |> ignore

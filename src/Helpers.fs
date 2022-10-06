@@ -109,12 +109,26 @@ module SuggestModal =
         sm
             
 
+module Notice = 
+    let show (text:string) =
+        text
+        |> U2.Case1
+        |> obsidian.Notice.Create
+        |> ignore
 
 module Content =
     
-    type CodeBlockContent = { startLine: int; title:string option; content:string }
+    type CodeBlockContent = { startLine: int; content:string }
     
     let private om fn x = Option.map fn x
+
+    let getTags (app:App) =
+        app.workspace.getActiveFile()
+        |> Option.bind app.metadataCache.getFileCache
+        |> Option.bind (fun f -> f.tags)
+            
+        
+
     let getCodeBlocks (app:App) =
         
         let view =
@@ -150,14 +164,7 @@ module Content =
                     let blockContent = lines.[startLine..endLine]
                     {
                         startLine = startLine
-                        title =
-                            blockContent
-                            |> Seq.tryFind (fun f -> f.StartsWith "title:")
-                            |> Option.map (fun f -> f.["title:".Length..].Trim())
-                        content =
-                            blockContent
-                            |> Seq.where (fun f -> not (f.StartsWith "title:"))
-                            |> String.concat "\n"
+                        content = blockContent |> String.concat "\n"
                     }
                 )
                 |> Seq.toArray
@@ -195,10 +202,6 @@ module Content =
                     let blockContent = lines.[startLine..endLine]
                     {
                         startLine = startLine
-                        title =
-                            blockContent
-                            |> Seq.tryFind (fun f -> f.StartsWith "title:")
-                            |> Option.map (fun f -> f.["title:".Length..])
                         content =
                             blockContent
                             |> Seq.where (fun f -> not (f.StartsWith "title:"))
@@ -225,25 +228,6 @@ module Seq =
                 yield e.Current 
         }
         
-[<CLIMutable>]        
-type PluginSettings =
-    {
-        defaultCodeBlockLanguage : string
-        defaultCalloutType : string
-    }
-    static member Default = {
-        defaultCodeBlockLanguage = "bash"
-        defaultCalloutType = "info"
-    }
-
-
-
-module PluginSettings =
-    let withDynamicProp (key:string) (value:string) (settings:PluginSettings) =
-        match key with
-        | "defaultCodeBlockLanguage" ->  { settings with defaultCodeBlockLanguage = value }
-        | "defaultCalloutType" ->  { settings with defaultCalloutType = value }
-        | _ -> failwith $"unknown property {key}"
 
     
     

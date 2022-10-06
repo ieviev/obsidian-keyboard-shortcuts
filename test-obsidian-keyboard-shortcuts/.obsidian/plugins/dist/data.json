@@ -1,4 +1,5 @@
 {
   "defaultCodeBlockLanguage": "bash",
-  "defaultCalloutType": "info"
+  "defaultCalloutType": "info2",
+  "defaultModalCommand": "obsidian-another-quick-switcher:search-command_Recent search"
 }

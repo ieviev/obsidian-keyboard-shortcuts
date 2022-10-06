@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "doc1.md",
+            "file": "ai file 1.md",
             "mode": "source",
             "source": false
           }
@@ -26,14 +26,6 @@
         "id": "c95dbe404fcf7d71",
         "type": "tabs",
         "children": [
-          {
-            "id": "735e7cd6fe184bd2",
-            "type": "leaf",
-            "state": {
-              "type": "file-explorer",
-              "state": {}
-            }
-          },
           {
             "id": "f7b8564f0597affd",
             "type": "leaf",
@@ -73,12 +65,20 @@
         "type": "tabs",
         "children": [
           {
+            "id": "735e7cd6fe184bd2",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
             "id": "e4d45babfb0ca3fa",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "doc1.md",
+                "file": "ai file 1.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -95,7 +95,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "doc1.md",
+                "file": "ai file 1.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -118,7 +118,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "doc1.md"
+                "file": "ai file 1.md"
               }
             }
           }
@@ -126,9 +126,14 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "active": "55ad445e570143a3",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "ai file 2.md",
+    "ai file 1.md",
+    "taggedfile2.md",
+    "taggedfile1.md",
+    "doc1.md"
+  ]
 }

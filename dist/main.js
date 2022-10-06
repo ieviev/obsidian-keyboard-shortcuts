@@ -582,11 +582,11 @@ function value(x) {
 function flatten(x) {
   return x == null ? void 0 : value(x);
 }
-function defaultArg(opt, defaultValue) {
-  return opt != null ? value(opt) : defaultValue;
-}
 function map(mapping, opt) {
   return opt != null ? some(mapping(value(opt))) : void 0;
+}
+function bind(binder, opt) {
+  return opt != null ? binder(value(opt)) : void 0;
 }
 
 // build/fable_modules/Fable.Promise.3.1.3/Promise.fs.js
@@ -1550,14 +1550,21 @@ function SuggestModal_withRenderSuggestion(fn, sm) {
   };
   return sm;
 }
+function Notice_show(text) {
+  let objectArg;
+  objectArg = obsidian.Notice, new objectArg(text);
+}
 var Content_CodeBlockContent = class extends Record {
-  constructor(startLine, title, content) {
+  constructor(startLine, content) {
     super();
     this.startLine = startLine | 0;
-    this.title = title;
     this.content = content;
   }
 };
+function Content_getTags(app) {
+  let option, objectArg;
+  return bind((f) => f.tags, (option = app.workspace.getActiveFile(), bind((objectArg = app.metadataCache, (arg) => objectArg.getFileCache(arg)), option)));
+}
 function Content_getCodeBlocks(app) {
   let option, objectArg_1;
   let view;
@@ -1574,7 +1581,7 @@ function Content_getCodeBlocks(app) {
       const startLine = ~~f_1.position.start.line + 1 | 0;
       const endLine = ~~f_1.position.end.line - 1 | 0;
       const blockContent = lines.slice(startLine, endLine + 1);
-      return new Content_CodeBlockContent(startLine, map((f_3) => f_3.slice("title:".length, f_3.length).trim(), tryFind((f_2) => f_2.indexOf("title:") === 0, blockContent)), join("\n", where((f_4) => !(f_4.indexOf("title:") === 0), blockContent)));
+      return new Content_CodeBlockContent(startLine, join("\n", blockContent));
     }, optionalCodeblockSections)), codeBlockSections);
     return codeBlockTexts;
   }
@@ -1827,11 +1834,11 @@ function copyCodeBlock(plugin) {
 ${substring(f_3.content, 0, min(comparePrimitives, f_3.content.length, 50))}`, objectArg = obsidian3.Notice, new objectArg(arg_2);
         Clipboard_write(f_3.content);
       }, SuggestModal_withRenderSuggestion((f_2, elem) => {
-        elem.innerText = defaultArg(f_2.title, f_2.content);
+        elem.innerText = f_2.content;
       }, SuggestModal_withGetSuggestions((queryInput) => {
         const query = obsidian3.prepareQuery(queryInput);
         const matches = map3((tuple) => tuple[0], where((f_1) => f_1[1] != null, map3((f) => {
-          const text = defaultArg(f.title, f.content);
+          const text = f.content;
           return [f, obsidian3.fuzzySearch(query, text)];
         }, codeblocks_1)));
         return Array.from(matches);
@@ -1839,6 +1846,29 @@ ${substring(f_3.content, 0, min(comparePrimitives, f_3.content.length, 50))}`, o
       modal.open();
       return void 0;
     }
+  });
+}
+function openSwitcherWithTag1(plugin) {
+  return Command_forMenu("openSwitcherWithTag1", "Open Switcher with Tag 1", () => {
+    let tags;
+    const matchValue = Content_getTags(plugin.app);
+    if (matchValue != null) {
+      if (tags = matchValue, tags.length === 0) {
+        const tags_1 = matchValue;
+        Notice_show("no tags found");
+      } else {
+        const tags_2 = matchValue;
+        const cmd = "obsidian-another-quick-switcher:search-command_Recent Search";
+        plugin.app.commands.executeCommandById(cmd);
+        const modalInput = document.querySelector("body > div.modal-container > div.prompt > input");
+        modalInput.value = `${tags_2[0].tag} `;
+        const ev = new Event("input", null);
+        modalInput.dispatchEvent(ev);
+      }
+    } else {
+      Notice_show("no tags found");
+    }
+    return void 0;
   });
 }
 function insertHeading4(plugin) {
@@ -1873,7 +1903,7 @@ var Plugin2 = class extends import_obsidian.Plugin {
     instance.contents = this;
     this.plugin = instance.contents;
     Plugin2__init(this);
-    this["init@15"] = 1;
+    this["init@15-1"] = 1;
     this.plugin.onload = () => {
       Plugin2__onload(this);
     };
@@ -1915,6 +1945,6 @@ function Plugin2__onload(this$) {
   iterate((cmd) => {
     let arg_1;
     arg_1 = cmd(this$.plugin), this$.plugin.addCommand(arg_1);
-  }, [copyCodeBlock, copyNextCodeBlock, insertCodeBlock, goToPrevHeading, goToNextHeading, insertHeading4, insertDefaultCallout]);
+  }, [copyCodeBlock, copyNextCodeBlock, insertCodeBlock, goToPrevHeading, goToNextHeading, insertHeading4, insertDefaultCallout, openSwitcherWithTag1]);
 }
 module.exports = Plugin2;
