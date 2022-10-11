@@ -636,6 +636,38 @@ function PromiseBuilder__Run_212F1D4B(_, p) {
 // build/fable_modules/Fable.Promise.3.1.3/PromiseImpl.fs.js
 var promise = PromiseBuilder_$ctor();
 
+// build/Settings.js
+var PluginSettings = class extends Record {
+  constructor(defaultCodeBlockLanguage, defaultCalloutType, defaultModalCommand) {
+    super();
+    this.defaultCodeBlockLanguage = defaultCodeBlockLanguage;
+    this.defaultCalloutType = defaultCalloutType;
+    this.defaultModalCommand = defaultModalCommand;
+  }
+};
+function PluginSettings$reflection() {
+  return record_type("Fs.Obsidian.PluginSettings", [], PluginSettings, () => [["defaultCodeBlockLanguage", string_type], ["defaultCalloutType", string_type], ["defaultModalCommand", string_type]]);
+}
+function PluginSettings_get_Default() {
+  return new PluginSettings("bash", "info", "obsidian-another-quick-switcher:search-command_Recent search");
+}
+function Gen_PluginSettings_setFieldByName(key, value2, x) {
+  switch (key) {
+    case "defaultCodeBlockLanguage": {
+      return new PluginSettings(value2, x.defaultCalloutType, x.defaultModalCommand);
+    }
+    case "defaultCalloutType": {
+      return new PluginSettings(x.defaultCodeBlockLanguage, value2, x.defaultModalCommand);
+    }
+    case "defaultModalCommand": {
+      return new PluginSettings(x.defaultCodeBlockLanguage, x.defaultCalloutType, value2);
+    }
+    default: {
+      throw new Error("unimplemented case");
+    }
+  }
+}
+
 // build/fable_modules/fable-library.3.7.17/RegExp.js
 function escape(str) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
@@ -703,9 +735,6 @@ function substring(str, startIndex, length2) {
   }
   return length2 != null ? str.substr(startIndex, length2) : str.substr(startIndex);
 }
-
-// build/Helpers.js
-var obsidian = __toModule(require("obsidian"));
 
 // build/fable_modules/fable-library.3.7.17/System.Text.js
 var StringBuilder = class {
@@ -1452,7 +1481,138 @@ function pairwise2(xs) {
   return delay(() => ofArray2(pairwise(toArray2(xs))));
 }
 
+// build/fable_modules/fable-library.3.7.17/Unicode.13.0.0.js
+var rangeDeltas = "#C$&$&$$$$$$%-%&%=$$$$$$=$$$$D$$'$$$$$$$$$$$$%$$%$$$$&$:$*;$+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$&%$$$%$&%'$%$&&%$%$$$$$%$$%$$%$&$$$%%$$&'$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$%$$$$$&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*%$%%$$'$$$$$$$$h$>5'/1(*$$$4\x93$$$$$$$$%$&$$'%$$&$$$%$4$,F$%&&$$$$$$$$$$$$$$$$$$$$$$$($$$$$%%VS$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$(%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$I%$)L$$%%$$P$$$%$%$$+>''%.)&%$%%.$$$%C$-8-'%$\x86$$*$$)%%$'%-&%$1$$$$A>%|.$1-D,%$&$%$%9'$,$&$(%2$<&%$$.X8$5.2$C$Y$$$$&+'$%$*-%%-$$2$%$+%%%9$*$$&'%$$&'%%%%$$+$'%$&%%-%%)$$$$$%%$$)'%%9$*$%$%$%%$$&%'%%&&$*'$$*-%&$$-%$$,$&$9$*$%$(%$$&($%$$%$%$2%%%-$$*$)$$%$+%%%9$*$%$(%$$$$$'%%%%$*%$'%$&%%-$$)-$$$)&&$'&%$$$%&%&&&/'%$%&&$&$%$)$1-&)$$($&$+$&$:$3&$&'$&$'*%$&(%%%-*$*$$$%$+$&$:$-$(%$$$$($$%$%%*%*$$%%%-$%0%%,$&$L%$&'$&$&$$$'&$*&%%-,$)$$%$5&;$,$$%*&$'&&$$$+)-%%$/S$%*'$)$+$-%H%$$$($;$$$-$%,$%($$$)%-%'C$&2$$&%)--$$$$$$$$$$%+$G'1$($%(.$G$+$)$%('%HN%'$)$%%%$-))%%'&$&%*&'0$%%)$$$-&$%I$$($%N$$&\u016C$'%*$$$'%L$'%D$'%*$$$'%2$\\$'%f%&,7&3-)y%)%$\u028F$$4$=$$&n&&+*0$'&.5&%,5%/0$&$%/W%$*+$%.&$&$$$%-)-))$'&$$-)F$X*(%E$$(i-B$&'%&'%$)&'$&%-A%(.O'=)-$&E:%%$%%X$$$*$$$$%+)-%$-)-)*$)%1$%b'$R$$($$($%*'-*-,,&%$A$'%%$&%-O$$%&$$&%+'G++%%&(-&&-A)%,*N%&++&$0$*'$)$%$%$(Ob0$EH]$($$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$,$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$,+)%)%++++)%)%+$$$$$$$$++1%++++++($%'$$$&&$%'$&'%%'$&+(&%&$%'$%$.()%$$$%$$$+$$($,$$'%&$$$.$$$-$($-$$%)&$$$-&$$$0&C30'$&/2%$'$%$&%&$$$%$()$$$$$$'$$'$'$%%%($'$$%$$3F$$'$%'((%'$%$%$*$B%%$$$B\u012F+$$$$7%*$$t$A<K)h<.8_q9\xDA$,$Y+\x92$\u011B$$$$$$$$$$$$$$AO($$B$$$$$$$$$$3\u0123\xA6$$$$$$$$$$$$$$$$$$$$$$b$$$$C$$\u0125S8%)J%C$\x8CR$R$$$&%$$$$$$'$$%$)%&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%)$$$$&$$('$%I$$($%[*$$1$:,*$*$*$*$*$*$*$*$C%$$$$&$$$$$,$%$$$$%$$$$$$$$$$($-%'$$$0%$P=$|/\xF9=/'$&$$$$$$$$$$$$$$%$$$$$$$$$$%$,'%$(%&$$$%$y%%%%$$}$&$(N$\x81$%'-CG/3B$-A+$2C-J2\u0163\u19E3c\u5220&8$\u049A&Z,K)%\u012F$&3-%7$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$&$-$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%%i-%)+:,%$$$$$$$$$$$$$&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$+$$$$%$$$$$$$$$$%$$$$$$$$&$$$$$$$$$$$$$$$$$$$$($($$$$$$$$$$$%$$'$$$M$$$%$*$&$'$:%%$'$&)%$$)W'+%U3%+%-)5)&$$%$-?+%:.%.$@&&$R$%'%%&0$$-'%($$,-($L)%%%%,&$+$$%-%'3$)&$$$$U$$&%%(%$$$;%$%.$%%%$%$$-)%)%),*$*$N$',$%'sF%$%$%$$$%-)\u2BC7/:'T'\u0823\u1923\u0191%\x8DI*/(($$-$0$($$$%$%$\x8F34\u018E$$3c%YK/$$%3*$$$)3$%%$$$$$$$$$$$$$$$$%$$'&&$'$$$$$$$&$$&$$$%'($\xAA%$$&$&$$$$$$%-%&%=$$$$$$=$$$$$$$$$%-$P%B&)%)%)%&&%$$$%$$'%-&%%/$=$6$%$2%1E\x9E(&'P&,X'4%&$0&$RP$\xA5@&T2$>'C',7$+$(I((A$$G'+$(MKKq%-)G'G'K+W.$\xB3\u015A,9-+\xBB)%$$O$%&$%:$$+:%*B+,S6$%((9)&$=($c['%%3%Q$&$%(''$&$@%&'$,*,*@%$@&C+$?%'(*,Y&*9%+6(+5*'/*slZV0V*)G'+-\u0149B$M$%$%%q@-$+9.'(y8*7:,$$$X2*'7-2&$P&'%%%$'.$%<*-)&G($+$-'$%$+F$%$,%$S&,%'''$$$-$$$&$7.5$<&&%$$%)$d*$$$'$2$-$)R$&+(-)%%$+%%%9$*$%$($%$%$'%%%&%$)$((%%*&(\xAEX&+%&$$'(-%$$$&AS&)$$'%$%%$$+-\xC9R&'%'%$%:'%ES&+%$$%&$.-)06N$$$%)$$$*-Y>%&%'$('-%&$\xE3O&,$%$\x87CC-,/+%$%+$%$;)$%%%$$$$$$$&,-i+%J&'%%'$$$$$>$-K)$$'+$+$)%&Q0$%&$(@\\\u012A,$H$*$)$$$(--6&%A%9$$*$%$%l*$%$I)&$$%$*$$+-))$%$C($%$%$$$$*-\u01596%%%\xDA$28+'40$\u03BD\x89\x92$(.\xE7\u0ADF\u0452$,\u0FEA\u026A\u21DC\u025C*B$-'%\x83A%($-S*(''$$--$*$8(6\u02D3CC:'\x88n'$$Z*'0c%$$$.%1\u181B+\u04F9M,\u231A\u0142T&4'+\u01AF\u0927\x8E(0&,*-%$%$'\u137F\u0119-J%_%&&)++%*A'^:e&$\xBD7/z,<\xAA===*$5==$$%%$%%%'$+'$$$*$.==%$'%+$*$=%$'$($$&*$============?%<$<$)<$<$)<$<$)<$<$)<$<$)$$%U\u0223Z'U+$1$%(2($2\u0573*$4%*$%$(\xF8P&**%-'$$\u0193O'-($\u0523\xE8%,*LEE*$'-'%\u0334^$&$'oP$2\xE5'$>$%$$%$$-$'$$$$)$'$$$$$$&$%$$%$$$$$$$$$$%$$%'$*$'$'$$$-$4(&$($4W%\u0131O'\x87/2%2$2$H-0\xC4[@0O',*%1)\xBD\u011E(\u02FB+0&0&\x97/|*/7/'[+-)K+A%%q\x9C$u$\xAA/1%(&&(*,<**,&0*L\xB6$ZH-\u0429\uA701E\u1058.\u0101%\u16A51\u1D54\u0C42\u0241\u0605\u136E\u{AECD9}$A\x83\xA3\u0113\uFE33\u{10021}%\u{10021}";
+var categories = "1.;=;78;<;6;+;<;#7;8>5>$7<8<1.;=?;>?'9<2?>?<->$;>-':-;#<#$<$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'#$'#%$#%$#%$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#%$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'$&>&>&>&>&>(#$#$&>#$@&$;#@>#;#@#@#$#@#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$<#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$?(*#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#@&;$;6@?=@(6(;(;(;(@'@';@2<;=;?(;2@;'&'(+;'(';'(2?(&(?('+'?';@2'('(@'('@+'(&?;&@(='(&(&(&(@;@'(@;@'@'@'@(2()'()(')()()'('(;+;&'()@'@'@'@'@'@'@(')(@)@)('@)@'@'(@+'=-?=';(@()@'@'@'@'@'@'@'@(@)(@(@(@(@'@'@+('(;@()@'@'@'@'@'@'@(')(@()@)(@'@'(@+;=@'(@()@'@'@'@'@'@'@(')()(@)@)(@()@'@'(@+?'-@('@'@'@'@'@'@'@'@'@'@)()@)@)(@'@)@+-?=?@()('@'@'@'@'()@(@(@(@'@'(@+@;-?'();'@'@'@'@'@(')()@()@)(@)@'@'(@+@'@()'@'@'(')(@)@)('?@')-'(@+-?'@()@'@'@'@'@'@(@)(@(@)@+@);@'('(@='&(;+;@'@'@'@'@'@'('('@'@&@(@+@'@'?;?;?(?+-?(?(?(7878)'@'@()(;('(@(@?(?@?;?;@')()()()('+;')('(')')'('()()(')+)(?#@#@#@$;&$'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@(;-@'?@#@$@6'?;'.'78@';,'@'@'(@'(;@'(@'@'@(@'()()()(;&;='(@+@-@;6;(2@+@'&'@'('('@'@'@()()@)()(@?@;+'@'@'@'@+-@?'()(@;')()(@()()()(@(+@+@;&;@(*(@()'()()()()'@+;?(?@()')()()('+'()()()()@;')()(@;+@'+'&;$@#@#;@(;()('('(')('@$&$&$&(@(#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#@$#$#$@#@$@#@#@#@#$#$@$%$%$%$@$#%>$>$@$#%>$@$#@>$#>@$@$#%>@.26;9:79:79;/02.;9:;5;<78;<;5;.2@2-&@-<78&-<78@&@=@(*(*(@?#?#?$#$#$?#?<#?#?#?#?#?$#$'$?$#<#$?<?$?-,#$,-?@<?<?<?<?<?<?<?<?<?<?7878?<?78?<?<?<?@?@-?-?<?<?<?<?78787878787878-?<78<7878787878<?<7878787878787878787878<7878<78<?<?<?@?@?#@$@#$#$#$#$#$#$#$#$&#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$?#$#$(#$@;-;$@$@$@'@&;@('@'@'@'@'@'@'@'@'@(;9:9:;9:;9:;6;6;9:;9:78787878;&;6;6;7;?;@?@?@?@?@.;?&',7878787878?78787878678?,()6&?,&';?@'@(>&'6';&'@'@'@?-?'?@'?@-?-?-?-?-?'?'@'&'@?@'&;'&;'+'@#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'(*;(;&#$#$#$#$#$#$#$#$#$#$#$#$#$#$&(',(;@>&>#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$&$#$#$#$#$#$#$#$&>#$#$'#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#$#$#$@#$'&$'('('(')()?(@-?=?@';@)')(@;+@(';';'(+'(;'()@;'@()'()()();@&+@;'(&'+'@'()()(@'('()@+@;'&'?')()'('('('('('@'&;')();'&)(@'@'@'@'@'@$>&$&>@$')()();)(@+@'@'@'@34'@'@$@$@'('<'@'@'@'@'@'>@'87@'@'@'=?@(;78;@(;657878787878787878;78;5;@;6787878;<6<@;=;@'@'@2@;=;78;<;6;+;<;#7;8>5>$7<8<78;78;'&'&'@'@'@'@'@=<>?=@?<?@2?@'@'@'@'@'@'@'@;@-@?,-?-?@?@?@?(@'@'@(-@'-@',',@'(@'@;'@';,@#$'@+@#@$@'@'@;@'@'@'@'@'@'@'@'@'@;-'?-'@-@'@'@-'-@;'@;@'@-'-@-'(@(@('@'@'@(@(-@;@'-;'-@'?'(@-;@'@;'@-'@-'@;@-@'@#@$@-'(@+@-@'@(6@'@'-'@'(-;@'-@'@)()'(;@-+@()')()(;2;@2@'@+@('()(@+;')'@'(;'@()')()';(;)(+';';@-@'@')()()(;(@'@'@'@'@';@'()(@+@()@'@'@'@'@'@'@(')()@)@)@'@)@')@(@(@')()()(';+;@;('@')()()()(';'@+@')(@)()(;'(@')()()(;'@+@;@'()()()('@+@'@()()(@+-;?@')()(;@#$+-@'@'@'@'@')@)@()(')')(;@+@'@')(@()(';')@'('()'(;(@'()('()(;';@'@'@')(@()(';@+-@;'@(@)()()(@'@'@'(@(@(@('(@+@'@'@')@(@)()('@+@'();@'@-?=?@;'@,@;@'@'@2@'@'@'@+@;@'@(;@'(;?&;?@+@-@'@'@#$-;@'@(')@(&@&;&(@)@'@'@'@'@'@'@'@'@'@'@'@?(;2@?@?@?)(?)2(?(?(?@?(?@-@?@-@#$#$@$#$#@#@#@#@#@#$@$@$@$#$#@#@#@#@$#@#@#@#@#@$#$#$#$#$#$#$@#<$<$#<$<$#<$<$#<$<$#<$<$#$@+?(?(?(?(?;@(@(@(@(@(@(@(@'@(&@+@'?@'(+@=@'@-(@#$(&@+@;@-?-=-@-?-@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@<@?@?@?@?@?@?@-?@?@?@?@?@?@?>?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@+@'@'@'@'@'@'@'@2@2@(@4@4@";
+
+// build/fable_modules/fable-library.3.7.17/Char.js
+function getCategoryFunc() {
+  const offset = 35;
+  const a1 = [...rangeDeltas].map((ch) => {
+    var _a;
+    return ((_a = ch.codePointAt(0)) !== null && _a !== void 0 ? _a : 0) - offset;
+  });
+  const a2 = [...categories].map((ch) => {
+    var _a;
+    return ((_a = ch.codePointAt(0)) !== null && _a !== void 0 ? _a : 0) - offset;
+  });
+  const codepoints = new Uint32Array(a1);
+  const categories2 = new Uint8Array(a2);
+  for (let i = 1; i < codepoints.length; ++i) {
+    codepoints[i] += codepoints[i - 1];
+  }
+  return (cp) => {
+    let hi = codepoints.length;
+    let lo = 0;
+    while (hi - lo > 1) {
+      const mid = Math.floor((hi + lo) / 2);
+      const test = codepoints[mid];
+      if (cp < test) {
+        hi = mid;
+      } else if (cp === test) {
+        hi = lo = mid;
+        break;
+      } else if (test < cp) {
+        lo = mid;
+      }
+    }
+    return categories2[lo];
+  };
+}
+var isControlMask = 1 << 14;
+var isDigitMask = 1 << 8;
+var isLetterMask = 0 | 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4;
+var isLetterOrDigitMask = isLetterMask | isDigitMask;
+var isUpperMask = 1 << 0;
+var isLowerMask = 1 << 1;
+var isNumberMask = 0 | 1 << 8 | 1 << 9 | 1 << 10;
+var isPunctuationMask = 0 | 1 << 18 | 1 << 19 | 1 << 20 | 1 << 21 | 1 << 22 | 1 << 23 | 1 << 24;
+var isSeparatorMask = 0 | 1 << 11 | 1 << 12 | 1 << 13;
+var isSymbolMask = 0 | 1 << 25 | 1 << 26 | 1 << 27 | 1 << 28;
+var isWhiteSpaceMask = 0 | 1 << 11 | 1 << 12 | 1 << 13;
+var unicodeCategoryFunc = getCategoryFunc();
+function charCodeAt(s, index) {
+  if (index >= 0 && index < s.length) {
+    return s.charCodeAt(index);
+  } else {
+    throw new Error("Index out of range.");
+  }
+}
+var isUpper = (s) => isUpper2(s, 0);
+function getUnicodeCategory2(s, index) {
+  const cp = charCodeAt(s, index);
+  return unicodeCategoryFunc(cp);
+}
+function isUpper2(s, index) {
+  const test = 1 << getUnicodeCategory2(s, index);
+  return (test & isUpperMask) !== 0;
+}
+
+// build/SettingTab.js
+var obsidian = __toModule(require("obsidian"));
+function System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(str) {
+  let source_1;
+  return toString((source_1 = pairwise2(str.split("")), fold((sb, tupledArg) => {
+    const c1 = tupledArg[0];
+    const c2 = tupledArg[1];
+    const up = isUpper;
+    const matchValue = [up(c1), up(c2)];
+    let pattern_matching_result;
+    if (matchValue[0]) {
+      pattern_matching_result = 1;
+    } else if (matchValue[1]) {
+      pattern_matching_result = 0;
+    } else {
+      pattern_matching_result = 1;
+    }
+    switch (pattern_matching_result) {
+      case 0: {
+        return StringBuilder__Append_Z721C83C5(sb, ` ${c2.toLocaleLowerCase()}`);
+      }
+      case 1: {
+        return StringBuilder__Append_244C7CD6(sb, c2);
+      }
+    }
+  }, StringBuilder_$ctor_Z721C83C5(`${str[0].toLocaleUpperCase()}`), source_1)));
+}
+function createSettingForProperty(plugin, settingTab, propName) {
+  new obsidian.Setting(settingTab.containerEl).setName(System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(propName)).addText((txt) => {
+    let arg_3;
+    const property = find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection()));
+    arg_3 = getValue(property, plugin.settings), txt.setValue(arg_3);
+    txt.onChange((value_1) => {
+      plugin.settings = Gen_PluginSettings_setFieldByName(propName, value_1, plugin.settings);
+      return void 0;
+    });
+    return void 0;
+  });
+}
+function createSettingDisplay(plugin, settingtab, unitVar) {
+  const containerEl = settingtab.containerEl;
+  containerEl.empty();
+  containerEl.createEl("h2", some(((arg) => arg)({
+    text: "Quick snippets and navigation"
+  })));
+  const fields = getRecordElements(PluginSettings$reflection());
+  const buildSetting = (propName) => {
+    createSettingForProperty(plugin, settingtab, propName);
+  };
+  const array_1 = map2(name, fields);
+  array_1.forEach(buildSetting);
+  return void 0;
+}
+function create(app, plugin) {
+  const settingtab = new obsidian.PluginSettingTab(app, plugin);
+  settingtab.display = () => createSettingDisplay(plugin, settingtab, void 0);
+  settingtab.hide = (f) => {
+    plugin.saveSettings(plugin.settings);
+    return void 0;
+  };
+  return settingtab;
+}
+
 // build/Helpers.js
+var obsidian2 = __toModule(require("obsidian"));
 function Command_defaultCommand() {
   let mid = "";
   let mname = "";
@@ -1531,7 +1691,7 @@ function Command_forEditor(id, name2, callback) {
   return cmd;
 }
 function SuggestModal_create(app) {
-  return new obsidian.SuggestModal(app);
+  return new obsidian2.SuggestModal(app);
 }
 function SuggestModal_withGetSuggestions(query, sm) {
   sm.getSuggestions = query;
@@ -1552,7 +1712,7 @@ function SuggestModal_withRenderSuggestion(fn, sm) {
 }
 function Notice_show(text) {
   let objectArg;
-  objectArg = obsidian.Notice, new objectArg(text);
+  objectArg = obsidian2.Notice, new objectArg(text);
 }
 var Content_CodeBlockContent = class extends Record {
   constructor(startLine, content) {
@@ -1568,7 +1728,7 @@ function Content_getTags(app) {
 function Content_getCodeBlocks(app) {
   let option, objectArg_1;
   let view;
-  const arg = obsidian.MarkdownView;
+  const arg = obsidian2.MarkdownView;
   const objectArg = app.workspace;
   view = objectArg.getActiveViewOfType(arg);
   if (view == null) {
@@ -1596,32 +1756,6 @@ function Seq_skipSafe(num, source) {
     })))), delay(() => enumerateWhile(() => e["System.Collections.IEnumerator.MoveNext"](), delay(() => singleton2(e["System.Collections.Generic.IEnumerator`1.get_Current"]())))));
   }));
 }
-var PluginSettings = class extends Record {
-  constructor(defaultCodeBlockLanguage, defaultCalloutType) {
-    super();
-    this.defaultCodeBlockLanguage = defaultCodeBlockLanguage;
-    this.defaultCalloutType = defaultCalloutType;
-  }
-};
-function PluginSettings$reflection() {
-  return record_type("Fs.Obsidian.Helpers.PluginSettings", [], PluginSettings, () => [["defaultCodeBlockLanguage", string_type], ["defaultCalloutType", string_type]]);
-}
-function PluginSettings_get_Default() {
-  return new PluginSettings("bash", "info");
-}
-function PluginSettingsModule_withDynamicProp(key, value2, settings) {
-  switch (key) {
-    case "defaultCodeBlockLanguage": {
-      return new PluginSettings(value2, settings.defaultCalloutType);
-    }
-    case "defaultCalloutType": {
-      return new PluginSettings(settings.defaultCodeBlockLanguage, value2);
-    }
-    default: {
-      throw new Error(`unknown property ${key}`);
-    }
-  }
-}
 function Clipboard_write(txt) {
   const matchValue = navigator.clipboard;
   if (matchValue != null) {
@@ -1632,136 +1766,6 @@ function Clipboard_write(txt) {
       return Promise.resolve();
     }));
   }
-}
-
-// build/fable_modules/fable-library.3.7.17/Unicode.13.0.0.js
-var rangeDeltas = "#C$&$&$$$$$$%-%&%=$$$$$$=$$$$D$$'$$$$$$$$$$$$%$$%$$$$&$:$*;$+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$&%$$$%$&%'$%$&&%$%$$$$$%$$%$$%$&$$$%%$$&'$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$%$$$$$&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*%$%%$$'$$$$$$$$h$>5'/1(*$$$4\x93$$$$$$$$%$&$$'%$$&$$$%$4$,F$%&&$$$$$$$$$$$$$$$$$$$$$$$($$$$$%%VS$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$(%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$I%$)L$$%%$$P$$$%$%$$+>''%.)&%$%%.$$$%C$-8-'%$\x86$$*$$)%%$'%-&%$1$$$$A>%|.$1-D,%$&$%$%9'$,$&$(%2$<&%$$.X8$5.2$C$Y$$$$&+'$%$*-%%-$$2$%$+%%%9$*$$&'%$$&'%%%%$$+$'%$&%%-%%)$$$$$%%$$)'%%9$*$%$%$%%$$&%'%%&&$*'$$*-%&$$-%$$,$&$9$*$%$(%$$&($%$$%$%$2%%%-$$*$)$$%$+%%%9$*$%$(%$$$$$'%%%%$*%$'%$&%%-$$)-$$$)&&$'&%$$$%&%&&&/'%$%&&$&$%$)$1-&)$$($&$+$&$:$3&$&'$&$'*%$&(%%%-*$*$$$%$+$&$:$-$(%$$$$($$%$%%*%*$$%%%-$%0%%,$&$L%$&'$&$&$$$'&$*&%%-,$)$$%$5&;$,$$%*&$'&&$$$+)-%%$/S$%*'$)$+$-%H%$$$($;$$$-$%,$%($$$)%-%'C$&2$$&%)--$$$$$$$$$$%+$G'1$($%(.$G$+$)$%('%HN%'$)$%%%$-))%%'&$&%*&'0$%%)$$$-&$%I$$($%N$$&\u016C$'%*$$$'%L$'%D$'%*$$$'%2$\\$'%f%&,7&3-)y%)%$\u028F$$4$=$$&n&&+*0$'&.5&%,5%/0$&$%/W%$*+$%.&$&$$$%-)-))$'&$$-)F$X*(%E$$(i-B$&'%&'%$)&'$&%-A%(.O'=)-$&E:%%$%%X$$$*$$$$%+)-%$-)-)*$)%1$%b'$R$$($$($%*'-*-,,&%$A$'%%$&%-O$$%&$$&%+'G++%%&(-&&-A)%,*N%&++&$0$*'$)$%$%$(Ob0$EH]$($$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$,$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$,+)%)%++++)%)%+$$$$$$$$++1%++++++($%'$$$&&$%'$&'%%'$&+(&%&$%'$%$.()%$$$%$$$+$$($,$$'%&$$$.$$$-$($-$$%)&$$$-&$$$0&C30'$&/2%$'$%$&%&$$$%$()$$$$$$'$$'$'$%%%($'$$%$$3F$$'$%'((%'$%$%$*$B%%$$$B\u012F+$$$$7%*$$t$A<K)h<.8_q9\xDA$,$Y+\x92$\u011B$$$$$$$$$$$$$$AO($$B$$$$$$$$$$3\u0123\xA6$$$$$$$$$$$$$$$$$$$$$$b$$$$C$$\u0125S8%)J%C$\x8CR$R$$$&%$$$$$$'$$%$)%&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%)$$$$&$$('$%I$$($%[*$$1$:,*$*$*$*$*$*$*$*$C%$$$$&$$$$$,$%$$$$%$$$$$$$$$$($-%'$$$0%$P=$|/\xF9=/'$&$$$$$$$$$$$$$$%$$$$$$$$$$%$,'%$(%&$$$%$y%%%%$$}$&$(N$\x81$%'-CG/3B$-A+$2C-J2\u0163\u19E3c\u5220&8$\u049A&Z,K)%\u012F$&3-%7$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$&$-$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%%i-%)+:,%$$$$$$$$$$$$$&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$+$$$$%$$$$$$$$$$%$$$$$$$$&$$$$$$$$$$$$$$$$$$$$($($$$$$$$$$$$%$$'$$$M$$$%$*$&$'$:%%$'$&)%$$)W'+%U3%+%-)5)&$$%$-?+%:.%.$@&&$R$%'%%&0$$-'%($$,-($L)%%%%,&$+$$%-%'3$)&$$$$U$$&%%(%$$$;%$%.$%%%$%$$-)%)%),*$*$N$',$%'sF%$%$%$$$%-)\u2BC7/:'T'\u0823\u1923\u0191%\x8DI*/(($$-$0$($$$%$%$\x8F34\u018E$$3c%YK/$$%3*$$$)3$%%$$$$$$$$$$$$$$$$%$$'&&$'$$$$$$$&$$&$$$%'($\xAA%$$&$&$$$$$$%-%&%=$$$$$$=$$$$$$$$$%-$P%B&)%)%)%&&%$$$%$$'%-&%%/$=$6$%$2%1E\x9E(&'P&,X'4%&$0&$RP$\xA5@&T2$>'C',7$+$(I((A$$G'+$(MKKq%-)G'G'K+W.$\xB3\u015A,9-+\xBB)%$$O$%&$%:$$+:%*B+,S6$%((9)&$=($c['%%3%Q$&$%(''$&$@%&'$,*,*@%$@&C+$?%'(*,Y&*9%+6(+5*'/*slZV0V*)G'+-\u0149B$M$%$%%q@-$+9.'(y8*7:,$$$X2*'7-2&$P&'%%%$'.$%<*-)&G($+$-'$%$+F$%$,%$S&,%'''$$$-$$$&$7.5$<&&%$$%)$d*$$$'$2$-$)R$&+(-)%%$+%%%9$*$%$($%$%$'%%%&%$)$((%%*&(\xAEX&+%&$$'(-%$$$&AS&)$$'%$%%$$+-\xC9R&'%'%$%:'%ES&+%$$%&$.-)06N$$$%)$$$*-Y>%&%'$('-%&$\xE3O&,$%$\x87CC-,/+%$%+$%$;)$%%%$$$$$$$&,-i+%J&'%%'$$$$$>$-K)$$'+$+$)%&Q0$%&$(@\\\u012A,$H$*$)$$$(--6&%A%9$$*$%$%l*$%$I)&$$%$*$$+-))$%$C($%$%$$$$*-\u01596%%%\xDA$28+'40$\u03BD\x89\x92$(.\xE7\u0ADF\u0452$,\u0FEA\u026A\u21DC\u025C*B$-'%\x83A%($-S*(''$$--$*$8(6\u02D3CC:'\x88n'$$Z*'0c%$$$.%1\u181B+\u04F9M,\u231A\u0142T&4'+\u01AF\u0927\x8E(0&,*-%$%$'\u137F\u0119-J%_%&&)++%*A'^:e&$\xBD7/z,<\xAA===*$5==$$%%$%%%'$+'$$$*$.==%$'%+$*$=%$'$($$&*$============?%<$<$)<$<$)<$<$)<$<$)<$<$)$$%U\u0223Z'U+$1$%(2($2\u0573*$4%*$%$(\xF8P&**%-'$$\u0193O'-($\u0523\xE8%,*LEE*$'-'%\u0334^$&$'oP$2\xE5'$>$%$$%$$-$'$$$$)$'$$$$$$&$%$$%$$$$$$$$$$%$$%'$*$'$'$$$-$4(&$($4W%\u0131O'\x87/2%2$2$H-0\xC4[@0O',*%1)\xBD\u011E(\u02FB+0&0&\x97/|*/7/'[+-)K+A%%q\x9C$u$\xAA/1%(&&(*,<**,&0*L\xB6$ZH-\u0429\uA701E\u1058.\u0101%\u16A51\u1D54\u0C42\u0241\u0605\u136E\u{AECD9}$A\x83\xA3\u0113\uFE33\u{10021}%\u{10021}";
-var categories = "1.;=;78;<;6;+;<;#7;8>5>$7<8<1.;=?;>?'9<2?>?<->$;>-':-;#<#$<$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'#$'#%$#%$#%$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#%$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'$&>&>&>&>&>(#$#$&>#$@&$;#@>#;#@#@#$#@#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$<#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$?(*#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#@&;$;6@?=@(6(;(;(;(@'@';@2<;=;?(;2@;'&'(+;'(';'(2?(&(?('+'?';@2'('(@'('@+'(&?;&@(='(&(&(&(@;@'(@;@'@'@'@(2()'()(')()()'('(;+;&'()@'@'@'@'@'@'@(')(@)@)('@)@'@'(@+'=-?=';(@()@'@'@'@'@'@'@'@(@)(@(@(@(@'@'@+('(;@()@'@'@'@'@'@'@(')(@()@)(@'@'(@+;=@'(@()@'@'@'@'@'@'@(')()(@)@)(@()@'@'(@+?'-@('@'@'@'@'@'@'@'@'@'@)()@)@)(@'@)@+-?=?@()('@'@'@'@'()@(@(@(@'@'(@+@;-?'();'@'@'@'@'@(')()@()@)(@)@'@'(@+@'@()'@'@'(')(@)@)('?@')-'(@+-?'@()@'@'@'@'@'@(@)(@(@)@+@);@'('(@='&(;+;@'@'@'@'@'@'('('@'@&@(@+@'@'?;?;?(?+-?(?(?(7878)'@'@()(;('(@(@?(?@?;?;@')()()()('+;')('(')')'('()()(')+)(?#@#@#@$;&$'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@(;-@'?@#@$@6'?;'.'78@';,'@'@'(@'(;@'(@'@'@(@'()()()(;&;='(@+@-@;6;(2@+@'&'@'('('@'@'@()()@)()(@?@;+'@'@'@'@+-@?'()(@;')()(@()()()(@(+@+@;&;@(*(@()'()()()()'@+;?(?@()')()()('+'()()()()@;')()(@;+@'+'&;$@#@#;@(;()('('(')('@$&$&$&(@(#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#@$#$#$@#@$@#@#@#@#$#$@$%$%$%$@$#%>$>$@$#%>$@$#@>$#>@$@$#%>@.26;9:79:79;/02.;9:;5;<78;<;5;.2@2-&@-<78&-<78@&@=@(*(*(@?#?#?$#$#$?#?<#?#?#?#?#?$#$'$?$#<#$?<?$?-,#$,-?@<?<?<?<?<?<?<?<?<?<?7878?<?78?<?<?<?@?@-?-?<?<?<?<?78787878787878-?<78<7878787878<?<7878787878787878787878<7878<78<?<?<?@?@?#@$@#$#$#$#$#$#$#$#$&#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$?#$#$(#$@;-;$@$@$@'@&;@('@'@'@'@'@'@'@'@'@(;9:9:;9:;9:;6;6;9:;9:78787878;&;6;6;7;?;@?@?@?@?@.;?&',7878787878?78787878678?,()6&?,&';?@'@(>&'6';&'@'@'@?-?'?@'?@-?-?-?-?-?'?'@'&'@?@'&;'&;'+'@#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'(*;(;&#$#$#$#$#$#$#$#$#$#$#$#$#$#$&(',(;@>&>#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$&$#$#$#$#$#$#$#$&>#$#$'#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#$#$#$@#$'&$'('('(')()?(@-?=?@';@)')(@;+@(';';'(+'(;'()@;'@()'()()();@&+@;'(&'+'@'()()(@'('()@+@;'&'?')()'('('('('('@'&;')();'&)(@'@'@'@'@'@$>&$&>@$')()();)(@+@'@'@'@34'@'@$@$@'('<'@'@'@'@'@'>@'87@'@'@'=?@(;78;@(;657878787878787878;78;5;@;6787878;<6<@;=;@'@'@2@;=;78;<;6;+;<;#7;8>5>$7<8<78;78;'&'&'@'@'@'@'@=<>?=@?<?@2?@'@'@'@'@'@'@'@;@-@?,-?-?@?@?@?(@'@'@(-@'-@',',@'(@'@;'@';,@#$'@+@#@$@'@'@;@'@'@'@'@'@'@'@'@'@;-'?-'@-@'@'@-'-@;'@;@'@-'-@-'(@(@('@'@'@(@(-@;@'-;'-@'?'(@-;@'@;'@-'@-'@;@-@'@#@$@-'(@+@-@'@(6@'@'-'@'(-;@'-@'@)()'(;@-+@()')()(;2;@2@'@+@('()(@+;')'@'(;'@()')()';(;)(+';';@-@'@')()()(;(@'@'@'@'@';@'()(@+@()@'@'@'@'@'@'@(')()@)@)@'@)@')@(@(@')()()(';+;@;('@')()()()(';'@+@')(@)()(;'(@')()()(;'@+@;@'()()()('@+@'@()()(@+-;?@')()(;@#$+-@'@'@'@'@')@)@()(')')(;@+@'@')(@()(';')@'('()'(;(@'()('()(;';@'@'@')(@()(';@+-@;'@(@)()()(@'@'@'(@(@(@('(@+@'@'@')@(@)()('@+@'();@'@-?=?@;'@,@;@'@'@2@'@'@'@+@;@'@(;@'(;?&;?@+@-@'@'@#$-;@'@(')@(&@&;&(@)@'@'@'@'@'@'@'@'@'@'@'@?(;2@?@?@?)(?)2(?(?(?@?(?@-@?@-@#$#$@$#$#@#@#@#@#@#$@$@$@$#$#@#@#@#@$#@#@#@#@#@$#$#$#$#$#$#$@#<$<$#<$<$#<$<$#<$<$#<$<$#$@+?(?(?(?(?;@(@(@(@(@(@(@(@'@(&@+@'?@'(+@=@'@-(@#$(&@+@;@-?-=-@-?-@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@<@?@?@?@?@?@?@-?@?@?@?@?@?@?>?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@+@'@'@'@'@'@'@'@2@2@(@4@4@";
-
-// build/fable_modules/fable-library.3.7.17/Char.js
-function getCategoryFunc() {
-  const offset = 35;
-  const a1 = [...rangeDeltas].map((ch) => {
-    var _a;
-    return ((_a = ch.codePointAt(0)) !== null && _a !== void 0 ? _a : 0) - offset;
-  });
-  const a2 = [...categories].map((ch) => {
-    var _a;
-    return ((_a = ch.codePointAt(0)) !== null && _a !== void 0 ? _a : 0) - offset;
-  });
-  const codepoints = new Uint32Array(a1);
-  const categories2 = new Uint8Array(a2);
-  for (let i = 1; i < codepoints.length; ++i) {
-    codepoints[i] += codepoints[i - 1];
-  }
-  return (cp) => {
-    let hi = codepoints.length;
-    let lo = 0;
-    while (hi - lo > 1) {
-      const mid = Math.floor((hi + lo) / 2);
-      const test = codepoints[mid];
-      if (cp < test) {
-        hi = mid;
-      } else if (cp === test) {
-        hi = lo = mid;
-        break;
-      } else if (test < cp) {
-        lo = mid;
-      }
-    }
-    return categories2[lo];
-  };
-}
-var isControlMask = 1 << 14;
-var isDigitMask = 1 << 8;
-var isLetterMask = 0 | 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4;
-var isLetterOrDigitMask = isLetterMask | isDigitMask;
-var isUpperMask = 1 << 0;
-var isLowerMask = 1 << 1;
-var isNumberMask = 0 | 1 << 8 | 1 << 9 | 1 << 10;
-var isPunctuationMask = 0 | 1 << 18 | 1 << 19 | 1 << 20 | 1 << 21 | 1 << 22 | 1 << 23 | 1 << 24;
-var isSeparatorMask = 0 | 1 << 11 | 1 << 12 | 1 << 13;
-var isSymbolMask = 0 | 1 << 25 | 1 << 26 | 1 << 27 | 1 << 28;
-var isWhiteSpaceMask = 0 | 1 << 11 | 1 << 12 | 1 << 13;
-var unicodeCategoryFunc = getCategoryFunc();
-function charCodeAt(s, index) {
-  if (index >= 0 && index < s.length) {
-    return s.charCodeAt(index);
-  } else {
-    throw new Error("Index out of range.");
-  }
-}
-var isUpper = (s) => isUpper2(s, 0);
-function getUnicodeCategory2(s, index) {
-  const cp = charCodeAt(s, index);
-  return unicodeCategoryFunc(cp);
-}
-function isUpper2(s, index) {
-  const test = 1 << getUnicodeCategory2(s, index);
-  return (test & isUpperMask) !== 0;
-}
-
-// build/SettingTab.js
-var obsidian2 = __toModule(require("obsidian"));
-function System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(str) {
-  let source_1;
-  return toString((source_1 = pairwise2(str.split("")), fold((sb, tupledArg) => {
-    const c1 = tupledArg[0];
-    const c2 = tupledArg[1];
-    const up = isUpper;
-    const matchValue = [up(c1), up(c2)];
-    let pattern_matching_result;
-    if (matchValue[0]) {
-      pattern_matching_result = 1;
-    } else if (matchValue[1]) {
-      pattern_matching_result = 0;
-    } else {
-      pattern_matching_result = 1;
-    }
-    switch (pattern_matching_result) {
-      case 0: {
-        return StringBuilder__Append_Z721C83C5(sb, ` ${c2.toLocaleLowerCase()}`);
-      }
-      case 1: {
-        return StringBuilder__Append_244C7CD6(sb, c2);
-      }
-    }
-  }, StringBuilder_$ctor_Z721C83C5(`${str[0].toLocaleUpperCase()}`), source_1)));
-}
-function createSettingForProperty(plugin, settingTab, propName) {
-  new obsidian2.Setting(settingTab.containerEl).setName(System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(propName)).addText((txt) => {
-    let arg_3;
-    const property = find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection()));
-    arg_3 = getValue(property, plugin.settings), txt.setValue(arg_3);
-    txt.onChange((value_1) => {
-      plugin.settings = PluginSettingsModule_withDynamicProp(propName, value_1, plugin.settings);
-      return void 0;
-    });
-    return void 0;
-  });
-}
-function createSettingDisplay(plugin, settingtab, unitVar) {
-  const containerEl = settingtab.containerEl;
-  containerEl.empty();
-  containerEl.createEl("h2", some(((arg) => arg)({
-    text: "Quick snippets and navigation"
-  })));
-  const fields = getRecordElements(PluginSettings$reflection());
-  const buildSetting = (propName) => {
-    createSettingForProperty(plugin, settingtab, propName);
-  };
-  const array_1 = map2(name, fields);
-  array_1.forEach(buildSetting);
-  return void 0;
-}
-function create(app, plugin) {
-  const settingtab = new obsidian2.PluginSettingTab(app, plugin);
-  settingtab.display = () => createSettingDisplay(plugin, settingtab, void 0);
-  settingtab.hide = (f) => {
-    plugin.saveSettings(plugin.settings);
-    return void 0;
-  };
-  return settingtab;
 }
 
 // build/Commands.js
@@ -1858,12 +1862,16 @@ function openSwitcherWithTag1(plugin) {
         Notice_show("no tags found");
       } else {
         const tags_2 = matchValue;
-        const cmd = "obsidian-another-quick-switcher:search-command_Recent Search";
-        plugin.app.commands.executeCommandById(cmd);
-        const modalInput = document.querySelector("body > div.modal-container > div.prompt > input");
-        modalInput.value = `${tags_2[0].tag} `;
-        const ev = new Event("input", null);
-        modalInput.dispatchEvent(ev);
+        const cmd = plugin.settings.defaultModalCommand;
+        const matchValue_1 = plugin.app.commands.executeCommandById(cmd);
+        if (matchValue_1) {
+          const modalInput = document.querySelector("body > div.modal-container > div.prompt > input");
+          modalInput.value = `${tags_2[0].tag} `;
+          const ev = new Event("input", null);
+          modalInput.dispatchEvent(ev);
+        } else {
+          Notice_show(`failed to run command: ${cmd}, configure Default modal command in settings`);
+        }
       }
     } else {
       Notice_show("no tags found");
@@ -1903,7 +1911,7 @@ var Plugin2 = class extends import_obsidian.Plugin {
     instance.contents = this;
     this.plugin = instance.contents;
     Plugin2__init(this);
-    this["init@15-1"] = 1;
+    this["init@15"] = 1;
     this.plugin.onload = () => {
       Plugin2__onload(this);
     };
