@@ -91,6 +91,13 @@ function toIterator(en) {
     }
   };
 }
+function padWithZeros(i, length3) {
+  let str = i.toString(10);
+  while (str.length < length3) {
+    str = "0" + str;
+  }
+  return str;
+}
 function dateOffset(date) {
   const date1 = date;
   return typeof date1.offset === "number" ? date1.offset : date.kind === 1 ? 0 : date.getTimezoneOffset() * -6e4;
@@ -444,6 +451,54 @@ var FSharpRef = class {
 // build/Main.js
 var import_obsidian = __toModule(require("obsidian"));
 
+// build/fable_modules/fable-library.3.7.17/Numeric.js
+var symbol = Symbol("numeric");
+function isNumeric(x) {
+  return typeof x === "number" || (x === null || x === void 0 ? void 0 : x[symbol]);
+}
+function compare2(x, y) {
+  if (typeof x === "number") {
+    return x < y ? -1 : x > y ? 1 : 0;
+  } else {
+    return x.CompareTo(y);
+  }
+}
+function multiply(x, y) {
+  if (typeof x === "number") {
+    return x * y;
+  } else {
+    return x[symbol]().multiply(y);
+  }
+}
+function toFixed(x, dp) {
+  if (typeof x === "number") {
+    return x.toFixed(dp);
+  } else {
+    return x[symbol]().toFixed(dp);
+  }
+}
+function toPrecision(x, sd) {
+  if (typeof x === "number") {
+    return x.toPrecision(sd);
+  } else {
+    return x[symbol]().toPrecision(sd);
+  }
+}
+function toExponential(x, dp) {
+  if (typeof x === "number") {
+    return x.toExponential(dp);
+  } else {
+    return x[symbol]().toExponential(dp);
+  }
+}
+function toHex(x) {
+  if (typeof x === "number") {
+    return (Number(x) >>> 0).toString(16);
+  } else {
+    return x[symbol]().toHex();
+  }
+}
+
 // build/fable_modules/fable-library.3.7.17/Reflection.js
 var TypeInfo = class {
   constructor(fullname, generics, construct, parent, fields, cases, enumCases) {
@@ -668,6 +723,117 @@ function Gen_PluginSettings_setFieldByName(key, value2, x) {
   }
 }
 
+// build/fable_modules/fable-library.3.7.17/Date.js
+function dateOffsetToString(offset) {
+  const isMinus = offset < 0;
+  offset = Math.abs(offset);
+  const hours = ~~(offset / 36e5);
+  const minutes = offset % 36e5 / 6e4;
+  return (isMinus ? "-" : "+") + padWithZeros(hours, 2) + ":" + padWithZeros(minutes, 2);
+}
+function dateToHalfUTCString(date, half) {
+  const str = date.toISOString();
+  return half === "first" ? str.substring(0, str.indexOf("T")) : str.substring(str.indexOf("T") + 1, str.length - 1);
+}
+function dateToISOString(d, utc) {
+  if (utc) {
+    return d.toISOString();
+  } else {
+    const printOffset = d.kind == null ? true : d.kind === 2;
+    return padWithZeros(d.getFullYear(), 4) + "-" + padWithZeros(d.getMonth() + 1, 2) + "-" + padWithZeros(d.getDate(), 2) + "T" + padWithZeros(d.getHours(), 2) + ":" + padWithZeros(d.getMinutes(), 2) + ":" + padWithZeros(d.getSeconds(), 2) + "." + padWithZeros(d.getMilliseconds(), 3) + (printOffset ? dateOffsetToString(d.getTimezoneOffset() * -6e4) : "");
+  }
+}
+function dateToISOStringWithOffset(dateWithOffset, offset) {
+  const str = dateWithOffset.toISOString();
+  return str.substring(0, str.length - 1) + dateOffsetToString(offset);
+}
+function dateToStringWithCustomFormat(date, format2, utc) {
+  return format2.replace(/(\w)\1*/g, (match2) => {
+    let rep = Number.NaN;
+    switch (match2.substring(0, 1)) {
+      case "y":
+        const y = utc ? date.getUTCFullYear() : date.getFullYear();
+        rep = match2.length < 4 ? y % 100 : y;
+        break;
+      case "M":
+        rep = (utc ? date.getUTCMonth() : date.getMonth()) + 1;
+        break;
+      case "d":
+        rep = utc ? date.getUTCDate() : date.getDate();
+        break;
+      case "H":
+        rep = utc ? date.getUTCHours() : date.getHours();
+        break;
+      case "h":
+        const h = utc ? date.getUTCHours() : date.getHours();
+        rep = h > 12 ? h % 12 : h;
+        break;
+      case "m":
+        rep = utc ? date.getUTCMinutes() : date.getMinutes();
+        break;
+      case "s":
+        rep = utc ? date.getUTCSeconds() : date.getSeconds();
+        break;
+      case "f":
+        rep = utc ? date.getUTCMilliseconds() : date.getMilliseconds();
+        break;
+    }
+    if (Number.isNaN(rep)) {
+      return match2;
+    } else {
+      return rep < 10 && match2.length > 1 ? "0" + rep : "" + rep;
+    }
+  });
+}
+function dateToStringWithOffset(date, format2) {
+  var _a, _b, _c;
+  const d = new Date(date.getTime() + ((_a = date.offset) !== null && _a !== void 0 ? _a : 0));
+  if (typeof format2 !== "string") {
+    return d.toISOString().replace(/\.\d+/, "").replace(/[A-Z]|\.\d+/g, " ") + dateOffsetToString((_b = date.offset) !== null && _b !== void 0 ? _b : 0);
+  } else if (format2.length === 1) {
+    switch (format2) {
+      case "D":
+      case "d":
+        return dateToHalfUTCString(d, "first");
+      case "T":
+      case "t":
+        return dateToHalfUTCString(d, "second");
+      case "O":
+      case "o":
+        return dateToISOStringWithOffset(d, (_c = date.offset) !== null && _c !== void 0 ? _c : 0);
+      default:
+        throw new Error("Unrecognized Date print format");
+    }
+  } else {
+    return dateToStringWithCustomFormat(d, format2, true);
+  }
+}
+function dateToStringWithKind(date, format2) {
+  const utc = date.kind === 1;
+  if (typeof format2 !== "string") {
+    return utc ? date.toUTCString() : date.toLocaleString();
+  } else if (format2.length === 1) {
+    switch (format2) {
+      case "D":
+      case "d":
+        return utc ? dateToHalfUTCString(date, "first") : date.toLocaleDateString();
+      case "T":
+      case "t":
+        return utc ? dateToHalfUTCString(date, "second") : date.toLocaleTimeString();
+      case "O":
+      case "o":
+        return dateToISOString(date, utc);
+      default:
+        throw new Error("Unrecognized Date print format");
+    }
+  } else {
+    return dateToStringWithCustomFormat(date, format2, utc);
+  }
+}
+function toString2(date, format2, _provider) {
+  return date.offset != null ? dateToStringWithOffset(date, format2) : dateToStringWithKind(date, format2);
+}
+
 // build/fable_modules/fable-library.3.7.17/RegExp.js
 function escape(str) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
@@ -678,6 +844,98 @@ function match(reg, input, startAt = 0) {
 }
 
 // build/fable_modules/fable-library.3.7.17/String.js
+var formatRegExp = /\{(\d+)(,-?\d+)?(?:\:([a-zA-Z])(\d{0,2})|\:(.+?))?\}/g;
+function isLessThan(x, y) {
+  return compare2(x, y) < 0;
+}
+function format(str, ...args) {
+  if (typeof str === "object" && args.length > 0) {
+    str = args[0];
+    args.shift();
+  }
+  return str.replace(formatRegExp, (_, idx, padLength, format2, precision, pattern) => {
+    if (idx < 0 || idx >= args.length) {
+      throw new Error("Index must be greater or equal to zero and less than the arguments' length.");
+    }
+    let rep = args[idx];
+    if (isNumeric(rep)) {
+      precision = precision == null ? null : parseInt(precision, 10);
+      switch (format2) {
+        case "f":
+        case "F":
+          precision = precision != null ? precision : 2;
+          rep = toFixed(rep, precision);
+          break;
+        case "g":
+        case "G":
+          rep = precision != null ? toPrecision(rep, precision) : toPrecision(rep);
+          break;
+        case "e":
+        case "E":
+          rep = precision != null ? toExponential(rep, precision) : toExponential(rep);
+          break;
+        case "p":
+        case "P":
+          precision = precision != null ? precision : 2;
+          rep = toFixed(multiply(rep, 100), precision) + " %";
+          break;
+        case "d":
+        case "D":
+          rep = precision != null ? padLeft(String(rep), precision, "0") : String(rep);
+          break;
+        case "x":
+        case "X":
+          rep = precision != null ? padLeft(toHex(rep), precision, "0") : toHex(rep);
+          if (format2 === "X") {
+            rep = rep.toUpperCase();
+          }
+          break;
+        default:
+          if (pattern) {
+            let sign = "";
+            rep = pattern.replace(/([0#,]+)(\.[0#]+)?/, (_2, intPart, decimalPart) => {
+              if (isLessThan(rep, 0)) {
+                rep = multiply(rep, -1);
+                sign = "-";
+              }
+              decimalPart = decimalPart == null ? "" : decimalPart.substring(1);
+              rep = toFixed(rep, Math.max(decimalPart.length, 0));
+              let [repInt, repDecimal] = rep.split(".");
+              repDecimal || (repDecimal = "");
+              const leftZeroes = intPart.replace(/,/g, "").replace(/^#+/, "").length;
+              repInt = padLeft(repInt, leftZeroes, "0");
+              const rightZeros = decimalPart.replace(/#+$/, "").length;
+              if (rightZeros > repDecimal.length) {
+                repDecimal = padRight(repDecimal, rightZeros, "0");
+              } else if (rightZeros < repDecimal.length) {
+                repDecimal = repDecimal.substring(0, rightZeros) + repDecimal.substring(rightZeros).replace(/0+$/, "");
+              }
+              if (intPart.indexOf(",") > 0) {
+                const i = repInt.length % 3;
+                const thousandGroups = Math.floor(repInt.length / 3);
+                let thousands = i > 0 ? repInt.substr(0, i) + (thousandGroups > 0 ? "," : "") : "";
+                for (let j = 0; j < thousandGroups; j++) {
+                  thousands += repInt.substr(i + j * 3, 3) + (j < thousandGroups - 1 ? "," : "");
+                }
+                repInt = thousands;
+              }
+              return repDecimal.length > 0 ? repInt + "." + repDecimal : repInt;
+            });
+            rep = sign + rep;
+          }
+      }
+    } else if (rep instanceof Date) {
+      rep = toString2(rep, pattern || format2);
+    } else {
+      rep = toString(rep);
+    }
+    padLength = parseInt((padLength || " ").substring(1), 10);
+    if (!isNaN(padLength)) {
+      rep = pad(String(rep), Math.abs(padLength), " ", padLength < 0);
+    }
+    return rep;
+  });
+}
 function isNullOrEmpty(str) {
   return typeof str !== "string" || str.length === 0;
 }
@@ -687,6 +945,20 @@ function join(delimiter, xs) {
   } else {
     return Array.from(xs).join(delimiter);
   }
+}
+function pad(str, len, ch, isRight) {
+  ch = ch || " ";
+  len = len - str.length;
+  for (let i = 0; i < len; i++) {
+    str = isRight ? str + ch : ch + str;
+  }
+  return str;
+}
+function padLeft(str, len, ch) {
+  return pad(str, len, ch);
+}
+function padRight(str, len, ch) {
+  return pad(str, len, ch, true);
 }
 function split(str, splitters, count, options) {
   count = typeof count === "number" ? count : void 0;
@@ -729,11 +1001,11 @@ function split(str, splitters, count, options) {
   } while (findSplits);
   return splits;
 }
-function substring(str, startIndex, length2) {
-  if (startIndex + (length2 || 0) > str.length) {
+function substring(str, startIndex, length3) {
+  if (startIndex + (length3 || 0) > str.length) {
     throw new Error("Invalid startIndex and/or length");
   }
-  return length2 != null ? str.substr(startIndex, length2) : str.substr(startIndex);
+  return length3 != null ? str.substr(startIndex, length3) : str.substr(startIndex);
 }
 
 // build/fable_modules/fable-library.3.7.17/System.Text.js
@@ -1022,6 +1294,9 @@ function FSharpList__get_Tail(xs) {
   } else {
     throw new Error(SR_inputWasEmpty + "\\nParameter name: list");
   }
+}
+function length(xs) {
+  return FSharpList__get_Length(xs);
 }
 function toArray(xs) {
   const len = FSharpList__get_Length(xs) | 0;
@@ -1448,6 +1723,30 @@ function iterate(action, xs) {
     action(x);
   }, void 0, xs);
 }
+function iterateIndexed(action, xs) {
+  fold((i, x) => {
+    action(i, x);
+    return i + 1 | 0;
+  }, 0, xs);
+}
+function length2(xs) {
+  if (isArrayLike(xs)) {
+    return xs.length | 0;
+  } else if (xs instanceof FSharpList) {
+    return length(xs) | 0;
+  } else {
+    const e = ofSeq2(xs);
+    try {
+      let count = 0;
+      while (e["System.Collections.IEnumerator.MoveNext"]()) {
+        count = count + 1 | 0;
+      }
+      return count | 0;
+    } finally {
+      disposeSafe(e);
+    }
+  }
+}
 function map3(mapping, xs) {
   return generate(() => ofSeq2(xs), (e) => e["System.Collections.IEnumerator.MoveNext"]() ? some(mapping(e["System.Collections.Generic.IEnumerator`1.get_Current"]())) : void 0, (e_1) => {
     disposeSafe(e_1);
@@ -1474,11 +1773,24 @@ var CachedSeq$1 = class {
     return getEnumerator(_.res);
   }
 };
+function collect(mapping, xs) {
+  return delay(() => concat(map3(mapping, xs)));
+}
 function where(predicate, xs) {
   return filter(predicate, xs);
 }
 function pairwise2(xs) {
   return delay(() => ofArray2(pairwise(toArray2(xs))));
+}
+function sortWith(comparer, xs) {
+  return delay(() => {
+    const arr = toArray2(xs);
+    arr.sort(comparer);
+    return ofArray2(arr);
+  });
+}
+function sortByDescending(projection, xs, comparer) {
+  return sortWith((x, y) => comparer.Compare(projection(x), projection(y)) * -1, xs);
 }
 
 // build/fable_modules/fable-library.3.7.17/Unicode.13.0.0.js
@@ -1553,10 +1865,9 @@ var obsidian = __toModule(require("obsidian"));
 function System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(str) {
   let source_1;
   return toString((source_1 = pairwise2(str.split("")), fold((sb, tupledArg) => {
-    const c1 = tupledArg[0];
     const c2 = tupledArg[1];
     const up = isUpper;
-    const matchValue = [up(c1), up(c2)];
+    const matchValue = [up(tupledArg[0]), up(c2)];
     let pattern_matching_result;
     if (matchValue[0]) {
       pattern_matching_result = 1;
@@ -1578,8 +1889,7 @@ function System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(str) {
 function createSettingForProperty(plugin, settingTab, propName) {
   new obsidian.Setting(settingTab.containerEl).setName(System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(propName)).addText((txt) => {
     let arg_3;
-    const property = find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection()));
-    arg_3 = getValue(property, plugin.settings), txt.setValue(arg_3);
+    arg_3 = getValue(find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection())), plugin.settings), txt.setValue(arg_3);
     txt.onChange((value_1) => {
       plugin.settings = Gen_PluginSettings_setFieldByName(propName, value_1, plugin.settings);
       return void 0;
@@ -1593,12 +1903,10 @@ function createSettingDisplay(plugin, settingtab, unitVar) {
   containerEl.createEl("h2", some(((arg) => arg)({
     text: "Quick snippets and navigation"
   })));
-  const fields = getRecordElements(PluginSettings$reflection());
-  const buildSetting = (propName) => {
+  const array_1 = map2(name, getRecordElements(PluginSettings$reflection()));
+  array_1.forEach((propName) => {
     createSettingForProperty(plugin, settingtab, propName);
-  };
-  const array_1 = map2(name, fields);
-  array_1.forEach(buildSetting);
+  });
   return void 0;
 }
 function create(app, plugin) {
@@ -1710,6 +2018,9 @@ function SuggestModal_withRenderSuggestion(fn, sm) {
   };
   return sm;
 }
+function SuggestModal_openModal(sm) {
+  sm.open();
+}
 function Notice_show(text) {
   let objectArg;
   objectArg = obsidian2.Notice, new objectArg(text);
@@ -1736,14 +2047,11 @@ function Content_getCodeBlocks(app) {
   } else {
     const view_1 = value(view);
     const lines = split(view_1.getViewData(), ["\n"], null, 0);
-    const codeBlockSections = flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option)))));
-    const codeBlockTexts = map((optionalCodeblockSections) => toArray2(map3((f_1) => {
+    return map((optionalCodeblockSections) => toArray2(map3((f_1) => {
       const startLine = ~~f_1.position.start.line + 1 | 0;
       const endLine = ~~f_1.position.end.line - 1 | 0;
-      const blockContent = lines.slice(startLine, endLine + 1);
-      return new Content_CodeBlockContent(startLine, join("\n", blockContent));
-    }, optionalCodeblockSections)), codeBlockSections);
-    return codeBlockTexts;
+      return new Content_CodeBlockContent(startLine, join("\n", lines.slice(startLine, endLine + 1)));
+    }, optionalCodeblockSections)), flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option))))));
   }
 }
 function Seq_skipSafe(num, source) {
@@ -1770,14 +2078,367 @@ function Clipboard_write(txt) {
 
 // build/Commands.js
 var obsidian3 = __toModule(require("obsidian"));
+
+// build/fable_modules/fable-library.3.7.17/MapUtil.js
+function tryGetValue(map4, key, defaultValue) {
+  if (map4.has(key)) {
+    defaultValue.contents = map4.get(key);
+    return true;
+  }
+  return false;
+}
+function addToDict(dict, k, v) {
+  if (dict.has(k)) {
+    throw new Error("An item with the same key has already been added. Key: " + k);
+  }
+  dict.set(k, v);
+}
+function getItemFromDict(map4, key) {
+  if (map4.has(key)) {
+    return map4.get(key);
+  } else {
+    throw new Error(`The given key '${key}' was not present in the dictionary.`);
+  }
+}
+
+// build/fable_modules/fable-library.3.7.17/MutableMap.js
+var Dictionary = class {
+  constructor(pairs, comparer) {
+    const this$ = new FSharpRef(null);
+    this.comparer = comparer;
+    this$.contents = this;
+    this.hashMap = new Map([]);
+    this["init@8-1"] = 1;
+    const enumerator = getEnumerator(pairs);
+    try {
+      while (enumerator["System.Collections.IEnumerator.MoveNext"]()) {
+        const pair = enumerator["System.Collections.Generic.IEnumerator`1.get_Current"]();
+        Dictionary__Add_5BDDA1(this$.contents, pair[0], pair[1]);
+      }
+    } finally {
+      disposeSafe(enumerator);
+    }
+  }
+  get [Symbol.toStringTag]() {
+    return "Dictionary";
+  }
+  toJSON(_key) {
+    const this$ = this;
+    return Array.from(this$);
+  }
+  ["System.Collections.IEnumerable.GetEnumerator"]() {
+    const this$ = this;
+    return getEnumerator(this$);
+  }
+  GetEnumerator() {
+    const this$ = this;
+    return getEnumerator(concat(this$.hashMap.values()));
+  }
+  [Symbol.iterator]() {
+    return toIterator(this.GetEnumerator());
+  }
+  ["System.Collections.Generic.ICollection`1.Add2B595"](item) {
+    const this$ = this;
+    Dictionary__Add_5BDDA1(this$, item[0], item[1]);
+  }
+  ["System.Collections.Generic.ICollection`1.Clear"]() {
+    const this$ = this;
+    Dictionary__Clear(this$);
+  }
+  ["System.Collections.Generic.ICollection`1.Contains2B595"](item) {
+    const this$ = this;
+    const matchValue = Dictionary__TryFind_2B595(this$, item[0]);
+    let pattern_matching_result;
+    if (matchValue != null) {
+      if (equals(matchValue[1], item[1])) {
+        pattern_matching_result = 0;
+      } else {
+        pattern_matching_result = 1;
+      }
+    } else {
+      pattern_matching_result = 1;
+    }
+    switch (pattern_matching_result) {
+      case 0: {
+        return true;
+      }
+      case 1: {
+        return false;
+      }
+    }
+  }
+  ["System.Collections.Generic.ICollection`1.CopyToZ2E171D71"](array, arrayIndex) {
+    const this$ = this;
+    iterateIndexed((i, e) => {
+      array[arrayIndex + i] = e;
+    }, this$);
+  }
+  ["System.Collections.Generic.ICollection`1.get_Count"]() {
+    const this$ = this;
+    return Dictionary__get_Count(this$) | 0;
+  }
+  ["System.Collections.Generic.ICollection`1.get_IsReadOnly"]() {
+    return false;
+  }
+  ["System.Collections.Generic.ICollection`1.Remove2B595"](item) {
+    const this$ = this;
+    const matchValue = Dictionary__TryFind_2B595(this$, item[0]);
+    if (matchValue != null) {
+      if (equals(matchValue[1], item[1])) {
+        Dictionary__Remove_2B595(this$, item[0]);
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+  ["System.Collections.Generic.IDictionary`2.Add5BDDA1"](key, value2) {
+    const this$ = this;
+    Dictionary__Add_5BDDA1(this$, key, value2);
+  }
+  ["System.Collections.Generic.IDictionary`2.ContainsKey2B595"](key) {
+    const this$ = this;
+    return Dictionary__ContainsKey_2B595(this$, key);
+  }
+  ["System.Collections.Generic.IDictionary`2.get_Item2B595"](key) {
+    const this$ = this;
+    return Dictionary__get_Item_2B595(this$, key);
+  }
+  ["System.Collections.Generic.IDictionary`2.set_Item5BDDA1"](key, v) {
+    const this$ = this;
+    Dictionary__set_Item_5BDDA1(this$, key, v);
+  }
+  ["System.Collections.Generic.IDictionary`2.get_Keys"]() {
+    const this$ = this;
+    return toArray2(delay(() => map3((pair) => pair[0], this$)));
+  }
+  ["System.Collections.Generic.IDictionary`2.Remove2B595"](key) {
+    const this$ = this;
+    return Dictionary__Remove_2B595(this$, key);
+  }
+  ["System.Collections.Generic.IDictionary`2.TryGetValue23A0B95A"](key, value2) {
+    const this$ = this;
+    const matchValue = Dictionary__TryFind_2B595(this$, key);
+    if (matchValue != null) {
+      const pair = matchValue;
+      value2.contents = pair[1];
+      return true;
+    } else {
+      return false;
+    }
+  }
+  ["System.Collections.Generic.IDictionary`2.get_Values"]() {
+    const this$ = this;
+    return toArray2(delay(() => map3((pair) => pair[1], this$)));
+  }
+  get size() {
+    const this$ = this;
+    return Dictionary__get_Count(this$) | 0;
+  }
+  clear() {
+    const this$ = this;
+    Dictionary__Clear(this$);
+  }
+  delete(k) {
+    const this$ = this;
+    return Dictionary__Remove_2B595(this$, k);
+  }
+  entries() {
+    const this$ = this;
+    return map3((p) => [p[0], p[1]], this$);
+  }
+  get(k) {
+    const this$ = this;
+    return Dictionary__get_Item_2B595(this$, k);
+  }
+  has(k) {
+    const this$ = this;
+    return Dictionary__ContainsKey_2B595(this$, k);
+  }
+  keys() {
+    const this$ = this;
+    return map3((p) => p[0], this$);
+  }
+  set(k, v) {
+    const this$ = this;
+    Dictionary__set_Item_5BDDA1(this$, k, v);
+    return this$;
+  }
+  values() {
+    const this$ = this;
+    return map3((p) => p[1], this$);
+  }
+  forEach(f, thisArg) {
+    const this$ = this;
+    iterate((p) => {
+      f(p[1], p[0], this$);
+    }, this$);
+  }
+};
+function Dictionary__TryFindIndex_2B595(this$, k) {
+  const h = this$.comparer.GetHashCode(k) | 0;
+  let matchValue;
+  let outArg = null;
+  matchValue = [tryGetValue(this$.hashMap, h, new FSharpRef(() => outArg, (v) => {
+    outArg = v;
+  })), outArg];
+  if (matchValue[0]) {
+    return [true, h, matchValue[1].findIndex((pair) => this$.comparer.Equals(k, pair[0]))];
+  } else {
+    return [false, h, -1];
+  }
+}
+function Dictionary__TryFind_2B595(this$, k) {
+  const matchValue = Dictionary__TryFindIndex_2B595(this$, k);
+  let pattern_matching_result;
+  if (matchValue[0]) {
+    if (matchValue[2] > -1) {
+      pattern_matching_result = 0;
+    } else {
+      pattern_matching_result = 1;
+    }
+  } else {
+    pattern_matching_result = 1;
+  }
+  switch (pattern_matching_result) {
+    case 0: {
+      return getItemFromDict(this$.hashMap, matchValue[1])[matchValue[2]];
+    }
+    case 1: {
+      return void 0;
+    }
+  }
+}
+function Dictionary__Clear(this$) {
+  this$.hashMap.clear();
+}
+function Dictionary__get_Count(this$) {
+  let count = 0;
+  let enumerator = getEnumerator(this$.hashMap.values());
+  try {
+    while (enumerator["System.Collections.IEnumerator.MoveNext"]()) {
+      const pairs = enumerator["System.Collections.Generic.IEnumerator`1.get_Current"]();
+      count = count + pairs.length | 0;
+    }
+  } finally {
+    disposeSafe(enumerator);
+  }
+  return count | 0;
+}
+function Dictionary__get_Item_2B595(this$, k) {
+  const matchValue = Dictionary__TryFind_2B595(this$, k);
+  if (matchValue != null) {
+    return matchValue[1];
+  } else {
+    throw new Error("The item was not found in collection");
+  }
+}
+function Dictionary__set_Item_5BDDA1(this$, k, v) {
+  const matchValue = Dictionary__TryFindIndex_2B595(this$, k);
+  if (matchValue[0]) {
+    if (matchValue[2] > -1) {
+      getItemFromDict(this$.hashMap, matchValue[1])[matchValue[2]] = [k, v];
+    } else {
+      const value2 = void getItemFromDict(this$.hashMap, matchValue[1]).push([k, v]);
+    }
+  } else {
+    this$.hashMap.set(matchValue[1], [[k, v]]);
+  }
+}
+function Dictionary__Add_5BDDA1(this$, k, v) {
+  const matchValue = Dictionary__TryFindIndex_2B595(this$, k);
+  if (matchValue[0]) {
+    if (matchValue[2] > -1) {
+      const msg = format("An item with the same key has already been added. Key: {0}", k);
+      throw new Error(msg);
+    } else {
+      const value2 = void getItemFromDict(this$.hashMap, matchValue[1]).push([k, v]);
+    }
+  } else {
+    this$.hashMap.set(matchValue[1], [[k, v]]);
+  }
+}
+function Dictionary__ContainsKey_2B595(this$, k) {
+  const matchValue = Dictionary__TryFindIndex_2B595(this$, k);
+  let pattern_matching_result;
+  if (matchValue[0]) {
+    if (matchValue[2] > -1) {
+      pattern_matching_result = 0;
+    } else {
+      pattern_matching_result = 1;
+    }
+  } else {
+    pattern_matching_result = 1;
+  }
+  switch (pattern_matching_result) {
+    case 0: {
+      return true;
+    }
+    case 1: {
+      return false;
+    }
+  }
+}
+function Dictionary__Remove_2B595(this$, k) {
+  const matchValue = Dictionary__TryFindIndex_2B595(this$, k);
+  let pattern_matching_result;
+  if (matchValue[0]) {
+    if (matchValue[2] > -1) {
+      pattern_matching_result = 0;
+    } else {
+      pattern_matching_result = 1;
+    }
+  } else {
+    pattern_matching_result = 1;
+  }
+  switch (pattern_matching_result) {
+    case 0: {
+      getItemFromDict(this$.hashMap, matchValue[1]).splice(matchValue[2], 1);
+      return true;
+    }
+    case 1: {
+      return false;
+    }
+  }
+}
+
+// build/fable_modules/fable-library.3.7.17/Seq2.js
+function groupBy(projection, xs, comparer) {
+  return delay(() => {
+    const dict = new Dictionary([], comparer);
+    const keys = [];
+    const enumerator = getEnumerator(xs);
+    try {
+      while (enumerator["System.Collections.IEnumerator.MoveNext"]()) {
+        const x = enumerator["System.Collections.Generic.IEnumerator`1.get_Current"]();
+        const key = projection(x);
+        let matchValue;
+        let outArg = null;
+        matchValue = [tryGetValue(dict, key, new FSharpRef(() => outArg, (v) => {
+          outArg = v;
+        })), outArg];
+        if (matchValue[0]) {
+          void matchValue[1].push(x);
+        } else {
+          addToDict(dict, key, [x]);
+          void keys.push(key);
+        }
+      }
+    } finally {
+      disposeSafe(enumerator);
+    }
+    return map3((key_1) => [key_1, getItemFromDict(dict, key_1)], keys);
+  });
+}
+
+// build/Commands.js
 function doNone(f) {
   return void 0;
 }
 function goToPrevHeading(plugin) {
   return Command_forEditor("goToPrevHeading", "Go to previous heading", uncurry(2, (editor) => {
     const cursor = editor.getCursor();
-    const linesbefore = reverse(split(editor.getValue(), ["\n"], null, 0).slice(void 0, ~~cursor.line + 1));
-    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, linesbefore));
+    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, reverse(split(editor.getValue(), ["\n"], null, 0).slice(void 0, ~~cursor.line + 1))));
     if (foundOpt != null) {
       const moveby = foundOpt | 0;
       const newpos = ~~cursor.line - moveby - 1;
@@ -1791,8 +2452,7 @@ function goToPrevHeading(plugin) {
 function goToNextHeading(plugin) {
   return Command_forEditor("goToNextHeading", "Go to next heading", uncurry(2, (editor) => {
     const cursor = editor.getCursor();
-    const linesafter = split(editor.getValue(), ["\n"], null, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], null, 0).length);
-    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, linesafter));
+    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, split(editor.getValue(), ["\n"], null, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], null, 0).length)));
     if (foundOpt != null) {
       const moveby = foundOpt | 0;
       const newpos = ~~cursor.line + moveby + 1;
@@ -1841,11 +2501,8 @@ ${substring(f_3.content, 0, min(comparePrimitives, f_3.content.length, 50))}`, o
         elem.innerText = f_2.content;
       }, SuggestModal_withGetSuggestions((queryInput) => {
         const query = obsidian3.prepareQuery(queryInput);
-        const matches = map3((tuple) => tuple[0], where((f_1) => f_1[1] != null, map3((f) => {
-          const text = f.content;
-          return [f, obsidian3.fuzzySearch(query, text)];
-        }, codeblocks_1)));
-        return Array.from(matches);
+        const arg = map3((tuple) => tuple[0], where((f_1) => f_1[1] != null, map3((f) => [f, obsidian3.fuzzySearch(query, f.content)], codeblocks_1)));
+        return Array.from(arg);
       }, SuggestModal_create(plugin.app))));
       modal.open();
       return void 0;
@@ -1865,10 +2522,15 @@ function openSwitcherWithTag1(plugin) {
         const cmd = plugin.settings.defaultModalCommand;
         const matchValue_1 = plugin.app.commands.executeCommandById(cmd);
         if (matchValue_1) {
-          const modalInput = document.querySelector("body > div.modal-container > div.prompt > input");
-          modalInput.value = `${tags_2[0].tag} `;
-          const ev = new Event("input", null);
-          modalInput.dispatchEvent(ev);
+          const matchValue_2 = document.querySelector("input.prompt-input");
+          if (equals(matchValue_2, null)) {
+            Notice_show("plugin outdated");
+          } else {
+            const modalInput = matchValue_2;
+            modalInput.value = `${tags_2[0].tag} `;
+            const ev = new Event("input", null);
+            modalInput.dispatchEvent(ev);
+          }
         } else {
           Notice_show(`failed to run command: ${cmd}, configure Default modal command in settings`);
         }
@@ -1879,10 +2541,92 @@ function openSwitcherWithTag1(plugin) {
     return void 0;
   });
 }
+function tagSearch(plugin) {
+  return Command_forMenu("tagSearch", "Search by Tag", () => {
+    SuggestModal_openModal(SuggestModal_withOnChooseSuggestion((chosenResult) => {
+      const cmd = plugin.settings.defaultModalCommand;
+      const matchValue = plugin.app.commands.executeCommandById(cmd);
+      if (matchValue) {
+        const matchValue_1 = document.querySelector("input.prompt-input");
+        if (equals(matchValue_1, null)) {
+          Notice_show("plugin outdated");
+        } else {
+          const modalInput = matchValue_1;
+          modalInput.value = `${chosenResult.tag} `;
+          const ev = new Event("input", null);
+          modalInput.dispatchEvent(ev);
+        }
+      } else {
+        Notice_show(`failed to run command: ${cmd}, configure Default modal command in settings`);
+      }
+    }, SuggestModal_withRenderSuggestion((f_3, elem) => {
+      elem.innerText = `${f_3.count}:	${f_3.tag}`;
+    }, SuggestModal_withGetSuggestions((queryInput) => {
+      let source, objectArg;
+      const query = obsidian3.prepareQuery(queryInput);
+      const arg_1 = where((f_2) => obsidian3.fuzzySearch(query, f_2.tag) != null, map3((tupledArg_1) => ({
+        count: tupledArg_1[1],
+        tag: tupledArg_1[0]
+      }), sortByDescending((tuple) => tuple[1], map3((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_1) => f_1.tag, collect((x) => x, choose((f) => f.tags, (source = plugin.app.vault.getMarkdownFiles(), choose((objectArg = plugin.app.metadataCache, (arg) => objectArg.getFileCache(arg)), source)))), {
+        Equals: (x_1, y) => x_1 === y,
+        GetHashCode: stringHash
+      })), {
+        Compare: comparePrimitives
+      })));
+      return Array.from(arg_1);
+    }, SuggestModal_create(plugin.app)))));
+    return void 0;
+  });
+}
 function insertHeading4(plugin) {
   return Command_forEditor("insertHeading4", "Insert heading 4", uncurry(2, (edit) => {
     edit.replaceSelection("#### ");
     return doNone;
+  }));
+}
+function insertHeading5(plugin) {
+  return Command_forEditor("insertHeading5", "Insert heading 5", uncurry(2, (edit) => {
+    edit.replaceSelection("##### ");
+    return doNone;
+  }));
+}
+function increaseHeading(plugin) {
+  return Command_forEditor("increaseHeading", "Increase Heading level", uncurry(2, (edit) => {
+    const lineIdx = edit.getCursor().line;
+    const currLine = edit.getLine(lineIdx);
+    const matchValue = [currLine.indexOf("#") === 0, currLine.indexOf("######") === 0];
+    let pattern_matching_result;
+    if (matchValue[0]) {
+      if (matchValue[1]) {
+        pattern_matching_result = 0;
+      } else {
+        pattern_matching_result = 1;
+      }
+    } else {
+      pattern_matching_result = 0;
+    }
+    switch (pattern_matching_result) {
+      case 0: {
+        return doNone;
+      }
+      case 1: {
+        edit.setLine(lineIdx, `#${currLine}`);
+        return doNone;
+      }
+    }
+  }));
+}
+function decreaseHeading(plugin) {
+  return Command_forEditor("decreaseHeading", "Decrease Heading level", uncurry(2, (edit) => {
+    const lineIdx = edit.getCursor().line;
+    const currLine = edit.getLine(lineIdx);
+    const matchValue = currLine.indexOf("##") === 0;
+    if (matchValue) {
+      edit.setLine(lineIdx, currLine.slice(1, currLine.length));
+      return doNone;
+    } else {
+      return doNone;
+    }
   }));
 }
 function insertDefaultCallout(plugin) {
@@ -1932,7 +2676,6 @@ function Plugin2__init(this$) {
         this$.plugin.settings = v;
         return Promise.resolve();
       }).catch((_arg_2) => {
-        const e = _arg_2;
         this$.plugin.settings = PluginSettings_get_Default();
         return Promise.resolve();
       });
@@ -1953,6 +2696,6 @@ function Plugin2__onload(this$) {
   iterate((cmd) => {
     let arg_1;
     arg_1 = cmd(this$.plugin), this$.plugin.addCommand(arg_1);
-  }, [copyCodeBlock, copyNextCodeBlock, insertCodeBlock, goToPrevHeading, goToNextHeading, insertHeading4, insertDefaultCallout, openSwitcherWithTag1]);
+  }, [copyCodeBlock, copyNextCodeBlock, goToPrevHeading, goToNextHeading, increaseHeading, decreaseHeading, insertHeading4, insertHeading5, insertDefaultCallout, insertCodeBlock, openSwitcherWithTag1, tagSearch]);
 }
 module.exports = Plugin2;

@@ -92,7 +92,6 @@ let rec copyCodeBlock (plugin:ExtendedPlugin<PluginSettings>) =
                             f, obsidian.fuzzySearch(query,text)
                         )
                         |> Seq.where (fun f -> snd f |> Option.isSome)
-//                            |> Seq.sortBy (fun f -> (snd f).Value.score )
                         |> Seq.map fst
                     matches |> ResizeArray
                     )
@@ -120,20 +119,96 @@ let rec openSwitcherWithTag1 (plugin:ExtendedPlugin<PluginSettings>) =
                 | false -> 
                     Notice.show $"failed to run command: {cmd}, configure Default modal command in settings"
                 | true -> 
-                    let modalInput = document.querySelector("body > div.modal-container > div.prompt > input")
-                    modalInput?value <- $"%s{tags[0].tag} "
-                    let ev = Browser.Event.Event.Create("input",null)
-                    modalInput.dispatchEvent(ev) |> ignore
+                    match document.querySelector("input.prompt-input")  with 
+                    | null -> Notice.show "plugin outdated"
+                    | modalInput -> 
+                        modalInput?value <- $"%s{tags[0].tag} "
+                        let ev = Browser.Event.Event.Create("input",null)
+                        modalInput.dispatchEvent(ev) |> ignore
             None
         )    
-        
+
+let rec tagSearch (plugin:ExtendedPlugin<PluginSettings>) =
+    Command.forMenu (nameof tagSearch) "Search by Tag"
+        (fun _ ->
+
+            let getVaultTags() = 
+                plugin.app.vault.getMarkdownFiles()
+                |> Seq.choose plugin.app.metadataCache.getFileCache
+                |> Seq.choose (fun f -> f.tags)
+                |> Seq.collect id
+                |> Seq.groupBy (fun f -> f.tag)
+                |> Seq.map (fun (tag,tags) -> tag, tags |> Seq.length)
+                |> Seq.sortByDescending snd
+
+            plugin.app
+            |> SuggestModal.create
+            |> SuggestModal.withGetSuggestions (fun queryInput ->
+                let query = obsidian.prepareQuery queryInput
+                let matches =
+                    getVaultTags()
+                    |> Seq.map (fun (tag,count) -> {|count=count;tag=tag|} )
+                    |> Seq.where (fun f -> obsidian.fuzzySearch(query,f.tag).IsSome)
+                    
+                matches |> ResizeArray
+                )
+            |> SuggestModal.withRenderSuggestion (fun f elem -> elem.innerText <- $"{f.count}:\t{f.tag}")
+            |> SuggestModal.withOnChooseSuggestion (fun (chosenResult) ->
+                let cmd = plugin.settings.defaultModalCommand
+                match plugin.app?commands?executeCommandById(cmd) with 
+                | false -> 
+                    Notice.show $"failed to run command: {cmd}, configure Default modal command in settings"
+                | true -> 
+                    match document.querySelector("input.prompt-input")  with 
+                    | null -> Notice.show "plugin outdated"
+                    | modalInput -> 
+                        modalInput?value <- $"{chosenResult.tag} "
+                        let ev = Browser.Event.Event.Create("input",null)
+                        modalInput.dispatchEvent(ev) |> ignore
+            )
+            |> SuggestModal.openModal
+            
+            None
+        )  
+
 let rec insertHeading4 (plugin:ExtendedPlugin<PluginSettings>) =
     Command.forEditor (nameof insertHeading4) "Insert heading 4"
         (fun edit ->
             edit.replaceSelection("#### ")
             doNone
         )            
-   
+
+let rec insertHeading5 (plugin:ExtendedPlugin<PluginSettings>) =
+    Command.forEditor (nameof insertHeading5) "Insert heading 5"
+        (fun edit ->
+            edit.replaceSelection("##### ")
+            doNone
+        )     
+
+let rec increaseHeading (plugin:ExtendedPlugin<PluginSettings>) =
+    Command.forEditor (nameof increaseHeading) "Increase Heading level"
+        (fun edit ->
+            let lineIdx = edit.getCursor().line
+            let currLine = lineIdx |> edit.getLine
+            match currLine.StartsWith("#"), currLine.StartsWith("######") with 
+            | false,_ | _, true -> doNone
+            | _ -> 
+                edit.setLine(lineIdx,$"#{currLine}")
+                doNone
+        )     
+
+let rec decreaseHeading (plugin:ExtendedPlugin<PluginSettings>) =
+    Command.forEditor (nameof decreaseHeading) "Decrease Heading level"
+        (fun edit ->
+            let lineIdx = edit.getCursor().line
+            let currLine = lineIdx |> edit.getLine
+            match currLine.StartsWith("##") with 
+            | false -> doNone
+            | _ -> 
+                edit.setLine(lineIdx,currLine[1..])
+                doNone
+        )  
+
 let rec insertDefaultCallout (plugin:ExtendedPlugin<PluginSettings>) =
     Command.forEditor (nameof insertDefaultCallout) "Insert Default Callout"
         (fun edit ->

@@ -146,6 +146,13 @@
         "Alt"
       ],
       "key": "]"
+    },
+    {
+      "modifiers": [
+        "Alt",
+        "Shift"
+      ],
+      "key": "Q"
     }
   ],
   "quick-snippets-and-navigation:insertHeading4": [
@@ -203,6 +210,14 @@
         "Alt"
       ],
       "key": "C"
+    }
+  ],
+  "quick-snippets-and-navigation:tagSearch": [
+    {
+      "modifiers": [
+        "Alt"
+      ],
+      "key": "E"
     }
   ]
 }

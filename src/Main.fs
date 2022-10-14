@@ -51,12 +51,20 @@ type Plugin2(app, manifest) as instance =
             [|
                 Commands.copyCodeBlock
                 Commands.copyNextCodeBlock
-                Commands.insertCodeBlock
+
                 Commands.goToPrevHeading
                 Commands.goToNextHeading
+
+                Commands.increaseHeading
+                Commands.decreaseHeading
+
                 Commands.insertHeading4
+                Commands.insertHeading5
                 Commands.insertDefaultCallout
+                Commands.insertCodeBlock
+                
                 Commands.openSwitcherWithTag1
+                Commands.tagSearch
                 // Commands.insertTest
             |]
             |> Seq.iter (fun cmd -> plugin |> cmd |> plugin.addCommand |> ignore)

@@ -62,7 +62,7 @@ module Command =
         let cmd = defaultCommand()
         cmd.id <- id
         cmd.name <- name
-        cmd.editorCallback <- Some callback
+        cmd.editorCallback <- Some (callback)
         cmd
         
     let forEditorCheck id name callback =
@@ -107,6 +107,8 @@ module SuggestModal =
                 elem |> Some
             )
         sm
+
+    let openModal (sm:t<'t>) = sm.``open``()
             
 
 module Notice = 
