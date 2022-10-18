@@ -13,7 +13,7 @@ type PluginSettings =
     static member Default = {
         defaultCodeBlockLanguage = "bash"
         defaultCalloutType = "info"
-        defaultModalCommand = "obsidian-another-quick-switcher:search-command_Recent search"
+        defaultModalCommand = "obsidian-another-quick-switcher:search-command_recent-search"
     }
 
 //------------------------------------------------------------------------------

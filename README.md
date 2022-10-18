@@ -23,14 +23,13 @@ no keybinds are set on install, you have to configure them yourself
 
 ## Switcher extensions
 
-NOTE: these require you to configure `Default modal command` in the plugin settings:
+> NOTE: these require you to configure `Default modal command` in the plugin settings:
 
-For the following demos i used the [Another Quick Switcher plugin](https://github.com/tadashi-aikawa/obsidian-another-quick-switcher) which supports tags and set `Default modal command` to:
+> For the following demos i used the [Another Quick Switcher plugin](https://github.com/tadashi-aikawa/obsidian-another-quick-switcher) which supports tags and set `Default modal command` to:
 
 ```
-obsidian-another-quick-switcher:search-command_Recent search
+obsidian-another-quick-switcher:search-command_recent-search
 ```
-
 
 ### Switcher extensions / Search by tag
 
@@ -43,6 +42,14 @@ Allows performing a multi-step search, first filtering notes by tag.
 Opens the switcher with the first tag in the file already added to the query.
 
 ![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/obs-with-tag-1.gif?raw=true)
+
+> NOTE 2: if you want to find the command id for another switcher command press ctrl+shift+i to open the developer console and run this line.
+
+```
+app.commands.listCommands().map(x => x.id);
+```
+
+![](_resources/command-ids.png)
 
 
 

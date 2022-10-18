@@ -704,7 +704,7 @@ function PluginSettings$reflection() {
   return record_type("Fs.Obsidian.PluginSettings", [], PluginSettings, () => [["defaultCodeBlockLanguage", string_type], ["defaultCalloutType", string_type], ["defaultModalCommand", string_type]]);
 }
 function PluginSettings_get_Default() {
-  return new PluginSettings("bash", "info", "obsidian-another-quick-switcher:search-command_Recent search");
+  return new PluginSettings("bash", "info", "obsidian-another-quick-switcher:search-command_recent-search");
 }
 function Gen_PluginSettings_setFieldByName(key, value2, x) {
   switch (key) {

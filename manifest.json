@@ -1,7 +1,7 @@
 {
   "id": "quick-snippets-and-navigation",
   "name": "Quick snippets and navigation",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "minAppVersion": "0.13.33",
   "description": "Keyboard navigation up/down for headings\n- Configurable default code block and callout\n- Copy code block via keyboard shortcut\n - Navigation extensions",
   "author": "aciq",
