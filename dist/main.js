@@ -2559,18 +2559,20 @@ function tagSearch(plugin) {
       } else {
         Notice_show(`failed to run command: ${cmd}, configure Default modal command in settings`);
       }
-    }, SuggestModal_withRenderSuggestion((f_3, elem) => {
-      elem.innerText = `${f_3.count}:	${f_3.tag}`;
+    }, SuggestModal_withRenderSuggestion((f_4, elem) => {
+      elem.innerText = `${f_4.count}:	${f_4.tag}`;
     }, SuggestModal_withGetSuggestions((queryInput) => {
-      let source, objectArg;
+      let results, source, objectArg;
       const query = obsidian3.prepareQuery(queryInput);
-      const arg_1 = where((f_2) => obsidian3.fuzzySearch(query, f_2.tag) != null, map3((tupledArg_1) => ({
+      const arg_1 = map3((tuple_1) => tuple_1[0], (results = choose((f_2) => map((search) => [f_2, search.score], obsidian3.fuzzySearch(query, f_2.tag)), map3((tupledArg_1) => ({
         count: tupledArg_1[1],
         tag: tupledArg_1[0]
-      }), sortByDescending((tuple) => tuple[1], map3((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_1) => f_1.tag, collect((x) => x, choose((f) => f.tags, (source = plugin.app.vault.getMarkdownFiles(), choose((objectArg = plugin.app.metadataCache, (arg) => objectArg.getFileCache(arg)), source)))), {
+      }), map3((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_1) => f_1.tag, collect((x) => x, choose((f) => f.tags, (source = plugin.app.vault.getMarkdownFiles(), choose((objectArg = plugin.app.metadataCache, (arg) => objectArg.getFileCache(arg)), source)))), {
         Equals: (x_1, y) => x_1 === y,
         GetHashCode: stringHash
-      })), {
+      })))), queryInput === "" ? sortByDescending((f_3) => f_3[0].count, results, {
+        Compare: comparePrimitives
+      }) : sortByDescending((tuple) => tuple[1], results, {
         Compare: comparePrimitives
       })));
       return Array.from(arg_1);

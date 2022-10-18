@@ -138,6 +138,12 @@
         "Shift"
       ],
       "key": "S"
+    },
+    {
+      "modifiers": [
+        "Alt"
+      ],
+      "key": "Q"
     }
   ],
   "quick-snippets-and-navigation:openSwitcherWithTag1": [
@@ -171,14 +177,7 @@
       "key": "A"
     }
   ],
-  "quick-snippets-and-navigation:insertDefaultCallout": [
-    {
-      "modifiers": [
-        "Alt"
-      ],
-      "key": "Q"
-    }
-  ],
+  "quick-snippets-and-navigation:insertDefaultCallout": [],
   "quick-snippets-and-navigation:goToNextHeading": [
     {
       "modifiers": [
@@ -218,6 +217,13 @@
         "Alt"
       ],
       "key": "E"
+    },
+    {
+      "modifiers": [
+        "Alt",
+        "Shift"
+      ],
+      "key": "W"
     }
   ]
 }

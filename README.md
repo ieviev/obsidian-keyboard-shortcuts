@@ -3,6 +3,7 @@
 - Keyboard navigation up/down for headings
 - Configurable default code block and callout shortcuts
 - Copy code block via keyboard shortcut
+- Quick Switcher extensions
 
 no keybinds are set on install, you have to configure them yourself
 
@@ -20,8 +21,32 @@ no keybinds are set on install, you have to configure them yourself
 
 ![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/obs-copying-codeblocks.gif?raw=true)
 
+## Switcher extensions
 
-## Insert heading 4 / Insert code block / Insert callout
+NOTE: these require you to configure `Default modal command` in the plugin settings:
+
+For the following demos i used the [Another Quick Switcher plugin](https://github.com/tadashi-aikawa/obsidian-another-quick-switcher) which supports tags and set `Default modal command` to:
+
+```
+obsidian-another-quick-switcher:search-command_Recent search
+```
+
+
+### Switcher extensions / Search by tag
+
+Allows performing a multi-step search, first filtering notes by tag.
+
+![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/obs-search-by-tag.gif?raw=true)
+
+### Switcher extensions / Open switcher with Tag 1
+
+Opens the switcher with the first tag in the file already added to the query.
+
+![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/obs-with-tag-1.gif?raw=true)
+
+
+
+## Insert heading 4/5 / Insert code block / Insert callout
 
 - also moves the cursor inside the code block / to the title after using
 - the default language of the code block is configurable in settings

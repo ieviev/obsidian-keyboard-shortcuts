@@ -1,6 +1,5 @@
-#tag1 
+#sametag
 
-asdasdasdasd
-
+this file has the same tag
 
 

@@ -1,4 +1,4 @@
-#tag1
+#sametag
 
 # some text
 

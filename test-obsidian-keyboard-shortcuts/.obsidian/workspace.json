@@ -8,7 +8,7 @@
         "type": "tabs",
         "children": [
           {
-            "id": "55ad445e570143a3",
+            "id": "e8a5b9d6b60dd6fc",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -20,7 +20,7 @@
             }
           },
           {
-            "id": "e8a5b9d6b60dd6fc",
+            "id": "b9538049f3e4cda7",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -31,8 +31,7 @@
               }
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -51,7 +50,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "tag:#tag1",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -99,7 +98,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "taggedfile1.md",
+                "file": "ai file 2.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -116,7 +115,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "taggedfile1.md",
+                "file": "ai file 2.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -139,7 +138,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "taggedfile1.md"
+                "file": "ai file 2.md"
               }
             }
           }
@@ -154,11 +153,12 @@
   },
   "active": "e8a5b9d6b60dd6fc",
   "lastOpenFiles": [
+    "ai file 1.md",
     "ai file 2.md",
+    "taggedfile3.md",
+    "taggedfile2.md",
     "taggedfile1.md",
     "javascript frameworks.md",
-    "ai file 1.md",
-    "taggedfile2.md",
     "doc1.md"
   ]
 }

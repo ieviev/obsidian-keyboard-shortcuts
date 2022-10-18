@@ -139,7 +139,6 @@ let rec tagSearch (plugin:ExtendedPlugin<PluginSettings>) =
                 |> Seq.collect id
                 |> Seq.groupBy (fun f -> f.tag)
                 |> Seq.map (fun (tag,tags) -> tag, tags |> Seq.length)
-                |> Seq.sortByDescending snd
 
             plugin.app
             |> SuggestModal.create
@@ -148,8 +147,13 @@ let rec tagSearch (plugin:ExtendedPlugin<PluginSettings>) =
                 let matches =
                     getVaultTags()
                     |> Seq.map (fun (tag,count) -> {|count=count;tag=tag|} )
-                    |> Seq.where (fun f -> obsidian.fuzzySearch(query,f.tag).IsSome)
-                    
+                    |> Seq.choose (fun f -> obsidian.fuzzySearch(query,f.tag) |> Option.map (fun search -> f,search.score) )
+                    |> (fun results -> 
+                        match queryInput with 
+                        | "" -> results |> Seq.sortByDescending (fun f -> (fst f).count)
+                        | _ -> results |> Seq.sortByDescending snd
+                    )
+                    |> Seq.map fst
                 matches |> ResizeArray
                 )
             |> SuggestModal.withRenderSuggestion (fun f elem -> elem.innerText <- $"{f.count}:\t{f.tag}")
