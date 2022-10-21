@@ -64,6 +64,7 @@ type Plugin2(app, manifest) as instance =
                 Commands.insertCodeBlock
                 
                 Commands.openSwitcherWithTag1
+                Commands.foldedTagSearch
                 Commands.tagSearch
                 // Commands.insertTest
             |]

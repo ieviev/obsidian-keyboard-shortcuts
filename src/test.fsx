@@ -82,3 +82,38 @@ module Manifest =
 
 
 // Manifest.genmanifest()
+
+
+
+let t1 = "#category/category1/categ2" 
+
+let firstlevel = t1.Substring(0,t1.IndexOf("/"))
+
+module String =
+    /// e.g. "a/b/c/d" |> nthIndexOf 2 '/' returns 3
+    let nthIndexOf (n:int) (char:char) (str:string) =
+        let rec loop (pos:int) n =
+            match str.IndexOf(char, pos) with
+            | -1 -> -1
+            | newIdx when n > 1 -> 
+                loop (newIdx + 1) (n - 1)
+            | newIdx -> newIdx
+        loop 0 n
+
+    // "a/b/c/d" |> String.untilNthOccurrence 2 '/' -> a/b/
+    let untilNthOccurrence (n:int) (char:char) (str:string) =
+        match str |> nthIndexOf (n) (char) with 
+        | -1 -> str
+        | n -> str.Substring(0,n + 1)
+
+"a/b/c/d" |> String.nthIndexOf 3 '/'
+"a/b/c/d" |> String.untilNthOccurrence 2 '/'
+t1 |> String.untilNthOccurrence 2 '/'
+t1 |> String.nthIndexOf 1 '/'
+t1 |> String.nthIndexOf 0 '/'
+
+let secondlevel = 
+    let l1 = t1.IndexOf("/")
+    let l2 = t1.IndexOf("/", (l1 + 1) )
+    let level1 = t1.Substring(0,l2)
+    level1

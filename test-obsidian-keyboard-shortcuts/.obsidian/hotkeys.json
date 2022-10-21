@@ -129,6 +129,13 @@
         "Mod"
       ],
       "key": ";"
+    },
+    {
+      "modifiers": [
+        "Alt",
+        "Mod"
+      ],
+      "key": ";"
     }
   ],
   "obsidian-another-quick-switcher:search-command_Recent search": [
@@ -224,6 +231,21 @@
         "Shift"
       ],
       "key": "W"
+    }
+  ],
+  "quick-snippets-and-navigation:foldedTagSearch": [
+    {
+      "modifiers": [
+        "Alt",
+        "Shift"
+      ],
+      "key": "D"
+    },
+    {
+      "modifiers": [
+        "Alt"
+      ],
+      "key": "D"
     }
   ]
 }

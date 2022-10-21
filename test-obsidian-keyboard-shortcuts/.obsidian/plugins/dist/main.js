@@ -637,6 +637,9 @@ function value(x) {
 function flatten(x) {
   return x == null ? void 0 : value(x);
 }
+function filter(predicate, opt) {
+  return opt != null ? predicate(value(opt)) ? opt : void 0 : opt;
+}
 function map(mapping, opt) {
   return opt != null ? some(mapping(value(opt))) : void 0;
 }
@@ -1649,7 +1652,7 @@ function enumerateUsing(resource, source) {
 function enumerateWhile(guard, xs) {
   return concat(unfold((i) => guard() ? [xs, i + 1] : void 0, 0));
 }
-function filter(f, xs) {
+function filter2(f, xs) {
   return choose((x) => {
     if (f(x)) {
       return some(x);
@@ -1777,7 +1780,7 @@ function collect(mapping, xs) {
   return delay(() => concat(map3(mapping, xs)));
 }
 function where(predicate, xs) {
-  return filter(predicate, xs);
+  return filter2(predicate, xs);
 }
 function pairwise2(xs) {
   return delay(() => ofArray2(pairwise(toArray2(xs))));
@@ -1865,9 +1868,10 @@ var obsidian = __toModule(require("obsidian"));
 function System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(str) {
   let source_1;
   return toString((source_1 = pairwise2(str.split("")), fold((sb, tupledArg) => {
+    const c1 = tupledArg[0];
     const c2 = tupledArg[1];
     const up = isUpper;
-    const matchValue = [up(tupledArg[0]), up(c2)];
+    const matchValue = [up(c1), up(c2)];
     let pattern_matching_result;
     if (matchValue[0]) {
       pattern_matching_result = 1;
@@ -1889,7 +1893,8 @@ function System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(str) {
 function createSettingForProperty(plugin, settingTab, propName) {
   new obsidian.Setting(settingTab.containerEl).setName(System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(propName)).addText((txt) => {
     let arg_3;
-    arg_3 = getValue(find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection())), plugin.settings), txt.setValue(arg_3);
+    const property = find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection()));
+    arg_3 = getValue(property, plugin.settings), txt.setValue(arg_3);
     txt.onChange((value_1) => {
       plugin.settings = Gen_PluginSettings_setFieldByName(propName, value_1, plugin.settings);
       return void 0;
@@ -1903,10 +1908,12 @@ function createSettingDisplay(plugin, settingtab, unitVar) {
   containerEl.createEl("h2", some(((arg) => arg)({
     text: "Quick snippets and navigation"
   })));
-  const array_1 = map2(name, getRecordElements(PluginSettings$reflection()));
-  array_1.forEach((propName) => {
+  const fields = getRecordElements(PluginSettings$reflection());
+  const buildSetting = (propName) => {
     createSettingForProperty(plugin, settingtab, propName);
-  });
+  };
+  const array_1 = map2(name, fields);
+  array_1.forEach(buildSetting);
   return void 0;
 }
 function create(app, plugin) {
@@ -1998,6 +2005,14 @@ function Command_forEditor(id, name2, callback) {
   cmd.editorCallback = callback;
   return cmd;
 }
+var SuggestModal_SuggestModalKeyboardShortcut$1 = class extends Record {
+  constructor(modifiers, key, action) {
+    super();
+    this.modifiers = modifiers;
+    this.key = key;
+    this.action = action;
+  }
+};
 function SuggestModal_create(app) {
   return new obsidian2.SuggestModal(app);
 }
@@ -2005,9 +2020,16 @@ function SuggestModal_withGetSuggestions(query, sm) {
   sm.getSuggestions = query;
   return sm;
 }
+function SuggestModal_withGetSuggestions2(query, sm) {
+  sm.getSuggestions = (f) => {
+    const arg = query(f);
+    return Array.from(arg);
+  };
+  return sm;
+}
 function SuggestModal_withOnChooseSuggestion(fn, sm) {
   sm.onChooseSuggestion = (f, eventargs) => {
-    fn(f);
+    fn([f, eventargs]);
   };
   return sm;
 }
@@ -2016,6 +2038,17 @@ function SuggestModal_withRenderSuggestion(fn, sm) {
     fn(sugg, elem);
     return void 0;
   };
+  return sm;
+}
+function SuggestModal_withKeyboardShortcut(keyboardShortcut, sm) {
+  sm.scope.register(Array.from(keyboardShortcut.modifiers), keyboardShortcut.key, (evt) => {
+    keyboardShortcut.action([evt, sm]);
+    return false;
+  });
+  return sm;
+}
+function SuggestModal_mapResultContainer(map4, sm) {
+  map4(sm.resultContainerEl);
   return sm;
 }
 function SuggestModal_openModal(sm) {
@@ -2047,11 +2080,14 @@ function Content_getCodeBlocks(app) {
   } else {
     const view_1 = value(view);
     const lines = split(view_1.getViewData(), ["\n"], null, 0);
-    return map((optionalCodeblockSections) => toArray2(map3((f_1) => {
+    const codeBlockSections = flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option)))));
+    const codeBlockTexts = map((optionalCodeblockSections) => toArray2(map3((f_1) => {
       const startLine = ~~f_1.position.start.line + 1 | 0;
       const endLine = ~~f_1.position.end.line - 1 | 0;
-      return new Content_CodeBlockContent(startLine, join("\n", lines.slice(startLine, endLine + 1)));
-    }, optionalCodeblockSections)), flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option))))));
+      const blockContent = lines.slice(startLine, endLine + 1);
+      return new Content_CodeBlockContent(startLine, join("\n", blockContent));
+    }, optionalCodeblockSections)), codeBlockSections);
+    return codeBlockTexts;
   }
 }
 function Seq_skipSafe(num, source) {
@@ -2073,6 +2109,38 @@ function Clipboard_write(txt) {
     return PromiseBuilder__Run_212F1D4B(promise, PromiseBuilder__Delay_62FBFDE1(promise, () => {
       return Promise.resolve();
     }));
+  }
+}
+function String_nthIndexOf(n, char, str) {
+  const loop = (pos_mut, n_1_mut) => {
+    let newIdx;
+    loop:
+      while (true) {
+        const pos = pos_mut, n_1 = n_1_mut;
+        const matchValue = str.indexOf(char, pos) | 0;
+        if (matchValue === -1) {
+          return -1;
+        } else if (newIdx = matchValue | 0, n_1 > 1) {
+          const newIdx_1 = matchValue | 0;
+          pos_mut = newIdx_1 + 1;
+          n_1_mut = n_1 - 1;
+          continue loop;
+        } else {
+          const newIdx_2 = matchValue | 0;
+          return newIdx_2 | 0;
+        }
+        break;
+      }
+  };
+  return loop(0, n) | 0;
+}
+function String_untilNthOccurrence(n, char, str) {
+  const matchValue = String_nthIndexOf(n, char, str) | 0;
+  if (matchValue === -1) {
+    return str;
+  } else {
+    const n_1 = matchValue | 0;
+    return substring(str, 0, n_1 + 1);
   }
 }
 
@@ -2438,7 +2506,8 @@ function doNone(f) {
 function goToPrevHeading(plugin) {
   return Command_forEditor("goToPrevHeading", "Go to previous heading", uncurry(2, (editor) => {
     const cursor = editor.getCursor();
-    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, reverse(split(editor.getValue(), ["\n"], null, 0).slice(void 0, ~~cursor.line + 1))));
+    const linesbefore = reverse(split(editor.getValue(), ["\n"], null, 0).slice(void 0, ~~cursor.line + 1));
+    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, linesbefore));
     if (foundOpt != null) {
       const moveby = foundOpt | 0;
       const newpos = ~~cursor.line - moveby - 1;
@@ -2452,7 +2521,8 @@ function goToPrevHeading(plugin) {
 function goToNextHeading(plugin) {
   return Command_forEditor("goToNextHeading", "Go to next heading", uncurry(2, (editor) => {
     const cursor = editor.getCursor();
-    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, split(editor.getValue(), ["\n"], null, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], null, 0).length)));
+    const linesafter = split(editor.getValue(), ["\n"], null, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], null, 0).length);
+    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, linesafter));
     if (foundOpt != null) {
       const moveby = foundOpt | 0;
       const newpos = ~~cursor.line + moveby + 1;
@@ -2492,8 +2562,10 @@ function copyCodeBlock(plugin) {
       return void 0;
     } else {
       const codeblocks_1 = value(codeblocks);
-      const modal = SuggestModal_withOnChooseSuggestion((f_3) => {
+      const modal = SuggestModal_withOnChooseSuggestion((tupledArg) => {
         let arg_2, objectArg;
+        const f_3 = tupledArg[0];
+        const args = tupledArg[1];
         arg_2 = `copied:
 ${substring(f_3.content, 0, min(comparePrimitives, f_3.content.length, 50))}`, objectArg = obsidian3.Notice, new objectArg(arg_2);
         Clipboard_write(f_3.content);
@@ -2501,8 +2573,11 @@ ${substring(f_3.content, 0, min(comparePrimitives, f_3.content.length, 50))}`, o
         elem.innerText = f_2.content;
       }, SuggestModal_withGetSuggestions((queryInput) => {
         const query = obsidian3.prepareQuery(queryInput);
-        const arg = map3((tuple) => tuple[0], where((f_1) => f_1[1] != null, map3((f) => [f, obsidian3.fuzzySearch(query, f.content)], codeblocks_1)));
-        return Array.from(arg);
+        const matches = map3((tuple) => tuple[0], where((f_1) => f_1[1] != null, map3((f) => {
+          const text = f.content;
+          return [f, obsidian3.fuzzySearch(query, text)];
+        }, codeblocks_1)));
+        return Array.from(matches);
       }, SuggestModal_create(plugin.app))));
       modal.open();
       return void 0;
@@ -2543,7 +2618,20 @@ function openSwitcherWithTag1(plugin) {
 }
 function tagSearch(plugin) {
   return Command_forMenu("tagSearch", "Search by Tag", () => {
-    SuggestModal_openModal(SuggestModal_withOnChooseSuggestion((chosenResult) => {
+    const getVaultTags = () => {
+      let source, objectArg;
+      return map3((tupledArg) => {
+        const tag = tupledArg[0];
+        const tags = tupledArg[1];
+        return [tag, length2(tags)];
+      }, groupBy((f_1) => f_1.tag, collect((x) => x, choose((f) => f.tags, (source = plugin.app.vault.getMarkdownFiles(), choose((objectArg = plugin.app.metadataCache, (arg) => objectArg.getFileCache(arg)), source)))), {
+        Equals: (x_1, y) => x_1 === y,
+        GetHashCode: stringHash
+      }));
+    };
+    SuggestModal_openModal(SuggestModal_withOnChooseSuggestion((tupledArg_2) => {
+      const chosenResult = tupledArg_2[0];
+      const eventArgs = tupledArg_2[1];
       const cmd = plugin.settings.defaultModalCommand;
       const matchValue = plugin.app.commands.executeCommandById(cmd);
       if (matchValue) {
@@ -2562,21 +2650,108 @@ function tagSearch(plugin) {
     }, SuggestModal_withRenderSuggestion((f_4, elem) => {
       elem.innerText = `${f_4.count}:	${f_4.tag}`;
     }, SuggestModal_withGetSuggestions((queryInput) => {
-      let results, source, objectArg;
+      let results;
       const query = obsidian3.prepareQuery(queryInput);
-      const arg_1 = map3((tuple_1) => tuple_1[0], (results = choose((f_2) => map((search) => [f_2, search.score], obsidian3.fuzzySearch(query, f_2.tag)), map3((tupledArg_1) => ({
-        count: tupledArg_1[1],
-        tag: tupledArg_1[0]
-      }), map3((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_1) => f_1.tag, collect((x) => x, choose((f) => f.tags, (source = plugin.app.vault.getMarkdownFiles(), choose((objectArg = plugin.app.metadataCache, (arg) => objectArg.getFileCache(arg)), source)))), {
-        Equals: (x_1, y) => x_1 === y,
-        GetHashCode: stringHash
-      })))), queryInput === "" ? sortByDescending((f_3) => f_3[0].count, results, {
+      const matches = map3((tuple_1) => tuple_1[0], (results = choose((f_2) => map((search) => [f_2, search.score], obsidian3.fuzzySearch(query, f_2.tag)), map3((tupledArg_1) => {
+        const tag_1 = tupledArg_1[0];
+        const count = tupledArg_1[1] | 0;
+        return {
+          count,
+          tag: tag_1
+        };
+      }, getVaultTags())), queryInput === "" ? sortByDescending((f_3) => f_3[0].count, results, {
         Compare: comparePrimitives
       }) : sortByDescending((tuple) => tuple[1], results, {
         Compare: comparePrimitives
       })));
-      return Array.from(arg_1);
+      return Array.from(matches);
     }, SuggestModal_create(plugin.app)))));
+    return void 0;
+  });
+}
+function foldedTagSearch(plugin) {
+  return Command_forMenu("foldedTagSearch", "Folded search by Tag", () => {
+    const startAcc = {
+      Level: 1,
+      Query: ""
+    };
+    const getVaultTags = (state) => {
+      let source, objectArg;
+      return map3((tupledArg) => {
+        const tag = tupledArg[0];
+        const tags_1 = tupledArg[1];
+        return [tag, length2(tags_1)];
+      }, groupBy((f_2) => String_untilNthOccurrence(state.Level, "/", f_2.tag), collect((x) => x, choose((f) => filter((tags) => tags.findIndex((f_1) => f_1.tag.indexOf(state.Query) === 0) > -1, f.tags), (source = plugin.app.vault.getMarkdownFiles(), choose((objectArg = plugin.app.metadataCache, (arg) => objectArg.getFileCache(arg)), source)))), {
+        Equals: (x_1, y) => x_1 === y,
+        GetHashCode: stringHash
+      }));
+    };
+    const createModal = (state_1) => {
+      SuggestModal_openModal(SuggestModal_mapResultContainer((f_6) => {
+        const div = f_6;
+        div.onkeydown = (keyboardEvent_1) => {
+          const matchValue_1 = keyboardEvent_1.key;
+          switch (matchValue_1) {
+            case "Enter": {
+              console.log(some("default enter pressed"));
+              break;
+            }
+            case "Tab": {
+              console.log(some("tab pressed"));
+              break;
+            }
+            default: {
+              console.log(some("something pressed"));
+            }
+          }
+        };
+      }, SuggestModal_withOnChooseSuggestion((tupledArg_3) => {
+        const chosenResult = tupledArg_3[0];
+        const eventArgs = tupledArg_3[1];
+        if (eventArgs instanceof KeyboardEvent) {
+          const keyboardEvent = eventArgs;
+          const matchValue = keyboardEvent.key;
+          switch (matchValue) {
+            case "Enter": {
+              console.log(some("default enter pressed"));
+              break;
+            }
+            case "Tab": {
+              window.alert(some("tab pressed"));
+              break;
+            }
+            default: {
+              console.log(some("something pressed"));
+            }
+          }
+        } else {
+          const mouseEvent = eventArgs;
+        }
+      }, SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1([], "Tab", (tupledArg_2) => {
+        const evt = tupledArg_2[0];
+        const modal = tupledArg_2[1];
+        console.log(some("yello"));
+      }), SuggestModal_withRenderSuggestion((f_5, elem) => {
+        elem.innerText = `${f_5.count}:	${f_5.tag}`;
+      }, SuggestModal_withGetSuggestions2((queryInput) => {
+        let results;
+        const query = obsidian3.prepareQuery(queryInput);
+        const matches = map3((tuple_1) => tuple_1[0], (results = choose((f_3) => map((search) => [f_3, search.score], obsidian3.fuzzySearch(query, f_3.tag)), map3((tupledArg_1) => {
+          const tag_1 = tupledArg_1[0];
+          const count = tupledArg_1[1] | 0;
+          return {
+            count,
+            tag: tag_1
+          };
+        }, getVaultTags(state_1))), queryInput === "" ? sortByDescending((f_4) => f_4[0].count, results, {
+          Compare: comparePrimitives
+        }) : sortByDescending((tuple) => tuple[1], results, {
+          Compare: comparePrimitives
+        })));
+        return matches;
+      }, SuggestModal_create(plugin.app)))))));
+    };
+    createModal(startAcc);
     return void 0;
   });
 }
@@ -2678,6 +2853,7 @@ function Plugin2__init(this$) {
         this$.plugin.settings = v;
         return Promise.resolve();
       }).catch((_arg_2) => {
+        const e = _arg_2;
         this$.plugin.settings = PluginSettings_get_Default();
         return Promise.resolve();
       });
@@ -2698,6 +2874,6 @@ function Plugin2__onload(this$) {
   iterate((cmd) => {
     let arg_1;
     arg_1 = cmd(this$.plugin), this$.plugin.addCommand(arg_1);
-  }, [copyCodeBlock, copyNextCodeBlock, goToPrevHeading, goToNextHeading, increaseHeading, decreaseHeading, insertHeading4, insertHeading5, insertDefaultCallout, insertCodeBlock, openSwitcherWithTag1, tagSearch]);
+  }, [copyCodeBlock, copyNextCodeBlock, goToPrevHeading, goToNextHeading, increaseHeading, decreaseHeading, insertHeading4, insertHeading5, insertDefaultCallout, insertCodeBlock, openSwitcherWithTag1, foldedTagSearch, tagSearch]);
 }
 module.exports = Plugin2;

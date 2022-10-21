@@ -2,10 +2,12 @@
 
 open System.Text.RegularExpressions
 open Browser
+open Browser.Types
 open Fable.Core
 open ObsidianBindings
 open Fable.Core.JsInterop
-
+open Fable.Import
+open Fable.Core.Extensions
 
 let [<Literal>] headingregex = """^(#{1,6}) """
 let doNone = (fun f -> None)
@@ -97,7 +99,7 @@ let rec copyCodeBlock (plugin:ExtendedPlugin<PluginSettings>) =
                     )
                 |> SuggestModal.withRenderSuggestion (fun f elem ->
                     elem.innerText <- f.content)
-                |> SuggestModal.withOnChooseSuggestion (fun f ->
+                |> SuggestModal.withOnChooseSuggestion (fun (f,args) ->
                     $"copied:\n{f.content.Substring(0, min (f.content.Length) 50)}"
                     |> U2.Case1 |> obsidian.Notice.Create |> ignore
                     Clipboard.write f.content |> ignore
@@ -157,7 +159,7 @@ let rec tagSearch (plugin:ExtendedPlugin<PluginSettings>) =
                 matches |> ResizeArray
                 )
             |> SuggestModal.withRenderSuggestion (fun f elem -> elem.innerText <- $"{f.count}:\t{f.tag}")
-            |> SuggestModal.withOnChooseSuggestion (fun (chosenResult) ->
+            |> SuggestModal.withOnChooseSuggestion (fun (chosenResult,eventArgs) ->
                 let cmd = plugin.settings.defaultModalCommand
                 match plugin.app?commands?executeCommandById(cmd) with 
                 | false -> 
@@ -171,9 +173,129 @@ let rec tagSearch (plugin:ExtendedPlugin<PluginSettings>) =
                         modalInput.dispatchEvent(ev) |> ignore
             )
             |> SuggestModal.openModal
-            
             None
         )  
+
+let rec foldedTagSearch (plugin:ExtendedPlugin<PluginSettings>) =
+    Command.forMenu (nameof foldedTagSearch) "Folded search by Tag"
+        (fun _ ->
+
+            let startAcc = {|
+                    Level = 1                 
+                    Query = ""                 
+                |} 
+            
+            let getVaultTags (state: {| Level: int; Query: string |}) = 
+                plugin.app.vault.getMarkdownFiles()
+                |> Seq.choose plugin.app.metadataCache.getFileCache
+                |> Seq.choose (fun f ->
+                    f.tags
+                    |> Option.filter (fun tags ->
+                        tags.Exists(fun f -> f.tag.StartsWith state.Query))
+                )
+                |> Seq.collect id
+                |> Seq.groupBy (fun f ->
+                    f.tag |> String.untilNthOccurrence state.Level '/' 
+                )
+                |> Seq.map (fun (tag,tags) -> tag, tags |> Seq.length)
+            
+            
+            let rec createModal state =
+                plugin.app
+                |> SuggestModal.create
+                |> SuggestModal.withGetSuggestions2 (fun queryInput ->
+                    let query = obsidian.prepareQuery queryInput
+                    let matches =
+                        getVaultTags state
+                        |> Seq.map (fun (tag,count) -> {|count=count;tag=tag|} )
+                        |> Seq.choose (fun f -> obsidian.fuzzySearch(query,f.tag) |> Option.map (fun search -> f,search.score) )
+                        |> (fun results -> 
+                            match queryInput with 
+                            | "" -> results |> Seq.sortByDescending (fun f -> (fst f).count)
+                            | _ -> results |> Seq.sortByDescending snd
+                        )
+                        |> Seq.map fst
+                    matches 
+                    )
+                |> SuggestModal.withRenderSuggestion (fun f elem ->
+                    elem.innerText <- $"{f.count}:\t{f.tag}"
+                )
+                |> SuggestModal.withKeyboardShortcut
+                    {
+                      modifiers = []
+                      key = "Tab"
+                      action = (fun (evt,modal) ->
+                          console.log "yello"
+                        )
+                    }
+//                |> SuggestModal.map (fun sm ->
+//                    sm.scope.register(
+//                        null,
+//                        Some "Tab",
+//                        !!(fun (evt:KeyboardEvent) ->
+//                            let currSelection =
+//                                SuggestModal.getCurrentSelection sm
+//                            let newState =
+//                                {|
+//                                  state with
+//                                    Level = state.Level + 1
+//                                    Query = currSelection.tag
+//                                  |}
+//                            sm.close()
+//                            console.log newState
+//                            createModal newState
+//                            U2.Case1 false
+//                        )
+//                    )
+//                    |> ignore
+//                )
+                |> SuggestModal.withOnChooseSuggestion (fun (chosenResult,eventArgs) ->
+                    match eventArgs with
+                    | U2.Case1 mouseEvent -> ()
+                    | U2.Case2 keyboardEvent -> 
+                        match keyboardEvent.key with
+                        | "Enter" ->
+                            //Browser.Dom.window.alert "hello"
+                            console.log "default enter pressed"
+                        | "Tab" -> Browser.Dom.window.alert "tab pressed"
+                        | _ ->
+                            console.log "something pressed"      
+                        ()
+                      
+    //                let cmd = plugin.settings.defaultModalCommand
+    //                match plugin.app?commands?executeCommandById(cmd) with 
+    //                | false -> 
+    //                    Notice.show $"failed to run command: {cmd}, configure Default modal command in settings"
+    //                | true -> 
+    //                    match document.querySelector("input.prompt-input")  with 
+    //                    | null -> Notice.show "plugin outdated"
+    //                    | modalInput -> 
+    //                        modalInput?value <- $"{chosenResult.tag} "
+    //                        let ev = Browser.Event.Event.Create("input",null)
+    //                        modalInput.dispatchEvent(ev) |> ignore
+                )
+                //
+                |> SuggestModal.mapResultContainer (fun f ->
+                    let div = f :?> HTMLDivElement
+                    div.onkeydown <- (fun keyboardEvent ->
+                        match keyboardEvent.key with
+                        | "Enter" ->
+                            //Browser.Dom.window.alert "hello"
+                            console.log "default enter pressed"
+                        | "Tab" -> console.log "tab pressed"
+                        | _ ->
+                            console.log "something pressed"  
+                    )
+                    //div.style.backgroundColor <- "red"
+                    ()
+                    
+                )
+                |> SuggestModal.openModal
+                
+            createModal startAcc
+                
+            None
+        )
 
 let rec insertHeading4 (plugin:ExtendedPlugin<PluginSettings>) =
     Command.forEditor (nameof insertHeading4) "Insert heading 4"

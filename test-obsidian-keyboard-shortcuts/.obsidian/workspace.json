@@ -13,7 +13,19 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "ai file 2.md",
+                "file": "taggedfile3.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "2994557787f749f0",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "taggedfile3.md",
                 "mode": "source",
                 "source": false
               }
@@ -31,7 +43,8 @@
               }
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -98,7 +111,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "ai file 2.md",
+                "file": "taggedfile3.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -115,7 +128,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "ai file 2.md",
+                "file": "taggedfile3.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -138,7 +151,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "ai file 2.md"
+                "file": "taggedfile3.md"
               }
             }
           }
@@ -146,18 +159,20 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "ribbon": {
     "mostRecentAction": ""
   },
-  "active": "e8a5b9d6b60dd6fc",
+  "active": "2994557787f749f0",
   "lastOpenFiles": [
-    "ai file 1.md",
-    "ai file 2.md",
+    "taggedfile1.md",
+    "aaaaaaa.md",
     "taggedfile3.md",
     "taggedfile2.md",
-    "taggedfile1.md",
+    "ai file 2.md",
+    "ai file 1.md",
     "javascript frameworks.md",
     "doc1.md"
   ]
