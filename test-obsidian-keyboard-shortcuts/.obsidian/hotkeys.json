@@ -126,12 +126,6 @@
   "app:toggle-right-sidebar": [
     {
       "modifiers": [
-        "Mod"
-      ],
-      "key": ";"
-    },
-    {
-      "modifiers": [
         "Alt",
         "Mod"
       ],
@@ -244,6 +238,24 @@
     {
       "modifiers": [
         "Alt"
+      ],
+      "key": "D"
+    }
+  ],
+  "file-explorer:reveal-active-file": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": ";"
+    }
+  ],
+  "app:delete-file": [
+    {
+      "modifiers": [
+        "Alt",
+        "Mod",
+        "Shift"
       ],
       "key": "D"
     }

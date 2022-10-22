@@ -7,6 +7,7 @@ open Fable.Core
 open Fable.Core.JS
 open Fable.Import
 open ObsidianBindings
+open JsInterop
 
 [<ImportAll("obsidian")>]
 let obsidian: ObsidianBindings.IExports = jsNative
@@ -88,7 +89,10 @@ module Command =
 let printJson x = x |> JSON.stringify |> printfn "%s"
 
 
-
+type SuggestModal<'t> with
+    member this.currentSelection : 't =
+        let values: 't [] = this?chooser?values
+        values[this?chooser?selectedItem]
 
 module SuggestModal =
     
@@ -153,9 +157,6 @@ module SuggestModal =
         mapping sm
         sm
 
-    let getCurrentSelection (sm: SuggestModal<'t>) : 't =
-        let values: 't [] = sm?chooser?values
-        values[sm?chooser?selectedItem]
 
     /// <summary>
     /// instructions -> (command * purpose) list <br/>
@@ -328,3 +329,10 @@ module String =
         match str |> nthIndexOf (n) (char) with
         | -1 -> str
         | n -> str.Substring(0, n + 1)
+
+
+
+
+type App with
+    member this.executeCommandById (commandId:string) : bool =
+        this?commands?executeCommandById(commandId)

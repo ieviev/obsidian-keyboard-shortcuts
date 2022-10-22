@@ -359,12 +359,65 @@ function toString(x, callStack = 0) {
     } else if (Symbol.iterator in x) {
       return seqToString(x);
     } else {
-      const cons = (_a = Object.getPrototypeOf(x)) === null || _a === void 0 ? void 0 : _a.constructor;
-      return cons === Object && callStack < 10 ? "{ " + Object.entries(x).map(([k, v]) => k + " = " + toString(v, callStack + 1)).join("\n  ") + " }" : (_b = cons === null || cons === void 0 ? void 0 : cons.name) !== null && _b !== void 0 ? _b : "";
+      const cons2 = (_a = Object.getPrototypeOf(x)) === null || _a === void 0 ? void 0 : _a.constructor;
+      return cons2 === Object && callStack < 10 ? "{ " + Object.entries(x).map(([k, v]) => k + " = " + toString(v, callStack + 1)).join("\n  ") + " }" : (_b = cons2 === null || cons2 === void 0 ? void 0 : cons2.name) !== null && _b !== void 0 ? _b : "";
     }
   }
   return String(x);
 }
+function unionToString(name2, fields) {
+  if (fields.length === 0) {
+    return name2;
+  } else {
+    let fieldStr = "";
+    let withParens = true;
+    if (fields.length === 1) {
+      fieldStr = toString(fields[0]);
+      withParens = fieldStr.indexOf(" ") >= 0;
+    } else {
+      fieldStr = fields.map((x) => toString(x)).join(", ");
+    }
+    return name2 + (withParens ? " (" : " ") + fieldStr + (withParens ? ")" : "");
+  }
+}
+var Union = class {
+  get name() {
+    return this.cases()[this.tag];
+  }
+  toJSON() {
+    return this.fields.length === 0 ? this.name : [this.name].concat(this.fields);
+  }
+  toString() {
+    return unionToString(this.name, this.fields);
+  }
+  GetHashCode() {
+    const hashes = this.fields.map((x) => structuralHash(x));
+    hashes.splice(0, 0, numberHash(this.tag));
+    return combineHashCodes(hashes);
+  }
+  Equals(other) {
+    if (this === other) {
+      return true;
+    } else if (!sameConstructor(this, other)) {
+      return false;
+    } else if (this.tag === other.tag) {
+      return equalArrays(this.fields, other.fields);
+    } else {
+      return false;
+    }
+  }
+  CompareTo(other) {
+    if (this === other) {
+      return 0;
+    } else if (!sameConstructor(this, other)) {
+      return -1;
+    } else if (this.tag === other.tag) {
+      return compareArrays(this.fields, other.fields);
+    } else {
+      return this.tag < other.tag ? -1 : 1;
+    }
+  }
+};
 function recordToJSON(self) {
   const o = {};
   const keys = Object.keys(self);
@@ -636,6 +689,9 @@ function value(x) {
 }
 function flatten(x) {
   return x == null ? void 0 : value(x);
+}
+function filter(predicate, opt) {
+  return opt != null ? predicate(value(opt)) ? opt : void 0 : opt;
 }
 function map(mapping, opt) {
   return opt != null ? some(mapping(value(opt))) : void 0;
@@ -936,6 +992,10 @@ function format(str, ...args) {
     return rep;
   });
 }
+function endsWith(str, search) {
+  const idx = str.lastIndexOf(search);
+  return idx >= 0 && idx === str.length - search.length;
+}
 function isNullOrEmpty(str) {
   return typeof str !== "string" || str.length === 0;
 }
@@ -1061,9 +1121,9 @@ function Operators_NullArg(x) {
 var SR_inputWasEmpty = "Collection was empty.";
 
 // build/fable_modules/fable-library.3.7.17/Array.js
-function Helpers_allocateArrayFromCons(cons, len) {
-  if (typeof cons === "function") {
-    return new cons(len);
+function Helpers_allocateArrayFromCons(cons2, len) {
+  if (typeof cons2 === "function") {
+    return new cons2(len);
   } else {
     return new Array(len);
   }
@@ -1072,16 +1132,16 @@ function fill(target, targetIndex, count, value2) {
   const start = targetIndex | 0;
   return target.fill(value2, start, start + count);
 }
-function map2(f, source, cons) {
+function map2(f, source, cons2) {
   const len = source.length | 0;
-  const target = Helpers_allocateArrayFromCons(cons, len);
+  const target = Helpers_allocateArrayFromCons(cons2, len);
   for (let i = 0; i <= len - 1; i++) {
     target[i] = f(source[i]);
   }
   return target;
 }
-function singleton(value2, cons) {
-  const ar = Helpers_allocateArrayFromCons(cons, 1);
+function singleton(value2, cons2) {
+  const ar = Helpers_allocateArrayFromCons(cons2, 1);
   ar[0] = value2;
   return ar;
 }
@@ -1104,10 +1164,10 @@ function reverse(array) {
 
 // build/fable_modules/fable-library.3.7.17/List.js
 var FSharpList = class extends Record {
-  constructor(head, tail) {
+  constructor(head2, tail2) {
     super();
-    this.head = head;
-    this.tail = tail;
+    this.head = head2;
+    this.tail = tail2;
   }
   toString() {
     const xs = this;
@@ -1258,6 +1318,12 @@ var ListEnumerator$1 = class {
 function ListEnumerator$1_$ctor_3002E699(xs) {
   return new ListEnumerator$1(xs);
 }
+function FSharpList_get_Empty() {
+  return new FSharpList(null, void 0);
+}
+function FSharpList_Cons_305B8EAC(x, xs) {
+  return new FSharpList(x, xs);
+}
 function FSharpList__get_IsEmpty(xs) {
   return xs.tail == null;
 }
@@ -1295,8 +1361,23 @@ function FSharpList__get_Tail(xs) {
     throw new Error(SR_inputWasEmpty + "\\nParameter name: list");
   }
 }
+function empty() {
+  return FSharpList_get_Empty();
+}
+function cons(x, xs) {
+  return FSharpList_Cons_305B8EAC(x, xs);
+}
+function isEmpty(xs) {
+  return FSharpList__get_IsEmpty(xs);
+}
 function length(xs) {
   return FSharpList__get_Length(xs);
+}
+function head(xs) {
+  return FSharpList__get_Head(xs);
+}
+function tail(xs) {
+  return FSharpList__get_Tail(xs);
 }
 function toArray(xs) {
   const len = FSharpList__get_Length(xs) | 0;
@@ -1316,6 +1397,55 @@ function toArray(xs) {
   };
   loop(0, xs);
   return res;
+}
+function fold(folder, state, xs) {
+  let acc = state;
+  let xs_1 = xs;
+  while (!FSharpList__get_IsEmpty(xs_1)) {
+    acc = folder(acc, FSharpList__get_Head(xs_1));
+    xs_1 = FSharpList__get_Tail(xs_1);
+  }
+  return acc;
+}
+function ofArrayWithTail(xs, tail_1) {
+  let res = tail_1;
+  for (let i = xs.length - 1; i >= 0; i--) {
+    res = FSharpList_Cons_305B8EAC(xs[i], res);
+  }
+  return res;
+}
+function ofArray(xs) {
+  return ofArrayWithTail(xs, FSharpList_get_Empty());
+}
+function map3(mapping, xs) {
+  const root = FSharpList_get_Empty();
+  const node = fold((acc, x) => {
+    const t = new FSharpList(mapping(x), void 0);
+    acc.tail = t;
+    return t;
+  }, root, xs);
+  const t_2 = FSharpList_get_Empty();
+  node.tail = t_2;
+  return FSharpList__get_Tail(root);
+}
+function forAll(f, xs) {
+  return fold((acc, x) => acc && f(x), true, xs);
+}
+function skipWhile(predicate_mut, xs_mut) {
+  skipWhile:
+    while (true) {
+      const predicate = predicate_mut, xs = xs_mut;
+      if (FSharpList__get_IsEmpty(xs)) {
+        return xs;
+      } else if (!predicate(FSharpList__get_Head(xs))) {
+        return xs;
+      } else {
+        predicate_mut = predicate;
+        xs_mut = FSharpList__get_Tail(xs);
+        continue skipWhile;
+      }
+      break;
+    }
 }
 
 // build/fable_modules/fable-library.3.7.17/Seq.js
@@ -1596,7 +1726,7 @@ function concat(sources) {
 function unfold(generator, state) {
   return mkSeq(() => Enumerator_unfold(generator, state));
 }
-function empty() {
+function empty2() {
   return delay(() => new Array(0));
 }
 function singleton2(x) {
@@ -1649,7 +1779,7 @@ function enumerateUsing(resource, source) {
 function enumerateWhile(guard, xs) {
   return concat(unfold((i) => guard() ? [xs, i + 1] : void 0, 0));
 }
-function filter(f, xs) {
+function filter2(f, xs) {
   return choose((x) => {
     if (f(x)) {
       return some(x);
@@ -1657,6 +1787,18 @@ function filter(f, xs) {
       return void 0;
     }
   }, xs);
+}
+function exists(predicate, xs) {
+  const e = ofSeq2(xs);
+  try {
+    let found = false;
+    while (!found && e["System.Collections.IEnumerator.MoveNext"]()) {
+      found = predicate(e["System.Collections.Generic.IEnumerator`1.get_Current"]());
+    }
+    return found;
+  } finally {
+    disposeSafe(e);
+  }
 }
 function tryFind(predicate, xs) {
   const e = ofSeq2(xs);
@@ -1706,7 +1848,7 @@ function tryFindIndex(predicate, xs) {
     disposeSafe(e);
   }
 }
-function fold(folder, state, xs) {
+function fold2(folder, state, xs) {
   const e = ofSeq2(xs);
   try {
     let acc = state;
@@ -1719,12 +1861,12 @@ function fold(folder, state, xs) {
   }
 }
 function iterate(action, xs) {
-  fold((unitVar, x) => {
+  fold2((unitVar, x) => {
     action(x);
   }, void 0, xs);
 }
 function iterateIndexed(action, xs) {
-  fold((i, x) => {
+  fold2((i, x) => {
     action(i, x);
     return i + 1 | 0;
   }, 0, xs);
@@ -1747,7 +1889,7 @@ function length2(xs) {
     }
   }
 }
-function map3(mapping, xs) {
+function map4(mapping, xs) {
   return generate(() => ofSeq2(xs), (e) => e["System.Collections.IEnumerator.MoveNext"]() ? some(mapping(e["System.Collections.Generic.IEnumerator`1.get_Current"]())) : void 0, (e_1) => {
     disposeSafe(e_1);
   });
@@ -1774,10 +1916,10 @@ var CachedSeq$1 = class {
   }
 };
 function collect(mapping, xs) {
-  return delay(() => concat(map3(mapping, xs)));
+  return delay(() => concat(map4(mapping, xs)));
 }
 function where(predicate, xs) {
-  return filter(predicate, xs);
+  return filter2(predicate, xs);
 }
 function pairwise2(xs) {
   return delay(() => ofArray2(pairwise(toArray2(xs))));
@@ -1864,7 +2006,7 @@ function isUpper2(s, index) {
 var obsidian = __toModule(require("obsidian"));
 function System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(str) {
   let source_1;
-  return toString((source_1 = pairwise2(str.split("")), fold((sb, tupledArg) => {
+  return toString((source_1 = pairwise2(str.split("")), fold2((sb, tupledArg) => {
     const c2 = tupledArg[1];
     const up = isUpper;
     const matchValue = [up(tupledArg[0]), up(c2)];
@@ -1998,6 +2140,18 @@ function Command_forEditor(id, name2, callback) {
   cmd.editorCallback = callback;
   return cmd;
 }
+function ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(this$) {
+  const values = this$.chooser.values;
+  return values[this$.chooser.selectedItem];
+}
+var SuggestModal_SuggestModalKeyboardShortcut$1 = class extends Record {
+  constructor(modifiers, key, action) {
+    super();
+    this.modifiers = modifiers;
+    this.key = key;
+    this.action = action;
+  }
+};
 function SuggestModal_create(app) {
   return new obsidian2.SuggestModal(app);
 }
@@ -2005,9 +2159,16 @@ function SuggestModal_withGetSuggestions(query, sm) {
   sm.getSuggestions = query;
   return sm;
 }
+function SuggestModal_withGetSuggestions2(query, sm) {
+  sm.getSuggestions = (f) => {
+    const arg = query(f);
+    return Array.from(arg);
+  };
+  return sm;
+}
 function SuggestModal_withOnChooseSuggestion(fn, sm) {
   sm.onChooseSuggestion = (f, eventargs) => {
-    fn(f);
+    fn([f, eventargs]);
   };
   return sm;
 }
@@ -2016,6 +2177,27 @@ function SuggestModal_withRenderSuggestion(fn, sm) {
     fn(sugg, elem);
     return void 0;
   };
+  return sm;
+}
+function SuggestModal_withKeyboardShortcut(keyboardShortcut, sm) {
+  sm.scope.register(Array.from(keyboardShortcut.modifiers), keyboardShortcut.key, (evt) => {
+    keyboardShortcut.action([evt, sm]);
+    return false;
+  });
+  return sm;
+}
+function SuggestModal_map(mapping, sm) {
+  mapping(sm);
+  return sm;
+}
+function SuggestModal_withInstructions(instructions, sm) {
+  let instructions$0027;
+  const arg = map3((tupledArg) => ({
+    command: tupledArg[0],
+    purpose: tupledArg[1]
+  }), instructions);
+  instructions$0027 = Array.from(arg);
+  sm.setInstructions(instructions$0027);
   return sm;
 }
 function SuggestModal_openModal(sm) {
@@ -2047,7 +2229,7 @@ function Content_getCodeBlocks(app) {
   } else {
     const view_1 = value(view);
     const lines = split(view_1.getViewData(), ["\n"], null, 0);
-    return map((optionalCodeblockSections) => toArray2(map3((f_1) => {
+    return map((optionalCodeblockSections) => toArray2(map4((f_1) => {
       const startLine = ~~f_1.position.start.line + 1 | 0;
       const endLine = ~~f_1.position.end.line - 1 | 0;
       return new Content_CodeBlockContent(startLine, join("\n", lines.slice(startLine, endLine + 1)));
@@ -2058,9 +2240,9 @@ function Seq_skipSafe(num, source) {
   return delay(() => enumerateUsing(getEnumerator(source), (e) => {
     let idx = 0;
     let loop = true;
-    return append(enumerateWhile(() => idx < num && loop, delay(() => append(!e["System.Collections.IEnumerator.MoveNext"]() ? (loop = false, empty()) : empty(), delay(() => {
+    return append(enumerateWhile(() => idx < num && loop, delay(() => append(!e["System.Collections.IEnumerator.MoveNext"]() ? (loop = false, empty2()) : empty2(), delay(() => {
       idx = idx + 1 | 0;
-      return empty();
+      return empty2();
     })))), delay(() => enumerateWhile(() => e["System.Collections.IEnumerator.MoveNext"](), delay(() => singleton2(e["System.Collections.Generic.IEnumerator`1.get_Current"]())))));
   }));
 }
@@ -2075,14 +2257,45 @@ function Clipboard_write(txt) {
     }));
   }
 }
+function String_nthIndexOf(n, char, str) {
+  const loop = (pos_mut, n_1_mut) => {
+    loop:
+      while (true) {
+        const pos = pos_mut, n_1 = n_1_mut;
+        const matchValue = str.indexOf(char, pos) | 0;
+        if (matchValue === -1) {
+          return -1;
+        } else if (n_1 > 1) {
+          pos_mut = matchValue + 1;
+          n_1_mut = n_1 - 1;
+          continue loop;
+        } else {
+          return matchValue | 0;
+        }
+        break;
+      }
+  };
+  return loop(0, n) | 0;
+}
+function String_untilNthOccurrence(n, char, str) {
+  const matchValue = String_nthIndexOf(n, char, str) | 0;
+  if (matchValue === -1) {
+    return str;
+  } else {
+    return substring(str, 0, matchValue + 1);
+  }
+}
+function ObsidianBindings_App__App_executeCommandById_Z721C83C5(this$, commandId) {
+  return this$.commands.executeCommandById(commandId);
+}
 
 // build/Commands.js
 var obsidian3 = __toModule(require("obsidian"));
 
 // build/fable_modules/fable-library.3.7.17/MapUtil.js
-function tryGetValue(map4, key, defaultValue) {
-  if (map4.has(key)) {
-    defaultValue.contents = map4.get(key);
+function tryGetValue(map5, key, defaultValue) {
+  if (map5.has(key)) {
+    defaultValue.contents = map5.get(key);
     return true;
   }
   return false;
@@ -2093,9 +2306,9 @@ function addToDict(dict, k, v) {
   }
   dict.set(k, v);
 }
-function getItemFromDict(map4, key) {
-  if (map4.has(key)) {
-    return map4.get(key);
+function getItemFromDict(map5, key) {
+  if (map5.has(key)) {
+    return map5.get(key);
   } else {
     throw new Error(`The given key '${key}' was not present in the dictionary.`);
   }
@@ -2210,7 +2423,7 @@ var Dictionary = class {
   }
   ["System.Collections.Generic.IDictionary`2.get_Keys"]() {
     const this$ = this;
-    return toArray2(delay(() => map3((pair) => pair[0], this$)));
+    return toArray2(delay(() => map4((pair) => pair[0], this$)));
   }
   ["System.Collections.Generic.IDictionary`2.Remove2B595"](key) {
     const this$ = this;
@@ -2229,7 +2442,7 @@ var Dictionary = class {
   }
   ["System.Collections.Generic.IDictionary`2.get_Values"]() {
     const this$ = this;
-    return toArray2(delay(() => map3((pair) => pair[1], this$)));
+    return toArray2(delay(() => map4((pair) => pair[1], this$)));
   }
   get size() {
     const this$ = this;
@@ -2245,7 +2458,7 @@ var Dictionary = class {
   }
   entries() {
     const this$ = this;
-    return map3((p) => [p[0], p[1]], this$);
+    return map4((p) => [p[0], p[1]], this$);
   }
   get(k) {
     const this$ = this;
@@ -2257,7 +2470,7 @@ var Dictionary = class {
   }
   keys() {
     const this$ = this;
-    return map3((p) => p[0], this$);
+    return map4((p) => p[0], this$);
   }
   set(k, v) {
     const this$ = this;
@@ -2266,7 +2479,7 @@ var Dictionary = class {
   }
   values() {
     const this$ = this;
-    return map3((p) => p[1], this$);
+    return map4((p) => p[1], this$);
   }
   forEach(f, thisArg) {
     const this$ = this;
@@ -2427,7 +2640,7 @@ function groupBy(projection, xs, comparer) {
     } finally {
       disposeSafe(enumerator);
     }
-    return map3((key_1) => [key_1, getItemFromDict(dict, key_1)], keys);
+    return map4((key_1) => [key_1, getItemFromDict(dict, key_1)], keys);
   });
 }
 
@@ -2492,8 +2705,9 @@ function copyCodeBlock(plugin) {
       return void 0;
     } else {
       const codeblocks_1 = value(codeblocks);
-      const modal = SuggestModal_withOnChooseSuggestion((f_3) => {
+      const modal = SuggestModal_withOnChooseSuggestion((tupledArg) => {
         let arg_2, objectArg;
+        const f_3 = tupledArg[0];
         arg_2 = `copied:
 ${substring(f_3.content, 0, min(comparePrimitives, f_3.content.length, 50))}`, objectArg = obsidian3.Notice, new objectArg(arg_2);
         Clipboard_write(f_3.content);
@@ -2501,7 +2715,7 @@ ${substring(f_3.content, 0, min(comparePrimitives, f_3.content.length, 50))}`, o
         elem.innerText = f_2.content;
       }, SuggestModal_withGetSuggestions((queryInput) => {
         const query = obsidian3.prepareQuery(queryInput);
-        const arg = map3((tuple) => tuple[0], where((f_1) => f_1[1] != null, map3((f) => [f, obsidian3.fuzzySearch(query, f.content)], codeblocks_1)));
+        const arg = map4((tuple) => tuple[0], where((f_1) => f_1[1] != null, map4((f) => [f, obsidian3.fuzzySearch(query, f.content)], codeblocks_1)));
         return Array.from(arg);
       }, SuggestModal_create(plugin.app))));
       modal.open();
@@ -2543,7 +2757,7 @@ function openSwitcherWithTag1(plugin) {
 }
 function tagSearch(plugin) {
   return Command_forMenu("tagSearch", "Search by Tag", () => {
-    SuggestModal_openModal(SuggestModal_withOnChooseSuggestion((chosenResult) => {
+    SuggestModal_openModal(SuggestModal_withOnChooseSuggestion((tupledArg_2) => {
       const cmd = plugin.settings.defaultModalCommand;
       const matchValue = plugin.app.commands.executeCommandById(cmd);
       if (matchValue) {
@@ -2552,7 +2766,7 @@ function tagSearch(plugin) {
           Notice_show("plugin outdated");
         } else {
           const modalInput = matchValue_1;
-          modalInput.value = `${chosenResult.tag} `;
+          modalInput.value = `${tupledArg_2[0].tag} `;
           const ev = new Event("input", null);
           modalInput.dispatchEvent(ev);
         }
@@ -2564,10 +2778,10 @@ function tagSearch(plugin) {
     }, SuggestModal_withGetSuggestions((queryInput) => {
       let results, source, objectArg;
       const query = obsidian3.prepareQuery(queryInput);
-      const arg_1 = map3((tuple_1) => tuple_1[0], (results = choose((f_2) => map((search) => [f_2, search.score], obsidian3.fuzzySearch(query, f_2.tag)), map3((tupledArg_1) => ({
+      const arg_1 = map4((tuple_1) => tuple_1[0], (results = choose((f_2) => map((search) => [f_2, search.score], obsidian3.fuzzySearch(query, f_2.tag)), map4((tupledArg_1) => ({
         count: tupledArg_1[1],
         tag: tupledArg_1[0]
-      }), map3((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_1) => f_1.tag, collect((x) => x, choose((f) => f.tags, (source = plugin.app.vault.getMarkdownFiles(), choose((objectArg = plugin.app.metadataCache, (arg) => objectArg.getFileCache(arg)), source)))), {
+      }), map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_1) => f_1.tag, collect((x) => x, choose((f) => f.tags, (source = plugin.app.vault.getMarkdownFiles(), choose((objectArg = plugin.app.metadataCache, (arg) => objectArg.getFileCache(arg)), source)))), {
         Equals: (x_1, y) => x_1 === y,
         GetHashCode: stringHash
       })))), queryInput === "" ? sortByDescending((f_3) => f_3[0].count, results, {
@@ -2577,6 +2791,107 @@ function tagSearch(plugin) {
       })));
       return Array.from(arg_1);
     }, SuggestModal_create(plugin.app)))));
+    return void 0;
+  });
+}
+var FoldedTagSearchAction = class extends Union {
+  constructor(tag, ...fields) {
+    super();
+    this.tag = tag | 0;
+    this.fields = fields;
+  }
+  cases() {
+    return ["ExpandTag", "AddAnotherTag"];
+  }
+};
+var FoldedTagSearchState = class extends Record {
+  constructor(Level, Query, Filters, Actions) {
+    super();
+    this.Level = Level | 0;
+    this.Query = Query;
+    this.Filters = Filters;
+    this.Actions = Actions;
+  }
+};
+function FoldedTagSearchState_get_Default() {
+  return new FoldedTagSearchState(1, "", empty(), empty());
+}
+function foldedTagSearch(plugin) {
+  return Command_forMenu("foldedTagSearch", "Folded search by Tag", () => {
+    const createModal = (state_1) => {
+      const undoLastAction = (tupledArg_1) => {
+        let inputRecord;
+        const modal = tupledArg_1[1];
+        const matchValue = state_1.Actions;
+        if (!isEmpty(matchValue)) {
+          if (head(matchValue).tag === 0) {
+            modal.close();
+            const prevLevel = state_1.Level - 1 | 0;
+            createModal(new FoldedTagSearchState(prevLevel, prevLevel === 1 ? "" : String_untilNthOccurrence(prevLevel - 1, "/", ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal).tag), state_1.Filters, tail(matchValue)));
+          } else if (isEmpty(state_1.Filters)) {
+          } else {
+            modal.close();
+            createModal((inputRecord = FoldedTagSearchState_get_Default(), new FoldedTagSearchState(inputRecord.Level, inputRecord.Query, tail(state_1.Filters), skipWhile((f_4) => !equals(f_4, new FoldedTagSearchAction(1)), tail(matchValue)))));
+          }
+        }
+      };
+      SuggestModal_openModal(SuggestModal_withOnChooseSuggestion((tupledArg_5) => {
+        const cmd = plugin.settings.defaultModalCommand;
+        const matchValue_3 = ObsidianBindings_App__App_executeCommandById_Z721C83C5(plugin.app, cmd);
+        if (matchValue_3) {
+          const matchValue_4 = document.querySelector("input.prompt-input");
+          if (equals(matchValue_4, null)) {
+            Notice_show("plugin outdated");
+          } else {
+            const modalInput = matchValue_4;
+            const searchString = join(" ", cons(tupledArg_5[0].tag, state_1.Filters)) + " ";
+            modalInput.value = searchString;
+            const ev = new Event("input", null);
+            modalInput.dispatchEvent(ev);
+          }
+        } else {
+          Notice_show(`failed to run command: ${cmd}, configure Default modal command in settings`);
+        }
+      }, SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1([], "Tab", (tupledArg_4) => {
+        const modal_2 = tupledArg_4[1];
+        const currSelection_1 = ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_2);
+        const matchValue_2 = endsWith(ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_2).tag, "/");
+        if (matchValue_2) {
+          const newState = new FoldedTagSearchState(state_1.Level + 1, currSelection_1.tag, state_1.Filters, cons(new FoldedTagSearchAction(0), state_1.Actions));
+          modal_2.close();
+          createModal(newState);
+        }
+      }), SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Ctrl"], "Enter", (tupledArg_3) => {
+        let inputRecord_1;
+        const modal_1 = tupledArg_3[1];
+        const current = ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_1).tag;
+        if (exists((f_8) => f_8 === current, state_1.Filters)) {
+        } else {
+          modal_1.close();
+          createModal((inputRecord_1 = FoldedTagSearchState_get_Default(), new FoldedTagSearchState(inputRecord_1.Level, inputRecord_1.Query, cons(ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_1).tag, state_1.Filters), cons(new FoldedTagSearchAction(1), state_1.Actions))));
+        }
+      }), SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Shift"], "Tab", undoLastAction), SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Shift"], "Enter", undoLastAction), SuggestModal_withRenderSuggestion((f_7, elem) => {
+        elem.innerText = `${f_7.count}:	${f_7.tag}`;
+      }, SuggestModal_withGetSuggestions2((queryInput) => {
+        let results, state, source, objectArg;
+        const query = obsidian3.prepareQuery(queryInput);
+        return map4((tuple_1) => tuple_1[0], (results = choose((f_5) => map((search) => [f_5, search.score], obsidian3.fuzzySearch(query, f_5.tag)), map4((tupledArg_2) => ({
+          count: tupledArg_2[1],
+          tag: tupledArg_2[0]
+        }), (state = state_1, map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_3) => String_untilNthOccurrence(state.Level, "/", f_3.tag), collect((tags_2) => where((f_2) => f_2.tag.indexOf(state.Query) === 0, tags_2), choose((cache) => filter((tags_1) => tags_1.findIndex((f_1) => f_1.tag.indexOf(state.Query) === 0) > -1, filter((tags) => forAll((filter3) => tags.findIndex((f) => f.tag.indexOf(filter3) === 0) > -1, state.Filters), cache.tags)), (source = plugin.app.vault.getMarkdownFiles(), choose((objectArg = plugin.app.metadataCache, (arg) => objectArg.getFileCache(arg)), source)))), {
+          Equals: (x, y) => x === y,
+          GetHashCode: stringHash
+        }))))), queryInput === "" ? sortByDescending((f_6) => f_6[0].count, results, {
+          Compare: comparePrimitives
+        }) : sortByDescending((tuple) => tuple[1], results, {
+          Compare: comparePrimitives
+        })));
+      }, SuggestModal_withInstructions(ofArray([["Tab", "Expand tag"], ["Ctrl+Enter", "Add another tag"], ["Shift+Enter/Shift+Tab", "Undo last action"], ["Enter", "Search"]]), SuggestModal_map((sm) => {
+        const arg_1 = join(" AND ", cons(state_1.Query, state_1.Filters));
+        sm.setPlaceholder(arg_1);
+      }, SuggestModal_create(plugin.app)))))))))));
+    };
+    createModal(FoldedTagSearchState_get_Default());
     return void 0;
   });
 }
@@ -2698,6 +3013,6 @@ function Plugin2__onload(this$) {
   iterate((cmd) => {
     let arg_1;
     arg_1 = cmd(this$.plugin), this$.plugin.addCommand(arg_1);
-  }, [copyCodeBlock, copyNextCodeBlock, goToPrevHeading, goToNextHeading, increaseHeading, decreaseHeading, insertHeading4, insertHeading5, insertDefaultCallout, insertCodeBlock, openSwitcherWithTag1, tagSearch]);
+  }, [copyCodeBlock, copyNextCodeBlock, goToPrevHeading, goToNextHeading, increaseHeading, decreaseHeading, insertHeading4, insertHeading5, insertDefaultCallout, insertCodeBlock, openSwitcherWithTag1, foldedTagSearch, tagSearch]);
 }
 module.exports = Plugin2;

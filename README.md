@@ -33,9 +33,18 @@ obsidian-another-quick-switcher:search-command_recent-search
 
 ### Switcher extensions / Search by tag
 
-Allows performing a multi-step search, first filtering notes by tag.
+Allows performing a 2-step search, first filtering notes by tag.
 
 ![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/obs-search-by-tag.gif?raw=true)
+
+### Switcher extensions / Folded search by Tag
+
+Tag search with:
+- Unfolding tags
+- AND queries
+
+![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/folded-search-by-tag.gif?raw=true)
+<!-- ![](_resources/folded-search-by-tag.gif) -->
 
 ### Switcher extensions / Open switcher with Tag 1
 

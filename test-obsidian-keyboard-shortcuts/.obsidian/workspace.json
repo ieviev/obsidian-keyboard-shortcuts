@@ -8,43 +8,18 @@
         "type": "tabs",
         "children": [
           {
-            "id": "e8a5b9d6b60dd6fc",
+            "id": "79c13c55e1e023bc",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "taggedfile3.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "2994557787f749f0",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "taggedfile3.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "b9538049f3e4cda7",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "taggedfile1.md",
+                "file": "file3.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -111,7 +86,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "taggedfile3.md",
+                "file": "file3.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -128,7 +103,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "taggedfile3.md",
+                "file": "file3.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -151,7 +126,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "taggedfile3.md"
+                "file": "file3.md"
               }
             }
           }
@@ -165,15 +140,17 @@
   "ribbon": {
     "mostRecentAction": ""
   },
-  "active": "2994557787f749f0",
+  "active": "79c13c55e1e023bc",
   "lastOpenFiles": [
-    "taggedfile1.md",
+    "file2.md",
+    "doc1.md",
+    "file5.md",
+    "file3.md",
+    "file1.md",
+    "file4.md",
     "aaaaaaa.md",
-    "taggedfile3.md",
-    "taggedfile2.md",
-    "ai file 2.md",
-    "ai file 1.md",
+    "sample4.md",
     "javascript frameworks.md",
-    "doc1.md"
+    "ai file 2.md"
   ]
 }

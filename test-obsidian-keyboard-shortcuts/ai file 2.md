@@ -1,3 +1,0 @@
-#ai
-
-some text
