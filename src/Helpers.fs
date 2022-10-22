@@ -8,6 +8,7 @@ open Fable.Core.JS
 open Fable.Import
 open ObsidianBindings
 open JsInterop
+open System.Collections.Generic
 
 [<ImportAll("obsidian")>]
 let obsidian: ObsidianBindings.IExports = jsNative
@@ -193,6 +194,7 @@ module Notice =
         |> ignore
 
 module Content =
+    open System.Collections.Generic
 
     type CodeBlockContent = { startLine: int; content: string }
 
@@ -203,6 +205,8 @@ module Content =
         |> Option.bind app.metadataCache.getFileCache
         |> Option.bind (fun f -> f.tags)
 
+
+    
 
 
     let getCodeBlocks (app: App) =
@@ -334,5 +338,31 @@ module String =
 
 
 type App with
+
+    member this.getAllTags() : obj =
+        this.metadataCache?getTags()
+        
+    
     member this.executeCommandById (commandId:string) : bool =
         this?commands?executeCommandById(commandId)
+
+    member this.getTagsOfFile(file:TFile) =
+        let fileCacheOpt = this.metadataCache.getFileCache(file)
+
+        match fileCacheOpt with 
+        | None -> Seq.empty
+        | Some cache -> 
+            let tags1 = 
+                cache.tags
+                |> Option.map (Seq.map (fun f -> f.tag))
+                |> Option.defaultValue Seq.empty
+
+            let tags2 : seq<string> = 
+                cache.frontmatter
+                |> Option.map (fun f -> !!f.["tags"])
+                |> Option.defaultValue Seq.empty
+                |> Seq.map (fun f -> $"#{f}")
+
+            Seq.append tags1 tags2
+
+      

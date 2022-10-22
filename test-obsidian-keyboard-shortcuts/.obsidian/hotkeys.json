@@ -234,12 +234,6 @@
         "Shift"
       ],
       "key": "D"
-    },
-    {
-      "modifiers": [
-        "Alt"
-      ],
-      "key": "D"
     }
   ],
   "file-explorer:reveal-active-file": [
@@ -256,6 +250,14 @@
         "Alt",
         "Mod",
         "Shift"
+      ],
+      "key": "D"
+    }
+  ],
+  "quick-snippets-and-navigation:debug-test": [
+    {
+      "modifiers": [
+        "Alt"
       ],
       "key": "D"
     }

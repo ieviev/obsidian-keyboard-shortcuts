@@ -690,8 +690,8 @@ function value(x) {
 function flatten(x) {
   return x == null ? void 0 : value(x);
 }
-function filter(predicate, opt) {
-  return opt != null ? predicate(value(opt)) ? opt : void 0 : opt;
+function defaultArg(opt, defaultValue) {
+  return opt != null ? value(opt) : defaultValue;
 }
 function map(mapping, opt) {
   return opt != null ? some(mapping(value(opt))) : void 0;
@@ -1779,7 +1779,7 @@ function enumerateUsing(resource, source) {
 function enumerateWhile(guard, xs) {
   return concat(unfold((i) => guard() ? [xs, i + 1] : void 0, 0));
 }
-function filter2(f, xs) {
+function filter(f, xs) {
   return choose((x) => {
     if (f(x)) {
       return some(x);
@@ -1919,7 +1919,7 @@ function collect(mapping, xs) {
   return delay(() => concat(map4(mapping, xs)));
 }
 function where(predicate, xs) {
-  return filter2(predicate, xs);
+  return filter(predicate, xs);
 }
 function pairwise2(xs) {
   return delay(() => ofArray2(pairwise(toArray2(xs))));
@@ -2287,6 +2287,15 @@ function String_untilNthOccurrence(n, char, str) {
 }
 function ObsidianBindings_App__App_executeCommandById_Z721C83C5(this$, commandId) {
   return this$.commands.executeCommandById(commandId);
+}
+function ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(this$, file) {
+  const fileCacheOpt = this$.metadataCache.getFileCache(file);
+  if (fileCacheOpt != null) {
+    const cache = fileCacheOpt;
+    return append(defaultArg(map((source) => map4((f) => f.tag, source), cache.tags), empty2()), map4((f_2) => `#${f_2}`, defaultArg(map((f_1) => f_1["tags"], cache.frontmatter), empty2())));
+  } else {
+    return empty2();
+  }
 }
 
 // build/Commands.js
@@ -2773,18 +2782,18 @@ function tagSearch(plugin) {
       } else {
         Notice_show(`failed to run command: ${cmd}, configure Default modal command in settings`);
       }
-    }, SuggestModal_withRenderSuggestion((f_4, elem) => {
-      elem.innerText = `${f_4.count}:	${f_4.tag}`;
+    }, SuggestModal_withRenderSuggestion((f_2, elem) => {
+      elem.innerText = `${f_2.count}:	${f_2.tag}`;
     }, SuggestModal_withGetSuggestions((queryInput) => {
       let results, source, objectArg;
       const query = obsidian3.prepareQuery(queryInput);
-      const arg_1 = map4((tuple_1) => tuple_1[0], (results = choose((f_2) => map((search) => [f_2, search.score], obsidian3.fuzzySearch(query, f_2.tag)), map4((tupledArg_1) => ({
+      const arg_1 = map4((tuple_1) => tuple_1[0], (results = choose((f) => map((search) => [f, search.score], obsidian3.fuzzySearch(query, f.tag)), map4((tupledArg_1) => ({
         count: tupledArg_1[1],
         tag: tupledArg_1[0]
-      }), map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_1) => f_1.tag, collect((x) => x, choose((f) => f.tags, (source = plugin.app.vault.getMarkdownFiles(), choose((objectArg = plugin.app.metadataCache, (arg) => objectArg.getFileCache(arg)), source)))), {
+      }), map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((x) => x, (source = plugin.app.vault.getMarkdownFiles(), collect((objectArg = plugin.app, (arg) => ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(objectArg, arg)), source)), {
         Equals: (x_1, y) => x_1 === y,
         GetHashCode: stringHash
-      })))), queryInput === "" ? sortByDescending((f_3) => f_3[0].count, results, {
+      })))), queryInput === "" ? sortByDescending((f_1) => f_1[0].count, results, {
         Compare: comparePrimitives
       }) : sortByDescending((tuple) => tuple[1], results, {
         Compare: comparePrimitives
@@ -2873,12 +2882,18 @@ function foldedTagSearch(plugin) {
       }), SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Shift"], "Tab", undoLastAction), SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Shift"], "Enter", undoLastAction), SuggestModal_withRenderSuggestion((f_7, elem) => {
         elem.innerText = `${f_7.count}:	${f_7.tag}`;
       }, SuggestModal_withGetSuggestions2((queryInput) => {
-        let results, state, source, objectArg;
+        let results, state, source_1, f1, objectArg;
         const query = obsidian3.prepareQuery(queryInput);
         return map4((tuple_1) => tuple_1[0], (results = choose((f_5) => map((search) => [f_5, search.score], obsidian3.fuzzySearch(query, f_5.tag)), map4((tupledArg_2) => ({
           count: tupledArg_2[1],
           tag: tupledArg_2[0]
-        }), (state = state_1, map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_3) => String_untilNthOccurrence(state.Level, "/", f_3.tag), collect((tags_2) => where((f_2) => f_2.tag.indexOf(state.Query) === 0, tags_2), choose((cache) => filter((tags_1) => tags_1.findIndex((f_1) => f_1.tag.indexOf(state.Query) === 0) > -1, filter((tags) => forAll((filter3) => tags.findIndex((f) => f.tag.indexOf(filter3) === 0) > -1, state.Filters), cache.tags)), (source = plugin.app.vault.getMarkdownFiles(), choose((objectArg = plugin.app.metadataCache, (arg) => objectArg.getFileCache(arg)), source)))), {
+        }), (state = state_1, map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_3) => String_untilNthOccurrence(state.Level, "/", f_3), collect((tags_1) => where((f_2) => f_2.indexOf(state.Query) === 0, tags_1), where((tags) => {
+          if (forAll((filter2) => tags.some((f) => f.indexOf(filter2) === 0), state.Filters)) {
+            return tags.some((f_1) => f_1.indexOf(state.Query) === 0);
+          } else {
+            return false;
+          }
+        }, (source_1 = plugin.app.vault.getMarkdownFiles(), map4((f1 = (objectArg = plugin.app, (arg) => ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(objectArg, arg)), (arg_1) => toArray2(f1(arg_1))), source_1)))), {
           Equals: (x, y) => x === y,
           GetHashCode: stringHash
         }))))), queryInput === "" ? sortByDescending((f_6) => f_6[0].count, results, {
@@ -2887,8 +2902,8 @@ function foldedTagSearch(plugin) {
           Compare: comparePrimitives
         })));
       }, SuggestModal_withInstructions(ofArray([["Tab", "Expand tag"], ["Ctrl+Enter", "Add another tag"], ["Shift+Enter/Shift+Tab", "Undo last action"], ["Enter", "Search"]]), SuggestModal_map((sm) => {
-        const arg_1 = join(" AND ", cons(state_1.Query, state_1.Filters));
-        sm.setPlaceholder(arg_1);
+        const arg_2 = join(" AND ", cons(state_1.Query, state_1.Filters));
+        sm.setPlaceholder(arg_2);
       }, SuggestModal_create(plugin.app)))))))))));
     };
     createModal(FoldedTagSearchState_get_Default());

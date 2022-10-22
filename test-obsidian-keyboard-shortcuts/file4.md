@@ -1,3 +1,9 @@
+---
+tags:
+- one
+- two
+- six
+---
 #Source/Articles
 #Creator/Person2
 

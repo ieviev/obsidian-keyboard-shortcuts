@@ -141,10 +141,8 @@ let rec tagSearch (plugin: ExtendedPlugin<PluginSettings>) =
 
         let getVaultTags () =
             plugin.app.vault.getMarkdownFiles ()
-            |> Seq.choose plugin.app.metadataCache.getFileCache
-            |> Seq.choose (fun f -> f.tags)
-            |> Seq.collect id
-            |> Seq.groupBy (fun f -> f.tag)
+            |> Seq.collect plugin.app.getTagsOfFile
+            |> Seq.groupBy id
             |> Seq.map (fun (tag, tags) -> tag, tags |> Seq.length)
 
         plugin.app
@@ -213,20 +211,19 @@ let rec foldedTagSearch (plugin: ExtendedPlugin<PluginSettings>) =
 
         let getVaultTags (state: FoldedTagSearchState) =
             plugin.app.vault.getMarkdownFiles ()
-            |> Seq.choose plugin.app.metadataCache.getFileCache
-            |> Seq.choose (fun cache ->
-                cache.tags
-                |> Option.filter (fun tags ->
-                    state.Filters
-                    |> List.forall (fun filter -> tags.Exists(fun f -> f.tag.StartsWith(filter))))
-                |> Option.filter (fun tags -> tags.Exists(fun f -> f.tag.StartsWith state.Query)))
+            |> Seq.map (plugin.app.getTagsOfFile >> Seq.toArray)
+            |> Seq.where (fun tags -> 
+                state.Filters
+                |> List.forall (fun filter -> 
+                    tags |> Array.exists (fun f -> f.StartsWith filter)
+                )
+                && tags |> Array.exists(fun f -> f.StartsWith state.Query)
+            )
             |> Seq.collect (fun tags ->
-                tags
-                |> Seq.where (fun f -> f.tag.StartsWith state.Query))
-            |> Seq.groupBy (fun f -> f.tag |> String.untilNthOccurrence state.Level '/')
+                tags |> Seq.where (fun f -> f.StartsWith state.Query)
+            )
+            |> Seq.groupBy (fun f -> f |> String.untilNthOccurrence state.Level '/')
             |> Seq.map (fun (tag, tags) -> tag, tags |> Seq.length)
-
-
 
 
         let rec createModal (state: FoldedTagSearchState) =
@@ -423,8 +420,24 @@ let rec insertCodeBlock (plugin: ExtendedPlugin<PluginSettings>) =
 
 let rec insertTest (plugin: ExtendedPlugin<PluginSettings>) =
 
-    Command.forEditor "testtesttest" "qqqqqq" (fun edit ->
-        edit.replaceSelection ("````\naaaaa\n````")
-        let cursor = edit.getCursor ()
-        edit.setCursor (U2.Case2(cursor.line - 1.))
+    Command.forEditor "debug-test" "debug-test" (fun edit ->
+        let tags = plugin.app.getAllTags()
+        let keys = JS.Constructors.Object.keys(tags)
+
+        let currFile = plugin.app.workspace.getActiveFile().Value
+
+        let tags2 = plugin.app.getTagsOfFile(currFile) |> Seq.toArray
+
+        let fm1 = 
+            plugin.app.vault.getMarkdownFiles ()
+            |> Seq.choose plugin.app.metadataCache.getFileCache
+            |> Seq.toArray
+            
+        // JS.Constructors.Object.
+        // let value : int = tags?(keys[0])
+        // console.log value
+
+        console.log fm1
+        console.log tags2
+
         doNone)
