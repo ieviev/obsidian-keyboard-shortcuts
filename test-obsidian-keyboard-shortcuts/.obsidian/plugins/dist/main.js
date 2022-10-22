@@ -2292,7 +2292,14 @@ function ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(this$, file) {
   const fileCacheOpt = this$.metadataCache.getFileCache(file);
   if (fileCacheOpt != null) {
     const cache = fileCacheOpt;
-    return append(defaultArg(map((source) => map4((f) => f.tag, source), cache.tags), empty2()), map4((f_2) => `#${f_2}`, defaultArg(map((f_1) => f_1["tags"], cache.frontmatter), empty2())));
+    return append(defaultArg(map((source) => map4((f) => f.tag, source), cache.tags), empty2()), map4((f_2) => `#${f_2}`, defaultArg(map((f_1) => {
+      const tags = f_1["tags"];
+      if (equals(tags, null)) {
+        return empty2();
+      } else {
+        return tags;
+      }
+    }, cache.frontmatter), empty2())));
   } else {
     return empty2();
   }

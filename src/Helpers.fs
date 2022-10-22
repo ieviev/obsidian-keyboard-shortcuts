@@ -359,7 +359,11 @@ type App with
 
             let tags2 : seq<string> = 
                 cache.frontmatter
-                |> Option.map (fun f -> !!f.["tags"])
+                |> Option.map (fun f ->
+                    let tags = !!f.["tags"]
+                    if tags = null then Seq.empty
+                    else tags
+                )
                 |> Option.defaultValue Seq.empty
                 |> Seq.map (fun f -> $"#{f}")
 
