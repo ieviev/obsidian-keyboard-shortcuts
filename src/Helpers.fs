@@ -154,6 +154,31 @@ module SuggestModal =
 
         sm
 
+    /// helper to use ctrl and mod both
+    let withCtrlKeyboardShortcut
+        (keyboardShortcut: SuggestModalKeyboardShortcut<'t>)
+        (sm: SuggestModal<'t>)
+        =
+        sm.scope.register (
+            ResizeArray([Modifier.Mod]),
+            Some keyboardShortcut.key,
+            !!(fun (evt: KeyboardEvent) ->
+                keyboardShortcut.action (evt,sm)
+                U2.Case1 false)
+        )
+        |> ignore
+
+        sm.scope.register (
+            ResizeArray([Modifier.Ctrl]),
+            Some keyboardShortcut.key,
+            !!(fun (evt: KeyboardEvent) ->
+                keyboardShortcut.action (evt,sm)
+                U2.Case1 false)
+        )
+        |> ignore
+
+        sm
+
     let map (mapping) (sm: SuggestModal<'t>) =
         mapping sm
         sm

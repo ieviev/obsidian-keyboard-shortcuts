@@ -2186,6 +2186,17 @@ function SuggestModal_withKeyboardShortcut(keyboardShortcut, sm) {
   });
   return sm;
 }
+function SuggestModal_withCtrlKeyboardShortcut(keyboardShortcut, sm) {
+  sm.scope.register(["Mod"], keyboardShortcut.key, (evt) => {
+    keyboardShortcut.action([evt, sm]);
+    return false;
+  });
+  sm.scope.register(["Ctrl"], keyboardShortcut.key, (evt_1) => {
+    keyboardShortcut.action([evt_1, sm]);
+    return false;
+  });
+  return sm;
+}
 function SuggestModal_map(mapping, sm) {
   mapping(sm);
   return sm;
@@ -2877,7 +2888,7 @@ function foldedTagSearch(plugin) {
           modal_2.close();
           createModal(newState);
         }
-      }), SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Ctrl"], "Enter", (tupledArg_3) => {
+      }), SuggestModal_withCtrlKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1([], "Enter", (tupledArg_3) => {
         let inputRecord_1;
         const modal_1 = tupledArg_3[1];
         const current = ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_1).tag;

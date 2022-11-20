@@ -306,9 +306,9 @@ let rec foldedTagSearch (plugin: ExtendedPlugin<PluginSettings>) =
                     key = "Tab"
                     action = undoLastAction
                 }
-            |> SuggestModal.withKeyboardShortcut
+            |> SuggestModal.withCtrlKeyboardShortcut
                 {
-                    modifiers = [ Modifier.Ctrl ]
+                    modifiers = []
                     key = "Enter"
                     action =
                         (fun (evt, modal) ->
