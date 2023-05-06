@@ -165,7 +165,7 @@ type [<AllowNullLiteral>] ObjectConstructor =
     abstract entries: obj: obj option -> ResizeArray<obj option>
 
 type [<AllowNullLiteral>] ObjectConstructorEachObject =
-    [<Emit "$0[$1]{{=$2}}">] abstract Item: key: string -> 'T with get, set
+    [<Emit "$0[$1]{{=$2}}">] abstract Item: key: string -> obj with get, set
 
 type [<AllowNullLiteral>] Math =
     abstract clamp: value: float * min: float * max: float -> float

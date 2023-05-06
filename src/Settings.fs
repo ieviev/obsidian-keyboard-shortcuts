@@ -8,11 +8,13 @@ type PluginSettings =
     {
         defaultCodeBlockLanguage : string
         defaultCalloutType : string
+        use3BackticksForCodeBlock : bool
         defaultModalCommand: string
     }
     static member Default : PluginSettings = {
         defaultCodeBlockLanguage = "bash"
         defaultCalloutType = "info"
+        use3BackticksForCodeBlock = false
         defaultModalCommand = "obsidian-another-quick-switcher:search-command_recent-search"
     }
 
@@ -29,6 +31,7 @@ module PluginSettings =
         match key with
         | "defaultCodeBlockLanguage" -> { x with defaultCodeBlockLanguage = unbox value }
         | "defaultCalloutType" -> { x with defaultCalloutType = unbox value }
+        | "use3BackticksForCodeBlock" -> { x with use3BackticksForCodeBlock = unbox value }
         | "defaultModalCommand" -> { x with defaultModalCommand = unbox value }
-        | _ -> failwith "unimplemented case"
+        | _ -> failwith $"unimplemented case {key}"
 

@@ -15,7 +15,7 @@ let pwsh (command:string) =
 File.Copy(__SOURCE_DIRECTORY__ + "/manifest.json" , __SOURCE_DIRECTORY__ + "/dist/manifest.json", true )
 pwsh "npm run build"
 pwsh "npm run publish"
-pwsh "cp -r dist quick-snippets-and-navigation"
+pwsh "cp -r dist/* ./quick-snippets-and-navigation/"
 pwsh "7z a quick-snippets-and-navigation.zip ./quick-snippets-and-navigation/ -r"
-pwsh "rm -Recurse -Force quick-snippets-and-navigation"
+pwsh "remove-item -Recurse -Force quick-snippets-and-navigation"
 

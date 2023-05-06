@@ -298,3 +298,6 @@ __pycache__/
 *.xsd.cs
 
 .ionide
+test-obsidian-keyboard-shortcuts/.obsidian/.obsidian/core-plugins-migration.json
+test-obsidian-keyboard-shortcuts/.obsidian/.obsidian/workspace.json
+

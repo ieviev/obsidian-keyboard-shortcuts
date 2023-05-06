@@ -749,32 +749,36 @@ var promise = PromiseBuilder_$ctor();
 
 // build/Settings.js
 var PluginSettings = class extends Record {
-  constructor(defaultCodeBlockLanguage, defaultCalloutType, defaultModalCommand) {
+  constructor(defaultCodeBlockLanguage, defaultCalloutType, use3BackticksForCodeBlock, defaultModalCommand) {
     super();
     this.defaultCodeBlockLanguage = defaultCodeBlockLanguage;
     this.defaultCalloutType = defaultCalloutType;
+    this.use3BackticksForCodeBlock = use3BackticksForCodeBlock;
     this.defaultModalCommand = defaultModalCommand;
   }
 };
 function PluginSettings$reflection() {
-  return record_type("Fs.Obsidian.PluginSettings", [], PluginSettings, () => [["defaultCodeBlockLanguage", string_type], ["defaultCalloutType", string_type], ["defaultModalCommand", string_type]]);
+  return record_type("Fs.Obsidian.PluginSettings", [], PluginSettings, () => [["defaultCodeBlockLanguage", string_type], ["defaultCalloutType", string_type], ["use3BackticksForCodeBlock", bool_type], ["defaultModalCommand", string_type]]);
 }
 function PluginSettings_get_Default() {
-  return new PluginSettings("bash", "info", "obsidian-another-quick-switcher:search-command_recent-search");
+  return new PluginSettings("bash", "info", false, "obsidian-another-quick-switcher:search-command_recent-search");
 }
 function Gen_PluginSettings_setFieldByName(key, value2, x) {
   switch (key) {
     case "defaultCodeBlockLanguage": {
-      return new PluginSettings(value2, x.defaultCalloutType, x.defaultModalCommand);
+      return new PluginSettings(value2, x.defaultCalloutType, x.use3BackticksForCodeBlock, x.defaultModalCommand);
     }
     case "defaultCalloutType": {
-      return new PluginSettings(x.defaultCodeBlockLanguage, value2, x.defaultModalCommand);
+      return new PluginSettings(x.defaultCodeBlockLanguage, value2, x.use3BackticksForCodeBlock, x.defaultModalCommand);
+    }
+    case "use3BackticksForCodeBlock": {
+      return new PluginSettings(x.defaultCodeBlockLanguage, x.defaultCalloutType, value2, x.defaultModalCommand);
     }
     case "defaultModalCommand": {
-      return new PluginSettings(x.defaultCodeBlockLanguage, x.defaultCalloutType, value2);
+      return new PluginSettings(x.defaultCodeBlockLanguage, x.defaultCalloutType, x.use3BackticksForCodeBlock, value2);
     }
     default: {
-      throw new Error("unimplemented case");
+      throw new Error(`unimplemented case ${key}`);
     }
   }
 }
@@ -1131,14 +1135,6 @@ function Helpers_allocateArrayFromCons(cons2, len) {
 function fill(target, targetIndex, count, value2) {
   const start = targetIndex | 0;
   return target.fill(value2, start, start + count);
-}
-function map2(f, source, cons2) {
-  const len = source.length | 0;
-  const target = Helpers_allocateArrayFromCons(cons2, len);
-  for (let i = 0; i <= len - 1; i++) {
-    target[i] = f(source[i]);
-  }
-  return target;
 }
 function singleton(value2, cons2) {
   const ar = Helpers_allocateArrayFromCons(cons2, 1);
@@ -1992,10 +1988,15 @@ function charCodeAt(s, index) {
     throw new Error("Index out of range.");
   }
 }
+var isDigit = (s) => isDigit2(s, 0);
 var isUpper = (s) => isUpper2(s, 0);
 function getUnicodeCategory2(s, index) {
   const cp = charCodeAt(s, index);
   return unicodeCategoryFunc(cp);
+}
+function isDigit2(s, index) {
+  const test = 1 << getUnicodeCategory2(s, index);
+  return (test & isDigitMask) !== 0;
 }
 function isUpper2(s, index) {
   const test = 1 << getUnicodeCategory2(s, index);
@@ -2011,33 +2012,51 @@ function System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(str) {
     const up = isUpper;
     const matchValue = [up(tupledArg[0]), up(c2)];
     let pattern_matching_result;
-    if (matchValue[0]) {
-      pattern_matching_result = 1;
-    } else if (matchValue[1]) {
+    if (isDigit(c2)) {
       pattern_matching_result = 0;
-    } else {
+    } else if (matchValue[0]) {
+      pattern_matching_result = 2;
+    } else if (matchValue[1]) {
       pattern_matching_result = 1;
+    } else {
+      pattern_matching_result = 2;
     }
     switch (pattern_matching_result) {
       case 0: {
-        return StringBuilder__Append_Z721C83C5(sb, ` ${c2.toLocaleLowerCase()}`);
+        return StringBuilder__Append_Z721C83C5(sb, ` ${c2} `);
       }
       case 1: {
+        return StringBuilder__Append_Z721C83C5(sb, ` ${c2.toLocaleLowerCase()}`);
+      }
+      case 2: {
         return StringBuilder__Append_244C7CD6(sb, c2);
       }
     }
   }, StringBuilder_$ctor_Z721C83C5(`${str[0].toLocaleUpperCase()}`), source_1)));
 }
-function createSettingForProperty(plugin, settingTab, propName) {
-  new obsidian.Setting(settingTab.containerEl).setName(System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(propName)).addText((txt) => {
-    let arg_3;
-    arg_3 = getValue(find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection())), plugin.settings), txt.setValue(arg_3);
-    txt.onChange((value_1) => {
-      plugin.settings = Gen_PluginSettings_setFieldByName(propName, value_1, plugin.settings);
+function createSettingForProperty(plugin, settingTab, propName, propType) {
+  const setting = new obsidian.Setting(settingTab.containerEl).setName(System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(propName));
+  if (equals2(propType, bool_type)) {
+    setting.addToggle((toggle) => {
+      let arg_3;
+      arg_3 = getValue(find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection())), plugin.settings), toggle.setValue(arg_3);
+      toggle.onChange((value_1) => {
+        plugin.settings = Gen_PluginSettings_setFieldByName(propName, value_1, plugin.settings);
+        return void 0;
+      });
       return void 0;
     });
-    return void 0;
-  });
+  } else if (equals2(propType, string_type)) {
+    setting.addText((txt) => {
+      let arg_5;
+      arg_5 = getValue(find((f_1) => name(f_1) === propName, getRecordElements(PluginSettings$reflection())), plugin.settings), txt.setValue(arg_5);
+      txt.onChange((value_5) => {
+        plugin.settings = Gen_PluginSettings_setFieldByName(propName, value_5, plugin.settings);
+        return void 0;
+      });
+      return void 0;
+    });
+  }
 }
 function createSettingDisplay(plugin, settingtab, unitVar) {
   const containerEl = settingtab.containerEl;
@@ -2045,10 +2064,11 @@ function createSettingDisplay(plugin, settingtab, unitVar) {
   containerEl.createEl("h2", some(((arg) => arg)({
     text: "Quick snippets and navigation"
   })));
-  const array_1 = map2(name, getRecordElements(PluginSettings$reflection()));
-  array_1.forEach((propName) => {
-    createSettingForProperty(plugin, settingtab, propName);
-  });
+  const fields = getRecordElements(PluginSettings$reflection());
+  for (let idx = 0; idx <= fields.length - 1; idx++) {
+    const field = fields[idx];
+    createSettingForProperty(plugin, settingtab, name(field), field[1]);
+  }
   return void 0;
 }
 function create(app, plugin) {
@@ -2703,6 +2723,50 @@ function goToNextHeading(plugin) {
     }
   }));
 }
+function goToPrevEmptyLine(plugin) {
+  return Command_forEditor("goToPrevEmptyLine", "Go to previous empty line", uncurry(2, (editor) => {
+    let x_1;
+    const cursor = editor.getCursor();
+    const linesbefore = reverse(split(editor.getValue(), ["\n"], null, 0).slice(void 0, ~~cursor.line + 1));
+    let foundOpt;
+    if (!(match(/^\s*$/gu, editor.getLine(~~cursor.line)) != null)) {
+      foundOpt = tryFindIndex((f) => match(/^\s*$/gu, f) != null, Seq_skipSafe(1, linesbefore));
+    } else {
+      const nToSkip = defaultArg(map((y) => 1 + y, tryFindIndex((f_1) => !(match(/^\s*$/gu, f_1) != null), linesbefore)), 1) | 0;
+      foundOpt = map((x_1 = nToSkip - 1 | 0, (y_1) => x_1 + y_1), tryFindIndex((f_2) => match(/^\s*$/gu, f_2) != null, Seq_skipSafe(nToSkip, linesbefore)));
+    }
+    if (foundOpt != null) {
+      const moveby = foundOpt | 0;
+      const newpos = ~~cursor.line - moveby - 1;
+      editor.setCursor(newpos);
+      return doNone;
+    } else {
+      return doNone;
+    }
+  }));
+}
+function goToNextEmptyLine(plugin) {
+  return Command_forEditor("goToNextEmptyLine", "Go to next empty line", uncurry(2, (editor) => {
+    let x_1;
+    const cursor = editor.getCursor();
+    const linesafter = split(editor.getValue(), ["\n"], null, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], null, 0).length);
+    let foundOpt;
+    if (!(match(/^\s*$/gu, editor.getLine(~~cursor.line)) != null)) {
+      foundOpt = tryFindIndex((f) => match(/^\s*$/gu, f) != null, Seq_skipSafe(1, linesafter));
+    } else {
+      const nToSkip = defaultArg(map((y) => 1 + y, tryFindIndex((f_1) => !(match(/^\s*$/gu, f_1) != null), linesafter)), 1) | 0;
+      foundOpt = map((x_1 = nToSkip - 1 | 0, (y_1) => x_1 + y_1), tryFindIndex((f_2) => match(/^\s*$/gu, f_2) != null, Seq_skipSafe(nToSkip, linesafter)));
+    }
+    if (foundOpt != null) {
+      const moveby = foundOpt | 0;
+      const newpos = ~~cursor.line + moveby + 1;
+      editor.setCursor(newpos);
+      return doNone;
+    } else {
+      return doNone;
+    }
+  }));
+}
 function copyNextCodeBlock(plugin) {
   return Command_forEditor("copyNextCodeBlock", "Copy Next Code Block", uncurry(2, (edit) => {
     let arg_1, objectArg;
@@ -2987,9 +3051,12 @@ function insertDefaultCallout(plugin) {
 }
 function insertCodeBlock(plugin) {
   return Command_forEditor("insertCodeBlock", "Insert Code Block", uncurry(2, (edit) => {
-    edit.replaceSelection(`\`\`\`\`${plugin.settings.defaultCodeBlockLanguage}
+    const newBlock = plugin.settings.use3BackticksForCodeBlock ? `\`\`\`${plugin.settings.defaultCodeBlockLanguage}
 
-\`\`\`\``);
+\`\`\`` : `\`\`\`\`${plugin.settings.defaultCodeBlockLanguage}
+
+\`\`\`\``;
+    edit.replaceSelection(newBlock);
     const cursor = edit.getCursor();
     edit.setCursor(cursor.line - 1);
     return doNone;
@@ -3046,6 +3113,6 @@ function Plugin2__onload(this$) {
   iterate((cmd) => {
     let arg_1;
     arg_1 = cmd(this$.plugin), this$.plugin.addCommand(arg_1);
-  }, [copyCodeBlock, copyNextCodeBlock, goToPrevHeading, goToNextHeading, increaseHeading, decreaseHeading, insertHeading4, insertHeading5, insertDefaultCallout, insertCodeBlock, openSwitcherWithTag1, foldedTagSearch, tagSearch]);
+  }, [copyCodeBlock, copyNextCodeBlock, goToPrevEmptyLine, goToNextEmptyLine, goToPrevHeading, goToNextHeading, increaseHeading, decreaseHeading, insertHeading4, insertHeading5, insertDefaultCallout, insertCodeBlock, openSwitcherWithTag1, foldedTagSearch, tagSearch]);
 }
 module.exports = Plugin2;

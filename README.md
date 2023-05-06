@@ -7,7 +7,7 @@
 
 no keybinds are set on install, you have to configure them yourself
 
-## Go to previous/next heading
+## Go to previous/next heading and Go to previous/next empty line
 
 - note: only works in edit mode
 

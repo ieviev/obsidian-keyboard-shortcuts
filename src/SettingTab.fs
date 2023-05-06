@@ -16,8 +16,10 @@ type String with
         str 
         |> Seq.pairwise 
         |> Seq.fold (fun (sb:StringBuilder) (c1:char,c2:char) -> 
-            let up = Char.IsUpper
+            let up = (fun v -> Char.IsUpper v)
             match up c1, up c2 with 
+            | _, _ when Char.IsDigit c2 -> 
+                $" {c2} " |> sb.Append
             | false, true -> 
                 $" {Char.ToLower c2}" |> sb.Append
             | _ -> c2 |> sb.Append
@@ -25,28 +27,46 @@ type String with
         |> string
 
 
-let createSettingForProperty (plugin:ExtendedPlugin<PluginSettings>) (settingTab:SettingTab) (propName:string) =
-    obsidian.Setting.Create(settingTab.containerEl)
-        .setName(propName |> String.camelcaseToHumanReadable |> U2.Case1)
-        .addText(fun txt ->
-            let property =
-                typeof<PluginSettings>
-                |> FSharpType.GetRecordFields
-                |> Seq.find (fun f -> f.Name = propName)
-            
-            !!property.GetValue(plugin.settings) |> txt.setValue |> ignore
-            
-            txt.onChange(fun value ->
-                plugin.settings <-
-                    plugin.settings
-                    |> PluginSettings.setFieldByName propName value
+let createSettingForProperty (plugin:ExtendedPlugin<PluginSettings>) (settingTab:SettingTab) (propName:string) (propType:Type) =
+    let setting = obsidian.Setting.Create(settingTab.containerEl) .setName(propName |> String.camelcaseToHumanReadable |> U2.Case1)
+    let createEditor() : unit = 
+        if propType = typeof<bool> then
+            setting.addToggle(fun toggle -> 
+                let property =
+                    typeof<PluginSettings>
+                    |> FSharpType.GetRecordFields
+                    |> Seq.find (fun f -> f.Name = propName)
+                !!property.GetValue(plugin.settings) |> toggle.setValue |> ignore
+                toggle.onChange(fun value ->
+                    plugin.settings <-
+                        plugin.settings
+                        |> PluginSettings.setFieldByName propName value
+                    None
+                )
+                |> ignore
                 None
-            )
-            |> ignore
-            None
-        )
-    |> ignore
+            ) |> ignore
+        elif propType = typeof<string> then
+            setting.addText(fun txt -> 
+                let property =
+                    typeof<PluginSettings>
+                    |> FSharpType.GetRecordFields
+                    |> Seq.find (fun f -> f.Name = propName)
+                !!property.GetValue(plugin.settings) |> txt.setValue |> ignore
+                txt.onChange(fun value ->
+                    plugin.settings <-
+                        plugin.settings
+                        |> PluginSettings.setFieldByName propName value
+                    None
+                )
+                |> ignore
+                None
+            ) |> ignore
+        else ()
     
+    createEditor()
+    ()
+
 
 let createSettingDisplay (plugin:ExtendedPlugin<PluginSettings>) (settingtab:PluginSettingTab) () =
     let containerEl = settingtab.containerEl
@@ -55,11 +75,9 @@ let createSettingDisplay (plugin:ExtendedPlugin<PluginSettings>) (settingtab:Plu
         unbox U2.Case1 {| text = "Quick snippets and navigation" |}) |> ignore
     
     let fields = typeof<PluginSettings> |> FSharpType.GetRecordFields
-    let buildSetting = createSettingForProperty plugin settingtab
     
-    fields
-    |> Array.map (fun f -> f.Name)
-    |> Array.iter buildSetting
+    for field in fields do
+        createSettingForProperty plugin settingtab field.Name field.PropertyType
     
     None
     

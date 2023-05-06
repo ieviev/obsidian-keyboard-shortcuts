@@ -48,10 +48,14 @@ type Plugin2(app, manifest) as instance =
             SettingTab.create app plugin
             |> plugin.addSettingTab
 
+
             [|
                 Commands.copyCodeBlock
                 Commands.copyNextCodeBlock
 
+                Commands.goToPrevEmptyLine
+                Commands.goToNextEmptyLine
+                
                 Commands.goToPrevHeading
                 Commands.goToNextHeading
 

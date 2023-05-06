@@ -41,7 +41,9 @@ let rec goToNextHeading (plugin: ExtendedPlugin<PluginSettings>) =
         let linesafter =
             editor.getValue().Split('\n').[int cursor.line ..]
 
+        
         let foundOpt =
+            
             linesafter
             |> Seq.skipSafe 1
             |> Seq.tryFindIndex (fun f -> Regex.Match(f, headingregex).Success)
@@ -52,6 +54,77 @@ let rec goToNextHeading (plugin: ExtendedPlugin<PluginSettings>) =
             let newpos = int cursor.line + moveby + 1 |> float
             editor.setCursor (U2.Case2 newpos)
             doNone)
+
+
+let rec goToPrevEmptyLine (plugin: ExtendedPlugin<PluginSettings>) =
+    Command.forEditor (nameof goToPrevEmptyLine) "Go to previous empty line" (fun editor ->
+        let cursor = editor.getCursor ()
+
+        let linesbefore =
+            editor.getValue().Split('\n').[.. int cursor.line]
+            |> Array.rev
+
+        let currentIsEmpty =
+            Regex.Match(editor.getLine (int cursor.line), "^\\s*$").Success
+
+        let foundOpt =
+            if not currentIsEmpty then 
+                linesbefore
+                |> Seq.skipSafe 1
+                |> Seq.tryFindIndex (fun f -> Regex.Match(f, "^\\s*$").Success)
+            else 
+                let nToSkip = 
+                    linesbefore
+                    |> Seq.tryFindIndex (fun f -> not (Regex.Match(f, "^\\s*$").Success))
+                    |> Option.map ((+) 1)
+                    |> Option.defaultValue 1
+                linesbefore
+                |> Seq.skipSafe nToSkip
+                |> Seq.tryFindIndex (fun f -> Regex.Match(f, "^\\s*$").Success)
+                |> Option.map ((+) (nToSkip - 1))
+
+        match foundOpt with
+        | None -> doNone
+        | Some moveby ->
+            let newpos = int cursor.line - moveby - 1 |> float
+            editor.setCursor (U2.Case2 newpos)
+            doNone)
+
+
+let rec goToNextEmptyLine (plugin: ExtendedPlugin<PluginSettings>) =
+    Command.forEditor (nameof goToNextEmptyLine) "Go to next empty line" (fun editor ->
+        let cursor = editor.getCursor ()
+
+        let linesafter =
+            editor.getValue().Split('\n').[int cursor.line ..]
+
+        let currentIsEmpty =
+            Regex.Match(editor.getLine (int cursor.line), "^\\s*$").Success
+
+        let foundOpt =
+            if not currentIsEmpty then 
+                linesafter
+                |> Seq.skipSafe 1
+                |> Seq.tryFindIndex (fun f -> Regex.Match(f, "^\\s*$").Success)
+            else 
+                let nToSkip = 
+                    linesafter
+                    |> Seq.tryFindIndex (fun f -> not (Regex.Match(f, "^\\s*$").Success))
+                    |> Option.map ((+) 1)
+                    |> Option.defaultValue 1
+                linesafter
+                |> Seq.skipSafe nToSkip
+                |> Seq.tryFindIndex (fun f -> Regex.Match(f, "^\\s*$").Success)
+                |> Option.map ((+) (nToSkip - 1))
+      
+        match foundOpt with
+        | None -> doNone
+        | Some moveby ->
+            let newpos = int cursor.line + moveby + 1 |> float
+            editor.setCursor (U2.Case2 newpos)
+            doNone)
+
+
 
 let rec copyNextCodeBlock (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor (nameof copyNextCodeBlock) "Copy Next Code Block" (fun edit ->
@@ -413,7 +486,11 @@ let rec insertDefaultCallout (plugin: ExtendedPlugin<PluginSettings>) =
 
 let rec insertCodeBlock (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor (nameof insertCodeBlock) "Insert Code Block" (fun edit ->
-        edit.replaceSelection ($"````{plugin.settings.defaultCodeBlockLanguage}\n\n````")
+        let newBlock = 
+            match plugin.settings.use3BackticksForCodeBlock with
+            | true -> ($"```{plugin.settings.defaultCodeBlockLanguage}\n\n```")
+            | false -> ($"````{plugin.settings.defaultCodeBlockLanguage}\n\n````")
+        edit.replaceSelection newBlock
         let cursor = edit.getCursor ()
         edit.setCursor (U2.Case2(cursor.line - 1.))
         doNone)

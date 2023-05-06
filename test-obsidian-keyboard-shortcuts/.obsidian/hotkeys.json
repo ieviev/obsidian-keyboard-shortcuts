@@ -261,5 +261,21 @@
       ],
       "key": "D"
     }
+  ],
+  "quick-snippets-and-navigation:goToNextEmptyLine": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "ArrowDown"
+    }
+  ],
+  "quick-snippets-and-navigation:goToPrevEmptyLine": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "ArrowUp"
+    }
   ]
 }
