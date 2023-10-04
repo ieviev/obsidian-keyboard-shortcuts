@@ -12,14 +12,22 @@ no keybinds are set on install, you have to configure them yourself
 - note: only works in edit mode
 
 
-![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/obs-go-to-heading.gif?raw=true)
+![](https://github.com/ieviev/obsidian-keyboard-shortcuts/blob/main/_resources/obs-go-to-heading.gif?raw=true)
+
+
+## Select current heading block
+
+- Select current heading block: selects text until the next heading or end of document
+
+![](https://github.com/ieviev/obsidian-keyboard-shortcuts/blob/main/_resources/select-current-block.gif?raw=true)
+
 
 ## Copy code block / Copy next code block 
 
 - Copy code block: shows a list of code blocks and allows you to search and copy one of them
 - Copy next code block: copies the next code block, closest to the cursor
 
-![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/obs-copying-codeblocks.gif?raw=true)
+![](https://github.com/ieviev/obsidian-keyboard-shortcuts/blob/main/_resources/obs-copying-codeblocks.gif?raw=true)
 
 ## Switcher extensions
 
@@ -35,7 +43,7 @@ obsidian-another-quick-switcher:search-command_recent-search
 
 Allows performing a 2-step search, first filtering notes by tag.
 
-![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/obs-search-by-tag.gif?raw=true)
+![](https://github.com/ieviev/obsidian-keyboard-shortcuts/blob/main/_resources/obs-search-by-tag.gif?raw=true)
 
 ### Switcher extensions / Folded search by Tag
 
@@ -43,14 +51,14 @@ Tag search with:
 - Unfolding tags
 - AND queries
 
-![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/folded-search-by-tag.gif?raw=true)
+![](https://github.com/ieviev/obsidian-keyboard-shortcuts/blob/main/_resources/folded-search-by-tag.gif?raw=true)
 <!-- ![](_resources/folded-search-by-tag.gif) -->
 
 ### Switcher extensions / Open switcher with Tag 1
 
 Opens the switcher with the first tag in the file already added to the query.
 
-![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/obs-with-tag-1.gif?raw=true)
+![](https://github.com/ieviev/obsidian-keyboard-shortcuts/blob/main/_resources/obs-with-tag-1.gif?raw=true)
 
 > NOTE 2: if you want to find the command id for another switcher command press ctrl+shift+i to open the developer console and run this line.
 
@@ -68,7 +76,7 @@ app.commands.listCommands().map(x => x.id);
 - the default language of the code block is configurable in settings
 - the default callout type is also configurable in settings
 
-![](https://github.com/aciq/obsidian-keyboard-shortcuts/blob/main/_resources/obs-inserting-codeblocks-headings.gif?raw=true)
+![](https://github.com/ieviev/obsidian-keyboard-shortcuts/blob/main/_resources/obs-inserting-codeblocks-headings.gif?raw=true)
 
 
 # development

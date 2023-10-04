@@ -690,8 +690,14 @@ function value(x) {
 function flatten(x) {
   return x == null ? void 0 : value(x);
 }
+function toArray(opt) {
+  return opt == null ? [] : [value(opt)];
+}
 function defaultArg(opt, defaultValue) {
   return opt != null ? value(opt) : defaultValue;
+}
+function defaultArgWith(opt, defThunk) {
+  return opt != null ? value(opt) : defThunk();
 }
 function map(mapping, opt) {
   return opt != null ? some(mapping(value(opt))) : void 0;
@@ -1375,7 +1381,7 @@ function head(xs) {
 function tail(xs) {
   return FSharpList__get_Tail(xs);
 }
-function toArray(xs) {
+function toArray2(xs) {
   const len = FSharpList__get_Length(xs) | 0;
   const res = fill(new Array(len), 0, len, null);
   const loop = (i_mut, xs_1_mut) => {
@@ -1731,9 +1737,9 @@ function singleton2(x) {
 function ofArray2(arr) {
   return arr;
 }
-function toArray2(xs) {
+function toArray3(xs) {
   if (xs instanceof FSharpList) {
-    return toArray(xs);
+    return toArray2(xs);
   } else {
     return Array.from(xs);
   }
@@ -1911,6 +1917,9 @@ var CachedSeq$1 = class {
     return getEnumerator(_.res);
   }
 };
+function reverse2(xs) {
+  return delay(() => ofArray2(reverse(toArray3(xs))));
+}
 function collect(mapping, xs) {
   return delay(() => concat(map4(mapping, xs)));
 }
@@ -1918,11 +1927,11 @@ function where(predicate, xs) {
   return filter(predicate, xs);
 }
 function pairwise2(xs) {
-  return delay(() => ofArray2(pairwise(toArray2(xs))));
+  return delay(() => ofArray2(pairwise(toArray3(xs))));
 }
 function sortWith(comparer, xs) {
   return delay(() => {
-    const arr = toArray2(xs);
+    const arr = toArray3(xs);
     arr.sort(comparer);
     return ofArray2(arr);
   });
@@ -2260,11 +2269,29 @@ function Content_getCodeBlocks(app) {
   } else {
     const view_1 = value(view);
     const lines = split(view_1.getViewData(), ["\n"], null, 0);
-    return map((optionalCodeblockSections) => toArray2(map4((f_1) => {
+    return map((optionalCodeblockSections) => toArray3(map4((f_1) => {
       const startLine = ~~f_1.position.start.line + 1 | 0;
       const endLine = ~~f_1.position.end.line - 1 | 0;
       return new Content_CodeBlockContent(startLine, join("\n", lines.slice(startLine, endLine + 1)));
     }, optionalCodeblockSections)), flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option))))));
+  }
+}
+function Content_getHeadings(app) {
+  let option, objectArg_1;
+  let view;
+  const arg = obsidian2.MarkdownView;
+  const objectArg = app.workspace;
+  view = objectArg.getActiveViewOfType(arg);
+  if (view == null) {
+    return void 0;
+  } else {
+    const view_1 = value(view);
+    const lines = split(view_1.getViewData(), ["\n"], null, 0);
+    return map((headingCaches) => toArray3(map4((f_1) => {
+      const startLine = ~~f_1.position.start.line + 1 | 0;
+      const endLine = ~~f_1.position.end.line - 1 | 0;
+      return new Content_CodeBlockContent(startLine, join("\n", where((f_2) => !(f_2.indexOf("title:") === 0), lines.slice(startLine, endLine + 1))));
+    }, headingCaches)), bind((f) => map((d) => d.slice(), f.headings), (option = app.workspace.getActiveFile(), bind((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option))));
   }
 }
 function Seq_skipSafe(num, source) {
@@ -2334,6 +2361,24 @@ function ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(this$, file) {
   } else {
     return empty2();
   }
+}
+function EditorPosition_create(ch, line) {
+  let _ch = ch;
+  let _line = line;
+  return new class {
+    get ch() {
+      return ch;
+    }
+    set ch(v) {
+      _ch = v;
+    }
+    get line() {
+      return _line;
+    }
+    set line(v_1) {
+      _line = v_1;
+    }
+  }();
 }
 
 // build/Commands.js
@@ -2470,7 +2515,7 @@ var Dictionary = class {
   }
   ["System.Collections.Generic.IDictionary`2.get_Keys"]() {
     const this$ = this;
-    return toArray2(delay(() => map4((pair) => pair[0], this$)));
+    return toArray3(delay(() => map4((pair) => pair[0], this$)));
   }
   ["System.Collections.Generic.IDictionary`2.Remove2B595"](key) {
     const this$ = this;
@@ -2489,7 +2534,7 @@ var Dictionary = class {
   }
   ["System.Collections.Generic.IDictionary`2.get_Values"]() {
     const this$ = this;
-    return toArray2(delay(() => map4((pair) => pair[1], this$)));
+    return toArray3(delay(() => map4((pair) => pair[1], this$)));
   }
   get size() {
     const this$ = this;
@@ -2698,29 +2743,53 @@ function doNone(f) {
 function goToPrevHeading(plugin) {
   return Command_forEditor("goToPrevHeading", "Go to previous heading", uncurry(2, (editor) => {
     const cursor = editor.getCursor();
-    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, reverse(split(editor.getValue(), ["\n"], null, 0).slice(void 0, ~~cursor.line + 1))));
-    if (foundOpt != null) {
-      const moveby = foundOpt | 0;
-      const newpos = ~~cursor.line - moveby - 1;
-      editor.setCursor(newpos);
-      return doNone;
+    const matchValue = Content_getHeadings(plugin.app);
+    if (matchValue != null) {
+      const targetHeading = tryFind((v) => v.startLine < ~~cursor.line, reverse2(matchValue));
+      if (targetHeading != null) {
+        const heading = targetHeading;
+        editor.setCursor(heading.startLine - 1);
+      }
     } else {
-      return doNone;
+      Notice_show("no headings found");
     }
+    return doNone;
   }));
 }
 function goToNextHeading(plugin) {
   return Command_forEditor("goToNextHeading", "Go to next heading", uncurry(2, (editor) => {
     const cursor = editor.getCursor();
-    const foundOpt = tryFindIndex((f) => match(/^(#{1,6}) /gu, f) != null, Seq_skipSafe(1, split(editor.getValue(), ["\n"], null, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], null, 0).length)));
-    if (foundOpt != null) {
-      const moveby = foundOpt | 0;
-      const newpos = ~~cursor.line + moveby + 1;
-      editor.setCursor(newpos);
-      return doNone;
+    const matchValue = Content_getHeadings(plugin.app);
+    if (matchValue != null) {
+      const targetHeading = tryFind((v) => v.startLine > ~~cursor.line + 1, matchValue);
+      if (targetHeading != null) {
+        const heading = targetHeading;
+        editor.setCursor(heading.startLine - 1);
+      }
     } else {
-      return doNone;
+      Notice_show("no headings found");
     }
+    return doNone;
+  }));
+}
+function selectCurrentBlock(plugin) {
+  return Command_forEditor("selectCurrentBlock", "Select current heading block", uncurry(2, (editor) => {
+    const cursor = editor.getCursor();
+    const matchValue = Content_getHeadings(plugin.app);
+    if (matchValue != null) {
+      const headings = matchValue;
+      iterate((topHeading) => {
+        defaultArgWith(map((bottomHeading) => {
+          const endlineText = editor.getLine(bottomHeading.startLine - 2);
+          editor.setSelection(EditorPosition_create(0, topHeading.startLine - 1), EditorPosition_create(endlineText.length, bottomHeading.startLine - 2));
+        }, tryFind((v_1) => v_1.startLine > topHeading.startLine, headings)), () => {
+          editor.setSelection(EditorPosition_create(0, topHeading.startLine - 1), EditorPosition_create(0, editor.lastLine()));
+        });
+      }, toArray(tryFind((v) => v.startLine <= ~~cursor.line + 1, reverse2(headings))));
+    } else {
+      Notice_show("no headings found");
+    }
+    return doNone;
   }));
 }
 function goToPrevEmptyLine(plugin) {
@@ -2975,7 +3044,7 @@ function foldedTagSearch(plugin) {
           } else {
             return false;
           }
-        }, (source_1 = plugin.app.vault.getMarkdownFiles(), map4((f1 = (objectArg = plugin.app, (arg) => ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(objectArg, arg)), (arg_1) => toArray2(f1(arg_1))), source_1)))), {
+        }, (source_1 = plugin.app.vault.getMarkdownFiles(), map4((f1 = (objectArg = plugin.app, (arg) => ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(objectArg, arg)), (arg_1) => toArray3(f1(arg_1))), source_1)))), {
           Equals: (x, y) => x === y,
           GetHashCode: stringHash
         }))))), queryInput === "" ? sortByDescending((f_6) => f_6[0].count, results, {
@@ -3113,6 +3182,6 @@ function Plugin2__onload(this$) {
   iterate((cmd) => {
     let arg_1;
     arg_1 = cmd(this$.plugin), this$.plugin.addCommand(arg_1);
-  }, [copyCodeBlock, copyNextCodeBlock, goToPrevEmptyLine, goToNextEmptyLine, goToPrevHeading, goToNextHeading, increaseHeading, decreaseHeading, insertHeading4, insertHeading5, insertDefaultCallout, insertCodeBlock, openSwitcherWithTag1, foldedTagSearch, tagSearch]);
+  }, [copyCodeBlock, copyNextCodeBlock, goToPrevEmptyLine, goToNextEmptyLine, selectCurrentBlock, goToPrevHeading, goToNextHeading, increaseHeading, decreaseHeading, insertHeading4, insertHeading5, insertDefaultCallout, insertCodeBlock, openSwitcherWithTag1, foldedTagSearch, tagSearch]);
 }
 module.exports = Plugin2;

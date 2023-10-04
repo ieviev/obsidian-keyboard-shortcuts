@@ -130,6 +130,13 @@
         "Mod"
       ],
       "key": ";"
+    },
+    {
+      "modifiers": [
+        "Alt",
+        "Mod"
+      ],
+      "key": "'"
     }
   ],
   "obsidian-another-quick-switcher:search-command_Recent search": [
@@ -276,6 +283,15 @@
         "Mod"
       ],
       "key": "ArrowUp"
+    }
+  ],
+  "quick-snippets-and-navigation:selectCurrentBlock": [
+    {
+      "modifiers": [
+        "Alt",
+        "Shift"
+      ],
+      "key": "\\"
     }
   ]
 }

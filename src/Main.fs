@@ -55,7 +55,9 @@ type Plugin2(app, manifest) as instance =
 
                 Commands.goToPrevEmptyLine
                 Commands.goToNextEmptyLine
-                
+
+                Commands.selectCurrentBlock
+
                 Commands.goToPrevHeading
                 Commands.goToNextHeading
 
@@ -66,7 +68,7 @@ type Plugin2(app, manifest) as instance =
                 Commands.insertHeading5
                 Commands.insertDefaultCallout
                 Commands.insertCodeBlock
-                
+
                 Commands.openSwitcherWithTag1
                 Commands.foldedTagSearch
                 Commands.tagSearch
