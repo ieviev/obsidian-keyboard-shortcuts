@@ -17,14 +17,10 @@ no keybinds are set on install, you have to configure them yourself
 - Copy Next Code Block
 - Copy Code Block
 - Search by Tag
-- Insert heading 4
-- Insert heading 5
 - Increase Heading level
 - Decrease Heading level
 - Insert Default Callout
 - Insert Code Block
-- Open Switcher with Tag 1
-
 
 ### Go to previous/next heading and Go to previous/next empty line
 
@@ -73,23 +69,8 @@ Tag search with:
 ![](https://github.com/ieviev/obsidian-keyboard-shortcuts/blob/main/_resources/folded-search-by-tag.gif?raw=true)
 <!-- ![](_resources/folded-search-by-tag.gif) -->
 
-#### Switcher extensions / Open switcher with Tag 1
 
-Opens the switcher with the first tag in the file already added to the query.
-
-![](https://github.com/ieviev/obsidian-keyboard-shortcuts/blob/main/_resources/obs-with-tag-1.gif?raw=true)
-
-> NOTE 2: if you want to find the command id for another switcher command press ctrl+shift+i to open the developer console and run this line.
-
-```
-app.commands.listCommands().map(x => x.id);
-```
-
-![](_resources/command-ids.png)
-
-
-
-### Insert heading 4/5 / Insert code block / Insert callout
+### Insert code block / Insert callout
 
 - also moves the cursor inside the code block / to the title after using
 - the default language of the code block is configurable in settings
