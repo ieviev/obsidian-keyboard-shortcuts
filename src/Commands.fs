@@ -63,7 +63,7 @@ let rec goToNextHeading (plugin: ExtendedPlugin<PluginSettings>) =
         )
 
 
-let rec selectCurrentBlock (plugin: ExtendedPlugin<PluginSettings>) =
+let rec selectCurrentBlock (plugin: ExtendedPlugin<PluginSettings>) : Command =
     Command.forEditor
         (nameof selectCurrentBlock)
         "Select current heading block"
@@ -76,40 +76,49 @@ let rec selectCurrentBlock (plugin: ExtendedPlugin<PluginSettings>) =
                 Notice.show "no headings found"
                 ()
             | Some headings ->
-                let topHeadingOpt =
+                match
                     headings
                     |> Seq.rev
-                    |> Seq.tryFind (fun v -> v.startLine <= (int cursor.line + 1))
-
-                topHeadingOpt
-                |> Option.iter (fun topHeading ->
-                    headings
-                    |> Seq.tryFind (fun v -> v.startLine > (int topHeading.startLine))
-                    |> Option.map (fun bottomHeading ->
-                        let endlineText =
-                            editor.getLine (float bottomHeading.startLine - 2.)
+                    |> Seq.tryFind (fun v -> v.startLine <= int cursor.line + 1)
+                with
+                | Some topHeading ->
+                    match
+                        headings
+                        |> Seq.tryFind (fun v -> v.startLine > int topHeading.startLine)
+                    with
+                    | Some bottomHeading ->
+                        let endlineText = editor.getLine (float bottomHeading.startLine - 2.)
 
                         editor.setSelection (
-                            EditorPosition.create 0 (float topHeading.startLine - 1.),
-                            EditorPosition.create
-                                (float endlineText.Length)
-                                (float bottomHeading.startLine - 2.)
+                            jsOptions<EditorPosition> (fun v ->
+                                v.ch <- 0
+                                v.line <- float topHeading.startLine - 1.
+                            ),
+                            jsOptions<EditorPosition> (fun v ->
+                                v.ch <- float endlineText.Length
+                                v.line <- float bottomHeading.startLine - 2.
+                            )
                         )
-                    )
-                    |> Option.defaultWith (fun _ ->
+                    | None ->
                         // no bottom heading
                         editor.setSelection (
-                            EditorPosition.create 0 (float topHeading.startLine - 1.),
-                            EditorPosition.create 0. (editor.lastLine ())
+                            jsOptions<EditorPosition> (fun v ->
+                                v.ch <- 0
+                                v.line <- float topHeading.startLine - 1.
+                            ),
+                            jsOptions<EditorPosition> (fun v ->
+                                v.ch <- 0
+                                v.line <- editor.lastLine ()
+                            )
                         )
-                    )
-                )
+                | None -> ()
 
             ret
         )
 
 
-let rec goToPrevEmptyLine (plugin: ExtendedPlugin<PluginSettings>) =
+
+let rec goToPrevEmptyLine (plugin: ExtendedPlugin<PluginSettings>) : Command =
     Command.forEditor
         (nameof goToPrevEmptyLine)
         "Go to previous empty line"
@@ -577,7 +586,7 @@ let rec insertCodeBlock (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         (nameof insertCodeBlock)
         "Insert Code Block"
-        "heading-5"
+        "toy-brick"
         (fun edit ->
             let newBlock =
                 match plugin.settings.use3BackticksForCodeBlock with

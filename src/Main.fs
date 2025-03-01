@@ -68,6 +68,7 @@ type Plugin2(app, manifest) as instance =
             let decreaseHeading = plugin.addCommand (Commands.decreaseHeading plugin)
             let insertDefaultCallout = plugin.addCommand (Commands.insertDefaultCallout plugin)
             let insertCodeBlock = plugin.addCommand (Commands.insertCodeBlock plugin)
+            let selectCurrentBlock = plugin.addCommand (Commands.selectCurrentBlock plugin)
             let foldedTagSearch = plugin.addCommand (Commands.foldedTagSearch plugin)
 
             plugin.addRibbonIcon (
@@ -80,6 +81,6 @@ type Plugin2(app, manifest) as instance =
                 )
             )
             |> ignore
-           
+
 
     do plugin?onload <- onload

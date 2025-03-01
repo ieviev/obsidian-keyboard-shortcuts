@@ -1475,9 +1475,6 @@ function value(x) {
 function some(x) {
   return x == null || x instanceof Some ? new Some(x) : x;
 }
-function flatten(x) {
-  return x == null ? void 0 : value(x);
-}
 function defaultArg(opt, defaultValue) {
   return opt != null ? value(opt) : defaultValue;
 }
@@ -2643,38 +2640,6 @@ function SuggestModal_withKeyboardShortcut(keyboardShortcut, sm) {
   });
   return sm;
 }
-function SuggestModal_withCtrlKeyboardShortcut(keyboardShortcut, sm) {
-  sm.scope.register(["Mod"], keyboardShortcut.key, (evt) => {
-    keyboardShortcut.action([evt, sm]);
-    return false;
-  });
-  sm.scope.register(["Ctrl"], keyboardShortcut.key, (evt_1) => {
-    keyboardShortcut.action([evt_1, sm]);
-    return false;
-  });
-  return sm;
-}
-function SuggestModal_map(mapping, sm) {
-  mapping(sm);
-  return sm;
-}
-function SuggestModal_withInstructions(instructions, sm) {
-  let instructions$0027;
-  const collection = map3((tupledArg) => ({
-    command: tupledArg[0],
-    purpose: tupledArg[1]
-  }), instructions);
-  instructions$0027 = Array.from(collection);
-  sm.setInstructions(instructions$0027);
-  return sm;
-}
-function SuggestModal_openModal(sm) {
-  sm.open();
-}
-function Notice_show(text) {
-  let objectArg;
-  objectArg = obsidian2.Notice, new objectArg(text);
-}
 var Content_CodeBlockContent = class extends Record {
   constructor(startLine, endLine, content) {
     super();
@@ -2698,7 +2663,7 @@ function Content_getCodeBlocks(app) {
       const startLine = ~~f_1.position.start.line + 1 | 0;
       const endLine = ~~f_1.position.end.line - 1 | 0;
       return new Content_CodeBlockContent(startLine, endLine, join("\n", lines.slice(startLine, endLine + 1)));
-    }, optionalCodeblockSections)), flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (file) => objectArg_1.getFileCache(file)), option))))));
+    }, optionalCodeblockSections)), bind((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), (option = app.workspace.getActiveFile(), bind((objectArg_1 = app.metadataCache, (file) => objectArg_1.getFileCache(file)), option))));
   }
 }
 function Content_getHeadings(app) {
@@ -2728,45 +2693,6 @@ function Seq_skipSafe(num, source) {
       return empty2();
     })))), delay(() => enumerateWhile(() => e["System.Collections.IEnumerator.MoveNext"](), delay(() => singleton2(e["System.Collections.Generic.IEnumerator`1.get_Current"]())))));
   }));
-}
-function Clipboard_write(txt) {
-  const matchValue = navigator.clipboard;
-  if (matchValue != null) {
-    const v = matchValue;
-    return v.writeText(txt);
-  } else {
-    return PromiseBuilder__Run_212F1D4B(promise, PromiseBuilder__Delay_62FBFDE1(promise, () => {
-      return Promise.resolve();
-    }));
-  }
-}
-function String_nthIndexOf(n, char, str) {
-  const loop = (pos_mut, n_1_mut) => {
-    loop:
-      while (true) {
-        const pos = pos_mut, n_1 = n_1_mut;
-        const matchValue = str.indexOf(char, pos) | 0;
-        if (matchValue === -1) {
-          return -1;
-        } else if (n_1 > 1) {
-          pos_mut = matchValue + 1;
-          n_1_mut = n_1 - 1;
-          continue loop;
-        } else {
-          return matchValue | 0;
-        }
-        break;
-      }
-  };
-  return loop(0, n) | 0;
-}
-function String_untilNthOccurrence(n, char, str) {
-  const matchValue = String_nthIndexOf(n, char, str) | 0;
-  if (matchValue === -1) {
-    return str;
-  } else {
-    return substring(str, 0, matchValue + 1);
-  }
 }
 function ObsidianBindings_App__App_executeCommandById_Z721C83C5(this$, commandId) {
   return this$.commands.executeCommandById(commandId);
@@ -3139,6 +3065,7 @@ function groupBy(projection, xs, comparer) {
 // build/Commands.js
 function goToPrevHeading(plugin) {
   return Command_forEditor("goToPrevHeading", "Go to previous heading", "square-chevron-up", uncurry2((editor) => {
+    let objectArg;
     const cursor = editor.getCursor();
     const matchValue = Content_getHeadings(plugin.app);
     if (matchValue != null) {
@@ -3148,13 +3075,14 @@ function goToPrevHeading(plugin) {
         editor.setCursor(heading.startLine - 1);
       }
     } else {
-      Notice_show("no headings found");
+      objectArg = obsidian3.Notice, new objectArg("no headings found");
     }
     return (arg00$0040) => void 0;
   }));
 }
 function goToNextHeading(plugin) {
   return Command_forEditor("goToNextHeading", "Go to next heading", "square-chevron-down", uncurry2((editor) => {
+    let objectArg;
     const cursor = editor.getCursor();
     const matchValue = Content_getHeadings(plugin.app);
     if (matchValue != null) {
@@ -3164,7 +3092,45 @@ function goToNextHeading(plugin) {
         editor.setCursor(heading.startLine - 1);
       }
     } else {
-      Notice_show("no headings found");
+      objectArg = obsidian3.Notice, new objectArg("no headings found");
+    }
+    return (arg00$0040) => void 0;
+  }));
+}
+function selectCurrentBlock(plugin) {
+  return Command_forEditor("selectCurrentBlock", "Select current heading block", "text-select", uncurry2((editor) => {
+    let objectArg;
+    const cursor = editor.getCursor();
+    const matchValue = Content_getHeadings(plugin.app);
+    if (matchValue != null) {
+      const headings = matchValue;
+      const matchValue_1 = tryFind((v) => v.startLine <= ~~cursor.line + 1, reverse2(headings));
+      if (matchValue_1 == null) {
+      } else {
+        const topHeading = matchValue_1;
+        const matchValue_2 = tryFind((v_1) => v_1.startLine > topHeading.startLine, headings);
+        if (matchValue_2 == null) {
+          editor.setSelection({
+            ch: 0,
+            line: topHeading.startLine - 1
+          }, {
+            ch: 0,
+            line: editor.lastLine()
+          });
+        } else {
+          const bottomHeading = matchValue_2;
+          const endlineText = editor.getLine(bottomHeading.startLine - 2);
+          editor.setSelection({
+            ch: 0,
+            line: topHeading.startLine - 1
+          }, {
+            ch: endlineText.length,
+            line: bottomHeading.startLine - 2
+          });
+        }
+      }
+    } else {
+      objectArg = obsidian3.Notice, new objectArg("no headings found");
     }
     return (arg00$0040) => void 0;
   }));
@@ -3215,7 +3181,7 @@ function goToNextEmptyLine(plugin) {
 }
 function copyNextCodeBlock(plugin) {
   return Command_forEditor("copyNextCodeBlock", "Copy Next Code Block", "book-check", uncurry2((edit) => {
-    let message, objectArg;
+    let message, objectArg, matchValue_1, v_1;
     const matchValue = Content_getCodeBlocks(plugin.app);
     if (matchValue != null) {
       const blocks = matchValue;
@@ -3225,7 +3191,9 @@ function copyNextCodeBlock(plugin) {
         const v = _arg_1;
         message = `copied:
 ${substring(v.content, 0, min(v.content.length, 50))}`, objectArg = obsidian3.Notice, new objectArg(message);
-        Clipboard_write(v.content);
+        matchValue_1 = navigator.clipboard, matchValue_1 != null ? (v_1 = matchValue_1, v_1.writeText(v.content)) : PromiseBuilder__Run_212F1D4B(promise, PromiseBuilder__Delay_62FBFDE1(promise, () => {
+          return Promise.resolve();
+        }));
       } else {
         new obsidian3.Notice("could not find a code block");
       }
@@ -3243,11 +3211,13 @@ function copyCodeBlock(plugin) {
     } else {
       const codeblocks_1 = value(codeblocks);
       const modal = SuggestModal_withOnChooseSuggestion((tupledArg) => {
-        let message, objectArg;
+        let message, objectArg, matchValue, v;
         const f_3 = tupledArg[0];
         message = `copied:
 ${substring(f_3.content, 0, min(f_3.content.length, 50))}`, objectArg = obsidian3.Notice, new objectArg(message);
-        Clipboard_write(f_3.content);
+        matchValue = navigator.clipboard, matchValue != null ? (v = matchValue, v.writeText(f_3.content)) : PromiseBuilder__Run_212F1D4B(promise, PromiseBuilder__Delay_62FBFDE1(promise, () => {
+          return Promise.resolve();
+        }));
       }, SuggestModal_withRenderSuggestion((f_2, elem) => {
         elem.innerText = f_2.content;
       }, SuggestModal_withGetSuggestions((queryInput) => {
@@ -3262,13 +3232,14 @@ ${substring(f_3.content, 0, min(f_3.content.length, 50))}`, objectArg = obsidian
 }
 function tagSearch(plugin) {
   return Command_forMenu("tagSearch", "Search by Tag", "text-search", () => {
-    SuggestModal_openModal(SuggestModal_withOnChooseSuggestion((tupledArg_2) => {
+    const sm_3 = SuggestModal_withOnChooseSuggestion((tupledArg_2) => {
+      let objectArg_2, objectArg_1;
       const cmd = plugin.settings.defaultModalCommand;
       const matchValue = plugin.app.commands.executeCommandById(cmd);
       if (matchValue) {
         const matchValue_1 = document.querySelector("input.prompt-input");
         if (equals(matchValue_1, defaultOf())) {
-          Notice_show("plugin outdated");
+          objectArg_2 = obsidian3.Notice, new objectArg_2("plugin outdated");
         } else {
           const modalInput = matchValue_1;
           modalInput.value = `${tupledArg_2[0].tag} `;
@@ -3276,7 +3247,7 @@ function tagSearch(plugin) {
           modalInput.dispatchEvent(ev);
         }
       } else {
-        Notice_show(`failed to run command: ${cmd}, configure Default modal command in settings`);
+        objectArg_1 = obsidian3.Notice, new objectArg_1(`failed to run command: ${cmd}, configure Default modal command in settings`);
       }
     }, SuggestModal_withRenderSuggestion((f_2, elem) => {
       elem.innerText = `${f_2.count}:	${f_2.tag}`;
@@ -3295,7 +3266,8 @@ function tagSearch(plugin) {
         Compare: comparePrimitives
       })));
       return Array.from(collection);
-    }, SuggestModal_create(plugin.app)))));
+    }, SuggestModal_create(plugin.app))));
+    sm_3.open();
     return void 0;
   });
 }
@@ -3324,66 +3296,110 @@ function FoldedTagSearchState_get_Default() {
 function foldedTagSearch(plugin) {
   return Command_forMenu("foldedTagSearch", "Folded search by Tag", "search-slash", () => {
     const createModal = (state_1) => {
+      let keyboardShortcut_3, sm_10, sm_4, sm_2, placeholder, instructions$0027, collection;
       const undoLastAction = (tupledArg_1) => {
-        let bind$0040;
+        let n_3, str_4, matchValue_4, loop_1, bind$0040;
         const modal = tupledArg_1[1];
-        const matchValue = state_1.Actions;
-        if (!isEmpty(matchValue)) {
-          if (head(matchValue).tag === 0) {
+        const matchValue_2 = state_1.Actions;
+        if (!isEmpty(matchValue_2)) {
+          if (head(matchValue_2).tag === 0) {
             modal.close();
             const prevLevel = state_1.Level - 1 | 0;
-            createModal(new FoldedTagSearchState(prevLevel, prevLevel === 1 ? "" : String_untilNthOccurrence(prevLevel - 1, "/", ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal).tag), state_1.Filters, tail(matchValue)));
+            createModal(new FoldedTagSearchState(prevLevel, prevLevel === 1 ? "" : (n_3 = prevLevel - 1 | 0, str_4 = ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal).tag, matchValue_4 = (loop_1 = (pos_1_mut, n_1_3_mut) => {
+              loop_1:
+                while (true) {
+                  const pos_1 = pos_1_mut, n_1_3 = n_1_3_mut;
+                  const matchValue_5 = str_4.indexOf("/", pos_1) | 0;
+                  if (matchValue_5 === -1) {
+                    return -1;
+                  } else if (n_1_3 > 1) {
+                    pos_1_mut = matchValue_5 + 1;
+                    n_1_3_mut = n_1_3 - 1;
+                    continue loop_1;
+                  } else {
+                    return matchValue_5 | 0;
+                  }
+                  break;
+                }
+            }, loop_1(0, n_3)) | 0, matchValue_4 === -1 ? str_4 : substring(str_4, 0, matchValue_4 + 1)), state_1.Filters, tail(matchValue_2)));
           } else if (isEmpty(state_1.Filters)) {
           } else {
             modal.close();
-            createModal((bind$0040 = FoldedTagSearchState_get_Default(), new FoldedTagSearchState(bind$0040.Level, bind$0040.Query, tail(state_1.Filters), skipWhile((f_4) => !equals(f_4, new FoldedTagSearchAction(1, [])), tail(matchValue)))));
+            createModal((bind$0040 = FoldedTagSearchState_get_Default(), new FoldedTagSearchState(bind$0040.Level, bind$0040.Query, tail(state_1.Filters), skipWhile((f_4) => !equals(f_4, new FoldedTagSearchAction(1, [])), tail(matchValue_2)))));
           }
         }
       };
-      SuggestModal_openModal(SuggestModal_withOnChooseSuggestion((tupledArg_5) => {
+      const sm_13 = SuggestModal_withOnChooseSuggestion((tupledArg_6) => {
+        let objectArg_2, objectArg_1;
         const cmd = plugin.settings.defaultModalCommand;
-        const matchValue_3 = ObsidianBindings_App__App_executeCommandById_Z721C83C5(plugin.app, cmd);
-        if (matchValue_3) {
-          const matchValue_4 = document.querySelector("input.prompt-input");
-          if (equals(matchValue_4, defaultOf())) {
-            Notice_show("plugin outdated");
+        const matchValue_7 = ObsidianBindings_App__App_executeCommandById_Z721C83C5(plugin.app, cmd);
+        if (matchValue_7) {
+          const matchValue_8 = document.querySelector("input.prompt-input");
+          if (equals(matchValue_8, defaultOf())) {
+            objectArg_2 = obsidian3.Notice, new objectArg_2("plugin outdated");
           } else {
-            const modalInput = matchValue_4;
-            const searchString = join(" ", cons(tupledArg_5[0].tag, state_1.Filters)) + " ";
+            const modalInput = matchValue_8;
+            const searchString = join(" ", cons(tupledArg_6[0].tag, state_1.Filters)) + " ";
             modalInput.value = searchString;
             const ev = new Event("input", defaultOf());
             modalInput.dispatchEvent(ev);
           }
         } else {
-          Notice_show(`failed to run command: ${cmd}, configure Default modal command in settings`);
+          objectArg_1 = obsidian3.Notice, new objectArg_1(`failed to run command: ${cmd}, configure Default modal command in settings`);
         }
-      }, SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1([], "Tab", (tupledArg_4) => {
-        const modal_2 = tupledArg_4[1];
+      }, SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1([], "Tab", (tupledArg_5) => {
+        const modal_2 = tupledArg_5[1];
         const currSelection_1 = ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_2);
-        const matchValue_2 = ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_2).tag.endsWith("/");
-        if (matchValue_2) {
+        const matchValue_6 = ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_2).tag.endsWith("/");
+        if (matchValue_6) {
           const newState = new FoldedTagSearchState(state_1.Level + 1, currSelection_1.tag, state_1.Filters, cons(new FoldedTagSearchAction(0, []), state_1.Actions));
           modal_2.close();
           createModal(newState);
         }
-      }), SuggestModal_withCtrlKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1([], "Enter", (tupledArg_3) => {
+      }), (keyboardShortcut_3 = new SuggestModal_SuggestModalKeyboardShortcut$1([], "Enter", (tupledArg_4) => {
         let bind$0040_1;
-        const modal_1 = tupledArg_3[1];
+        const modal_1 = tupledArg_4[1];
         const current = ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_1).tag;
         if (exists((f_8) => f_8 === current, state_1.Filters)) {
         } else {
           modal_1.close();
           createModal((bind$0040_1 = FoldedTagSearchState_get_Default(), new FoldedTagSearchState(bind$0040_1.Level, bind$0040_1.Query, cons(ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_1).tag, state_1.Filters), cons(new FoldedTagSearchAction(1, []), state_1.Actions))));
         }
-      }), SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Shift"], "Tab", undoLastAction), SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Shift"], "Enter", undoLastAction), SuggestModal_withRenderSuggestion((f_7, elem) => {
+      }), sm_10 = SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Shift"], "Tab", undoLastAction), SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Shift"], "Enter", undoLastAction), SuggestModal_withRenderSuggestion((f_7, elem) => {
         elem.innerText = `${f_7.count}:	${f_7.tag}`;
       }, SuggestModal_withGetSuggestions2((queryInput) => {
         let results, state, source_1, f1, objectArg;
         const query = obsidian3.prepareQuery(queryInput);
-        return map4((tuple_1) => tuple_1[0], (results = choose((f_5) => map((search) => [f_5, search.score], obsidian3.fuzzySearch(query, f_5.tag)), map4((tupledArg_2) => ({
-          count: tupledArg_2[1],
-          tag: tupledArg_2[0]
-        }), (state = state_1, map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_3) => String_untilNthOccurrence(state.Level, "/", f_3), collect((tags_1) => where((f_2) => f_2.startsWith(state.Query), tags_1), where((tags) => {
+        return map4((tuple_1) => tuple_1[0], (results = choose((f_5) => map((search) => [f_5, search.score], obsidian3.fuzzySearch(query, f_5.tag)), map4((tupledArg_3) => ({
+          count: tupledArg_3[1],
+          tag: tupledArg_3[0]
+        }), (state = state_1, map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_3) => {
+          const str_1 = f_3;
+          let matchValue;
+          const loop = (pos_mut, n_1_1_mut) => {
+            loop:
+              while (true) {
+                const pos = pos_mut, n_1_1 = n_1_1_mut;
+                const matchValue_1 = str_1.indexOf("/", pos) | 0;
+                if (matchValue_1 === -1) {
+                  return -1;
+                } else if (n_1_1 > 1) {
+                  pos_mut = matchValue_1 + 1;
+                  n_1_1_mut = n_1_1 - 1;
+                  continue loop;
+                } else {
+                  return matchValue_1 | 0;
+                }
+                break;
+              }
+          };
+          matchValue = loop(0, state.Level);
+          if (matchValue === -1) {
+            return str_1;
+          } else {
+            return substring(str_1, 0, matchValue + 1);
+          }
+        }, collect((tags_1) => where((f_2) => f_2.startsWith(state.Query), tags_1), where((tags) => {
           if (forAll((filter2) => tags.some((f) => f.startsWith(filter2)), state.Filters)) {
             return tags.some((f_1) => f_1.startsWith(state.Query));
           } else {
@@ -3397,10 +3413,17 @@ function foldedTagSearch(plugin) {
         }) : sortByDescending((tuple) => tuple[1], results, {
           Compare: comparePrimitives
         })));
-      }, SuggestModal_withInstructions(ofArray([["Tab", "Expand tag"], ["Ctrl+Enter", "Add another tag"], ["Shift+Enter/Shift+Tab", "Undo last action"], ["Enter", "Search"]]), SuggestModal_map((sm) => {
-        const placeholder = join(" AND ", cons(state_1.Query, state_1.Filters));
-        sm.setPlaceholder(placeholder);
-      }, SuggestModal_create(plugin.app)))))))))));
+      }, (sm_4 = (sm_2 = SuggestModal_create(plugin.app), placeholder = join(" AND ", cons(state_1.Query, state_1.Filters)), sm_2.setPlaceholder(placeholder), sm_2), instructions$0027 = (collection = map3((tupledArg_2) => ({
+        command: tupledArg_2[0],
+        purpose: tupledArg_2[1]
+      }), ofArray([["Tab", "Expand tag"], ["Ctrl+Enter", "Add another tag"], ["Shift+Enter/Shift+Tab", "Undo last action"], ["Enter", "Search"]])), Array.from(collection)), sm_4.setInstructions(instructions$0027), sm_4))))), void sm_10.scope.register(["Mod"], keyboardShortcut_3.key, (evt_1) => {
+        keyboardShortcut_3.action([evt_1, sm_10]);
+        return false;
+      }), void sm_10.scope.register(["Ctrl"], keyboardShortcut_3.key, (evt_1_1) => {
+        keyboardShortcut_3.action([evt_1_1, sm_10]);
+        return false;
+      }), sm_10)));
+      sm_13.open();
     };
     createModal(FoldedTagSearchState_get_Default());
     return void 0;
@@ -3452,7 +3475,7 @@ function insertDefaultCallout(plugin) {
   }));
 }
 function insertCodeBlock(plugin) {
-  return Command_forEditor("insertCodeBlock", "Insert Code Block", "heading-5", uncurry2((edit) => {
+  return Command_forEditor("insertCodeBlock", "Insert Code Block", "toy-brick", uncurry2((edit) => {
     const newBlock = plugin.settings.use3BackticksForCodeBlock ? `\`\`\`${plugin.settings.defaultCodeBlockLanguage}
 
 \`\`\`` : `\`\`\`\`${plugin.settings.defaultCodeBlockLanguage}
@@ -3527,6 +3550,7 @@ function Plugin2__onload(this$) {
   const decreaseHeading2 = this$.plugin.addCommand(decreaseHeading(this$.plugin));
   const insertDefaultCallout2 = this$.plugin.addCommand(insertDefaultCallout(this$.plugin));
   const insertCodeBlock2 = this$.plugin.addCommand(insertCodeBlock(this$.plugin));
+  const selectCurrentBlock2 = this$.plugin.addCommand(selectCurrentBlock(this$.plugin));
   const foldedTagSearch2 = this$.plugin.addCommand(foldedTagSearch(this$.plugin));
   this$.plugin.addRibbonIcon("layers-2", "Quick snippets and navigation: Search tags", (v) => {
     console.log(some(settingsTab));

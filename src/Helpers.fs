@@ -1,17 +1,14 @@
 ﻿[<AutoOpen>]
 module Fs.Obsidian.Helpers
 
-open System
 open Browser.Types
 open Fable.Core
 open Fable.Core.JS
-open Fable.Import
 open ObsidianBindings
 open JsInterop
-open System.Collections.Generic
 
 [<ImportAll("obsidian")>]
-let obsidian: ObsidianBindings.IExports = jsNative
+let obsidian: IExports = jsNative
 
 module Command =
 
@@ -50,8 +47,6 @@ module SuggestModal =
         key: string
         action: (KeyboardEvent * SuggestModal<'t>) -> unit
     }
-
-    open JsInterop
 
     let create app = obsidian.SuggestModal.Create(app)
 
@@ -117,7 +112,7 @@ module SuggestModal =
         sm
 
     /// helper to use ctrl and mod both
-    let withCtrlKeyboardShortcut
+    let inline withCtrlKeyboardShortcut
         (keyboardShortcut: SuggestModalKeyboardShortcut<'t>)
         (sm: SuggestModal<'t>)
         =
@@ -132,7 +127,7 @@ module SuggestModal =
         |> ignore
 
         sm.scope.register (
-            ResizeArray([ Modifier.Ctrl ]),
+            ResizeArray [ Modifier.Ctrl ],
             Some keyboardShortcut.key,
             !!(fun (evt: KeyboardEvent) ->
                 keyboardShortcut.action (evt, sm)
@@ -143,7 +138,7 @@ module SuggestModal =
 
         sm
 
-    let map (mapping) (sm: SuggestModal<'t>) =
+    let inline map mapping (sm: SuggestModal<'t>) =
         mapping sm
         sm
 
@@ -152,7 +147,7 @@ module SuggestModal =
     /// instructions -> (command * purpose) list <br/>
     /// line 2
     /// </summary>
-    let withInstructions (instructions: (string * string) list) (sm: SuggestModal<'t>) =
+    let inline withInstructions (instructions: (string * string) list) (sm: SuggestModal<'t>) =
         let instructions': ResizeArray<Instruction> =
             instructions
             |> List.map (fun (command, purpose) ->
@@ -167,31 +162,28 @@ module SuggestModal =
         sm
 
 
-    let mapResultContainer (map) (sm: SuggestModal<'t>) =
+    let inline mapResultContainer (map) (sm: SuggestModal<'t>) =
         map sm.resultContainerEl
         sm
 
-    let mapBackgroundContainer (mapping) (sm: SuggestModal<'t>) =
+    let inline mapBackgroundContainer (mapping) (sm: SuggestModal<'t>) =
         mapping sm.containerEl
         sm
 
-    let openModal (sm: SuggestModal<'t>) = sm.``open`` ()
+    let inline openModal (sm: SuggestModal<'t>) = sm.``open`` ()
 
 
 module Notice =
-    let show (text: string) =
+    let inline show (text: string) =
         text |> U2.Case1 |> obsidian.Notice.Create |> ignore
 
 module Content =
-    open System.Collections.Generic
 
     type CodeBlockContent = {
         startLine: int
         endLine: int
         content: string
     }
-
-    let private om fn x = Option.map fn x
 
     let getTags (app: App) =
         app.workspace.getActiveFile ()
@@ -212,15 +204,13 @@ module Content =
             let view = view.Value
             let lines = view.getViewData().Split('\n')
 
-            let codeBlockSections =
+            let codeBlockSections: SectionCache seq option =
                 app.workspace.getActiveFile ()
-                |> Option.map app.metadataCache.getFileCache
-                |> Option.flatten
-                |> Option.map (fun f ->
+                |> Option.bind app.metadataCache.getFileCache
+                |> Option.bind (fun f ->
                     f.sections
                     |> Option.map (fun d -> d |> Seq.where (fun d -> d.``type`` = "code"))
                 )
-                |> Option.flatten
 
             let codeBlockTexts =
                 codeBlockSections
@@ -315,15 +305,15 @@ type ExtendedPlugin<'TSettings> =
 
 
 module Clipboard =
-    let write txt =
+    let inline write txt =
         match Browser.Navigator.navigator.clipboard with
         | None -> promise { () }
         | Some v -> v.writeText (txt)
 
 
 module String =
-    /// e.g. "a/b/c/d" |> nthIndexOf 2 '/' returns 3
-    let nthIndexOf (n: int) (char: char) (str: string) =
+    /// "a/b/c/d" |> nthIndexOf 2 '/' -> 3
+    let inline nthIndexOf (n: int) (char: char) (str: string) =
         let rec loop (pos: int) n =
             match str.IndexOf(char, pos) with
             | -1 -> -1
@@ -333,7 +323,7 @@ module String =
         loop 0 n
 
     // "a/b/c/d" |> String.untilNthOccurrence 2 '/' -> a/b/
-    let untilNthOccurrence (n: int) (char: char) (str: string) =
+    let inline untilNthOccurrence (n: int) (char: char) (str: string) =
         match str |> nthIndexOf (n) (char) with
         | -1 -> str
         | n -> str.Substring(0, n + 1)
@@ -368,19 +358,3 @@ type App with
                 |> Seq.map (fun f -> $"#{f}")
 
             Seq.append tags1 tags2
-
-
-module EditorPosition =
-    let create ch line =
-        let mutable _ch = ch
-        let mutable _line = line
-
-        { new EditorPosition with
-            member this.ch
-                with get (): float = ch
-                and set (v: float): unit = _ch <- v
-
-            member this.line
-                with get (): float = _line
-                and set (v: float): unit = _line <- v
-        }

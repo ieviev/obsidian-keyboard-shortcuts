@@ -29,7 +29,7 @@ File.Copy(
 
 pwsh "npm run build"
 pwsh "npm run publish"
-pwsh "mkdir -p ./quick-snippets-and-navigation/"
-pwsh "cp -r dist/* ./quick-snippets-and-navigation/"
-pwsh "7z a quick-snippets-and-navigation.zip ./quick-snippets-and-navigation/ -r"
-pwsh "remove-item -Recurse -Force quick-snippets-and-navigation"
+// pwsh "mkdir -p ./quick-snippets-and-navigation/"
+// pwsh "cp -r dist/* ./quick-snippets-and-navigation/"
+// pwsh "7z a quick-snippets-and-navigation.zip ./quick-snippets-and-navigation/ -r"
+// pwsh "remove-item -Recurse -Force quick-snippets-and-navigation"
