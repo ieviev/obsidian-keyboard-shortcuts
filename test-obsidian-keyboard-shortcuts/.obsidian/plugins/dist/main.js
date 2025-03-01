@@ -340,20 +340,6 @@ function uncurry2(f) {
   curried.set(f2, f);
   return f2;
 }
-function curry2(f) {
-  return curried.get(f) ?? ((a1) => (a2) => f(a1, a2));
-}
-function uncurry3(f) {
-  if (f == null) {
-    return null;
-  }
-  const f2 = (a1, a2, a3) => f(a1)(a2)(a3);
-  curried.set(f2, f);
-  return f2;
-}
-function curry3(f) {
-  return curried.get(f) ?? ((a1) => (a2) => (a3) => f(a1, a2, a3));
-}
 
 // build/fable_modules/fable-library-js.4.24.0/Types.js
 function seqToString(self) {
@@ -1486,9 +1472,6 @@ function value(x) {
     return x instanceof Some ? x.value : x;
   }
 }
-function unwrap(opt) {
-  return opt instanceof Some ? opt.value : opt;
-}
 function some(x) {
   return x == null || x instanceof Some ? new Some(x) : x;
 }
@@ -2598,84 +2581,21 @@ function create(app, plugin) {
 
 // build/Helpers.js
 var obsidian2 = __toModule(require("obsidian"));
-function Command_defaultCommand() {
-  let mid = "";
-  let mname = "";
-  let _cb = void 0;
-  let _ccb = void 0;
-  let _hotkeys = void 0;
-  let _editorCallback = void 0;
-  let _editorCheckCallback = void 0;
-  return new class {
-    get callback() {
-      return unwrap(_cb);
-    }
-    set callback(v) {
-      _cb = v;
-    }
-    get checkCallback() {
-      return unwrap(_ccb);
-    }
-    set checkCallback(v_1) {
-      _ccb = v_1;
-    }
-    get editorCallback() {
-      return unwrap(map(uncurry2, _editorCallback));
-    }
-    set editorCallback(v_2) {
-      _editorCallback = map(curry2, v_2);
-    }
-    get editorCheckCallback() {
-      return unwrap(map(uncurry3, _editorCheckCallback));
-    }
-    set editorCheckCallback(v_3) {
-      _editorCheckCallback = map(curry3, v_3);
-    }
-    get hotkeys() {
-      return unwrap(_hotkeys);
-    }
-    set hotkeys(v_4) {
-      _hotkeys = v_4;
-    }
-    get icon() {
-      return void 0;
-    }
-    set icon(v_5) {
-    }
-    get id() {
-      return mid;
-    }
-    set id(v_6) {
-      mid = v_6;
-    }
-    get mobileOnly() {
-      return void 0;
-    }
-    set mobileOnly(v_7) {
-    }
-    get name() {
-      return mname;
-    }
-    set name(v_8) {
-      mname = v_8;
-    }
-  }();
-}
 function Command_forMenu(id, name2, icon, callback) {
-  const cmd = Command_defaultCommand();
-  cmd.id = id;
-  cmd.name = name2;
-  cmd.icon = icon;
-  cmd.callback = callback;
-  return cmd;
+  return {
+    id,
+    name: name2,
+    icon,
+    callback
+  };
 }
 function Command_forEditor(id, name2, icon, callback) {
-  const cmd = Command_defaultCommand();
-  cmd.id = id;
-  cmd.name = name2;
-  cmd.icon = icon;
-  cmd.editorCallback = callback;
-  return cmd;
+  return {
+    id,
+    name: name2,
+    icon,
+    editorCallback: callback
+  };
 }
 function ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(this$) {
   const values = this$.chooser.values;

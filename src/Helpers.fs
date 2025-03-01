@@ -15,78 +15,25 @@ let obsidian: ObsidianBindings.IExports = jsNative
 
 module Command =
 
-    let private defaultCommand () =
-        let mutable mid = ""
-        let mutable mname = ""
-        let mutable _cb = None
-        let mutable _ccb = None
-        let mutable _hotkeys = None
-        let mutable _editorCallback = None
-        let mutable _editorCheckCallback = None
-
-        { new Command with
-            member this.callback
-                with get () = _cb
-                and set v = _cb <- v
-
-            member this.checkCallback
-                with get () = _ccb
-                and set v = _ccb <- v
-
-            member this.editorCallback
-                with get () = _editorCallback
-                and set v = _editorCallback <- v
-
-            member this.editorCheckCallback
-                with get () = _editorCheckCallback
-                and set v = _editorCheckCallback <- v
-
-            member this.hotkeys
-                with get () = _hotkeys
-                and set v = _hotkeys <- v
-
-            member this.icon: string option = None
-
-            member this.icon
-                with set (v: string option): unit = ()
-
-            member this.id: string = mid
-
-            member this.id
-                with set (v: string): unit = mid <- v
-
-            member this.mobileOnly: bool option = None
-
-            member this.mobileOnly
-                with set (v: bool option): unit = ()
-
-            member this.name: string = mname
-
-            member this.name
-                with set (v: string): unit = mname <- v
-        }
-
     let forMenu id name icon callback =
-        let cmd = defaultCommand ()
-        cmd.id <- id
-        cmd.name <- name
-        cmd.icon <- Some icon
-        cmd.callback <- Some callback
-        cmd
+        jsOptions<Command> (fun v ->
+            v.id <- id
+            v.name <- name
+            v.icon <- Some icon
+            v.callback <- Some callback
+        )
+
 
     let forEditor id name icon callback =
-        let cmd = defaultCommand ()
-        cmd.id <- id
-        cmd.name <- name
-        cmd.icon <- Some icon
-        cmd.editorCallback <- Some callback
-        cmd
+        jsOptions<Command> (fun v ->
+            v.id <- id
+            v.name <- name
+            v.icon <- Some icon
+            v.editorCallback <- Some callback
+        )
 
 
-let printJson x =
-    x
-    |> JSON.stringify
-    |> printfn "%s"
+let printJson x = x |> JSON.stringify |> printfn "%s"
 
 
 type SuggestModal<'t> with
@@ -109,21 +56,12 @@ module SuggestModal =
     let create app = obsidian.SuggestModal.Create(app)
 
     let withGetSuggestions (query: string -> ResizeArray<'t>) (sm: SuggestModal<'t>) =
-        sm?getSuggestions <-
-            (fun f ->
-                query f
-                |> U2.Case1
-            )
+        sm?getSuggestions <- (fun f -> query f |> U2.Case1)
 
         sm
 
     let withGetSuggestions2 (query: string -> seq<'t>) (sm: SuggestModal<'t>) =
-        sm?getSuggestions <-
-            (fun f ->
-                query f
-                |> ResizeArray
-                |> U2.Case1
-            )
+        sm?getSuggestions <- (fun f -> query f |> ResizeArray |> U2.Case1)
 
         sm
 
@@ -156,8 +94,7 @@ module SuggestModal =
             (fun (sugg) (elem: HTMLDivElement) -> //:FuzzyMatch<string>
                 elem.innerText <- JSON.stringify (sugg)
 
-                elem
-                |> Some
+                elem |> Some
             )
 
         sm
@@ -168,8 +105,7 @@ module SuggestModal =
         (sm: SuggestModal<'t>)
         =
         sm.scope.register (
-            keyboardShortcut.modifiers
-            |> ResizeArray,
+            keyboardShortcut.modifiers |> ResizeArray,
             Some keyboardShortcut.key,
             !!(fun (evt: KeyboardEvent) ->
                 keyboardShortcut.action (evt, sm)
@@ -244,15 +180,16 @@ module SuggestModal =
 
 module Notice =
     let show (text: string) =
-        text
-        |> U2.Case1
-        |> obsidian.Notice.Create
-        |> ignore
+        text |> U2.Case1 |> obsidian.Notice.Create |> ignore
 
 module Content =
     open System.Collections.Generic
 
-    type CodeBlockContent = { startLine: int; endLine: int; content: string }
+    type CodeBlockContent = {
+        startLine: int
+        endLine: int
+        content: string
+    }
 
     let private om fn x = Option.map fn x
 
@@ -281,10 +218,7 @@ module Content =
                 |> Option.flatten
                 |> Option.map (fun f ->
                     f.sections
-                    |> Option.map (fun d ->
-                        d
-                        |> Seq.where (fun d -> d.``type`` = "code")
-                    )
+                    |> Option.map (fun d -> d |> Seq.where (fun d -> d.``type`` = "code"))
                 )
                 |> Option.flatten
 
@@ -294,22 +228,16 @@ module Content =
                 |> Option.map (fun optionalCodeblockSections ->
                     optionalCodeblockSections
                     |> Seq.map (fun f ->
-                        let startLine =
-                            int f.position.start.line
-                            + 1
+                        let startLine = int f.position.start.line + 1
 
-                        let endLine =
-                            int f.position.``end``.line
-                            - 1
+                        let endLine = int f.position.``end``.line - 1
 
                         let blockContent = lines.[startLine..endLine]
 
                         {
                             startLine = startLine
                             endLine = endLine
-                            content =
-                                blockContent
-                                |> String.concat "\n"
+                            content = blockContent |> String.concat "\n"
                         }
                     )
                     |> Seq.toArray
@@ -332,10 +260,7 @@ module Content =
             let codeBlockSections =
                 app.workspace.getActiveFile ()
                 |> Option.bind app.metadataCache.getFileCache
-                |> Option.bind (fun f ->
-                    f.headings
-                    |> Option.map (fun d -> d.ToArray())
-                )
+                |> Option.bind (fun f -> f.headings |> Option.map (fun d -> d.ToArray()))
 
             let codeBlockTexts =
                 codeBlockSections
@@ -343,13 +268,9 @@ module Content =
                 |> Option.map (fun headingCaches ->
                     headingCaches
                     |> Seq.map (fun f ->
-                        let startLine =
-                            int f.position.start.line
-                            + 1
+                        let startLine = int f.position.start.line + 1
 
-                        let endLine =
-                            int f.position.``end``.line
-                            - 1
+                        let endLine = int f.position.``end``.line - 1
 
                         let blockContent = lines.[startLine..endLine]
 
@@ -375,8 +296,7 @@ module Seq =
             let mutable idx = 0
             let mutable loop = true
 
-            while idx < num
-                  && loop do
+            while idx < num && loop do
                 if not (e.MoveNext()) then
                     loop <- false
 
@@ -414,10 +334,7 @@ module String =
 
     // "a/b/c/d" |> String.untilNthOccurrence 2 '/' -> a/b/
     let untilNthOccurrence (n: int) (char: char) (str: string) =
-        match
-            str
-            |> nthIndexOf (n) (char)
-        with
+        match str |> nthIndexOf (n) (char) with
         | -1 -> str
         | n -> str.Substring(0, n + 1)
 
@@ -457,6 +374,7 @@ module EditorPosition =
     let create ch line =
         let mutable _ch = ch
         let mutable _line = line
+
         { new EditorPosition with
             member this.ch
                 with get (): float = ch
