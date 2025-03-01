@@ -25,22 +25,28 @@ var __toModule = (module2) => {
 // build/Main.js
 __export(exports, {
   Plugin2: () => Plugin2,
-  Plugin2$reflection: () => Plugin2$reflection,
-  Plugin2_$ctor_Z7F5F6E8A: () => Plugin2_$ctor_Z7F5F6E8A
+  Plugin2_$ctor_Z7F5F6E8A: () => Plugin2_$ctor_Z7F5F6E8A,
+  Plugin2_$reflection: () => Plugin2_$reflection,
+  Plugin2__commandById_Z721C83C5: () => Plugin2__commandById_Z721C83C5,
+  Plugin2__init: () => Plugin2__init,
+  Plugin2__onload: () => Plugin2__onload
 });
 
-// build/fable_modules/fable-library.3.7.17/Util.js
+// build/fable_modules/fable-library-js.4.24.0/Util.js
 function isArrayLike(x) {
   return Array.isArray(x) || ArrayBuffer.isView(x);
 }
+function isEnumerable(x) {
+  return x != null && typeof x.GetEnumerator === "function";
+}
 function isComparable(x) {
-  return typeof x.CompareTo === "function";
+  return x != null && typeof x.CompareTo === "function";
 }
 function isEquatable(x) {
-  return typeof x.Equals === "function";
+  return x != null && typeof x.Equals === "function";
 }
 function isHashable(x) {
-  return typeof x.GetHashCode === "function";
+  return x != null && typeof x.GetHashCode === "function";
 }
 function isDisposable(x) {
   return x != null && typeof x.Dispose === "function";
@@ -50,13 +56,35 @@ function disposeSafe(x) {
     x.Dispose();
   }
 }
-function sameConstructor(x, y) {
-  var _a, _b;
-  return ((_a = Object.getPrototypeOf(x)) === null || _a === void 0 ? void 0 : _a.constructor) === ((_b = Object.getPrototypeOf(y)) === null || _b === void 0 ? void 0 : _b.constructor);
+function defaultOf() {
+  return null;
 }
+function sameConstructor(x, y) {
+  return Object.getPrototypeOf(x)?.constructor === Object.getPrototypeOf(y)?.constructor;
+}
+var Enumerable = class {
+  constructor(en) {
+    this.en = en;
+  }
+  GetEnumerator() {
+    return this.en;
+  }
+  "System.Collections.IEnumerable.GetEnumerator"() {
+    return this.en;
+  }
+  [Symbol.iterator]() {
+    return this;
+  }
+  next() {
+    const hasNext = this.en["System.Collections.IEnumerator.MoveNext"]();
+    const current = hasNext ? this.en["System.Collections.Generic.IEnumerator`1.get_Current"]() : void 0;
+    return { done: !hasNext, value: current };
+  }
+};
 var Enumerator = class {
   constructor(iter) {
     this.iter = iter;
+    this.current = defaultOf();
   }
   ["System.Collections.Generic.IEnumerator`1.get_Current"]() {
     return this.current;
@@ -76,27 +104,24 @@ var Enumerator = class {
     return;
   }
 };
-function getEnumerator(o) {
-  return typeof o.GetEnumerator === "function" ? o.GetEnumerator() : new Enumerator(o[Symbol.iterator]());
+function getEnumerator(e) {
+  if (isEnumerable(e)) {
+    return e.GetEnumerator();
+  } else {
+    return new Enumerator(e[Symbol.iterator]());
+  }
 }
 function toIterator(en) {
   return {
-    [Symbol.iterator]() {
-      return this;
-    },
     next() {
       const hasNext = en["System.Collections.IEnumerator.MoveNext"]();
-      const current = hasNext ? en["System.Collections.IEnumerator.get_Current"]() : void 0;
+      const current = hasNext ? en["System.Collections.Generic.IEnumerator`1.get_Current"]() : void 0;
       return { done: !hasNext, value: current };
     }
   };
 }
 function padWithZeros(i, length3) {
-  let str = i.toString(10);
-  while (str.length < length3) {
-    str = "0" + str;
-  }
-  return str;
+  return i.toString(10).padStart(length3, "0");
 }
 function dateOffset(date) {
   const date1 = date;
@@ -124,13 +149,17 @@ function stringHash(s) {
 function numberHash(x) {
   return x * 2654435761 | 0;
 }
+function bigintHash(x) {
+  return stringHash(x.toString(32));
+}
 function combineHashCodes(hashes) {
-  if (hashes.length === 0) {
-    return 0;
+  let h1 = 0;
+  const len = hashes.length;
+  for (let i = 0; i < len; i++) {
+    const h2 = hashes[i];
+    h1 = (h1 << 5) + h1 ^ h2;
   }
-  return hashes.reduce((h1, h2) => {
-    return (h1 << 5) + h1 ^ h2;
-  });
+  return h1;
 }
 function dateHash(x) {
   return x.getTime();
@@ -144,7 +173,6 @@ function arrayHash(x) {
   return combineHashCodes(hashes);
 }
 function structuralHash(x) {
-  var _a;
   if (x == null) {
     return 0;
   }
@@ -153,6 +181,8 @@ function structuralHash(x) {
       return x ? 1 : 0;
     case "number":
       return numberHash(x);
+    case "bigint":
+      return bigintHash(x);
     case "string":
       return stringHash(x);
     default: {
@@ -162,7 +192,7 @@ function structuralHash(x) {
         return arrayHash(x);
       } else if (x instanceof Date) {
         return dateHash(x);
-      } else if (((_a = Object.getPrototypeOf(x)) === null || _a === void 0 ? void 0 : _a.constructor) === Object) {
+      } else if (Object.getPrototypeOf(x)?.constructor === Object) {
         const hashes = Object.values(x).map((v) => structuralHash(v));
         return combineHashCodes(hashes);
       } else {
@@ -207,23 +237,22 @@ function equalObjects(x, y) {
   return true;
 }
 function equals(x, y) {
-  var _a;
   if (x === y) {
     return true;
   } else if (x == null) {
     return y == null;
   } else if (y == null) {
     return false;
-  } else if (typeof x !== "object") {
-    return false;
   } else if (isEquatable(x)) {
     return x.Equals(y);
   } else if (isArrayLike(x)) {
     return isArrayLike(y) && equalArrays(x, y);
+  } else if (typeof x !== "object") {
+    return false;
   } else if (x instanceof Date) {
     return y instanceof Date && compareDates(x, y) === 0;
   } else {
-    return ((_a = Object.getPrototypeOf(x)) === null || _a === void 0 ? void 0 : _a.constructor) === Object && equalObjects(x, y);
+    return Object.getPrototypeOf(x)?.constructor === Object && equalObjects(x, y);
   }
 }
 function compareDates(x, y) {
@@ -284,57 +313,49 @@ function compareObjects(x, y) {
   return 0;
 }
 function compare(x, y) {
-  var _a;
   if (x === y) {
     return 0;
   } else if (x == null) {
     return y == null ? 0 : -1;
   } else if (y == null) {
     return 1;
-  } else if (typeof x !== "object") {
-    return x < y ? -1 : 1;
   } else if (isComparable(x)) {
     return x.CompareTo(y);
   } else if (isArrayLike(x)) {
     return isArrayLike(y) ? compareArrays(x, y) : -1;
+  } else if (typeof x !== "object") {
+    return x < y ? -1 : 1;
   } else if (x instanceof Date) {
     return y instanceof Date ? compareDates(x, y) : -1;
   } else {
-    return ((_a = Object.getPrototypeOf(x)) === null || _a === void 0 ? void 0 : _a.constructor) === Object ? compareObjects(x, y) : -1;
+    return Object.getPrototypeOf(x)?.constructor === Object ? compareObjects(x, y) : -1;
   }
 }
-function min(comparer, x, y) {
-  return comparer(x, y) < 0 ? x : y;
-}
-var CURRIED = Symbol("curried");
-function uncurry(arity, f) {
-  if (f == null || f.length > 1) {
-    return f;
+var curried = new WeakMap();
+function uncurry2(f) {
+  if (f == null) {
+    return null;
   }
-  const uncurried = (...args) => {
-    let res = f;
-    for (let i = 0; i < arity; i++) {
-      res = res(args[i]);
-    }
-    return res;
-  };
-  uncurried[CURRIED] = f;
-  return uncurried;
+  const f2 = (a1, a2) => f(a1)(a2);
+  curried.set(f2, f);
+  return f2;
 }
-function _curry(args, arity, f) {
-  return (arg) => arity === 1 ? f(...args.concat([arg])) : _curry(args.concat([arg]), arity - 1, f);
+function curry2(f) {
+  return curried.get(f) ?? ((a1) => (a2) => f(a1, a2));
 }
-function curry(arity, f) {
-  if (f == null || f.length === 1) {
-    return f;
-  } else if (CURRIED in f) {
-    return f[CURRIED];
-  } else {
-    return _curry([], arity, f);
+function uncurry3(f) {
+  if (f == null) {
+    return null;
   }
+  const f2 = (a1, a2, a3) => f(a1)(a2)(a3);
+  curried.set(f2, f);
+  return f2;
+}
+function curry3(f) {
+  return curried.get(f) ?? ((a1) => (a2) => (a3) => f(a1, a2, a3));
 }
 
-// build/fable_modules/fable-library.3.7.17/Types.js
+// build/fable_modules/fable-library-js.4.24.0/Types.js
 function seqToString(self) {
   let count = 0;
   let str = "[";
@@ -352,15 +373,14 @@ function seqToString(self) {
   return str + "]";
 }
 function toString(x, callStack = 0) {
-  var _a, _b;
   if (x != null && typeof x === "object") {
     if (typeof x.toString === "function") {
       return x.toString();
     } else if (Symbol.iterator in x) {
       return seqToString(x);
     } else {
-      const cons2 = (_a = Object.getPrototypeOf(x)) === null || _a === void 0 ? void 0 : _a.constructor;
-      return cons2 === Object && callStack < 10 ? "{ " + Object.entries(x).map(([k, v]) => k + " = " + toString(v, callStack + 1)).join("\n  ") + " }" : (_b = cons2 === null || cons2 === void 0 ? void 0 : cons2.name) !== null && _b !== void 0 ? _b : "";
+      const cons2 = Object.getPrototypeOf(x)?.constructor;
+      return cons2 === Object && callStack < 10 ? "{ " + Object.entries(x).map(([k, v]) => k + " = " + toString(v, callStack + 1)).join("\n  ") + " }" : cons2?.name ?? "";
     }
   }
   return String(x);
@@ -369,7 +389,7 @@ function unionToString(name2, fields) {
   if (fields.length === 0) {
     return name2;
   } else {
-    let fieldStr = "";
+    let fieldStr;
     let withParens = true;
     if (fields.length === 1) {
       fieldStr = toString(fields[0]);
@@ -482,6 +502,12 @@ var Record = class {
   }
 };
 var FSharpRef = class {
+  get contents() {
+    return this.getter();
+  }
+  set contents(v) {
+    this.setter(v);
+  }
   constructor(contentsOrGetter, setter) {
     if (typeof setter === "function") {
       this.getter = contentsOrGetter;
@@ -493,24 +519,20 @@ var FSharpRef = class {
       };
     }
   }
-  get contents() {
-    return this.getter();
-  }
-  set contents(v) {
-    this.setter(v);
-  }
 };
 
 // build/Main.js
 var import_obsidian = __toModule(require("obsidian"));
 
-// build/fable_modules/fable-library.3.7.17/Numeric.js
+// build/fable_modules/fable-library-js.4.24.0/Numeric.js
 var symbol = Symbol("numeric");
 function isNumeric(x) {
-  return typeof x === "number" || (x === null || x === void 0 ? void 0 : x[symbol]);
+  return typeof x === "number" || typeof x === "bigint" || x?.[symbol];
 }
 function compare2(x, y) {
   if (typeof x === "number") {
+    return x < y ? -1 : x > y ? 1 : 0;
+  } else if (typeof x === "bigint") {
     return x < y ? -1 : x > y ? 1 : 0;
   } else {
     return x.CompareTo(y);
@@ -519,6 +541,8 @@ function compare2(x, y) {
 function multiply(x, y) {
   if (typeof x === "number") {
     return x * y;
+  } else if (typeof x === "bigint") {
+    return x * BigInt(y);
   } else {
     return x[symbol]().multiply(y);
   }
@@ -526,6 +550,8 @@ function multiply(x, y) {
 function toFixed(x, dp) {
   if (typeof x === "number") {
     return x.toFixed(dp);
+  } else if (typeof x === "bigint") {
+    return x;
   } else {
     return x[symbol]().toFixed(dp);
   }
@@ -533,6 +559,8 @@ function toFixed(x, dp) {
 function toPrecision(x, sd) {
   if (typeof x === "number") {
     return x.toPrecision(sd);
+  } else if (typeof x === "bigint") {
+    return x;
   } else {
     return x[symbol]().toPrecision(sd);
   }
@@ -540,6 +568,8 @@ function toPrecision(x, sd) {
 function toExponential(x, dp) {
   if (typeof x === "number") {
     return x.toExponential(dp);
+  } else if (typeof x === "bigint") {
+    return x;
   } else {
     return x[symbol]().toExponential(dp);
   }
@@ -547,12 +577,14 @@ function toExponential(x, dp) {
 function toHex(x) {
   if (typeof x === "number") {
     return (Number(x) >>> 0).toString(16);
+  } else if (typeof x === "bigint") {
+    return BigInt.asUintN(64, x).toString(16);
   } else {
     return x[symbol]().toHex();
   }
 }
 
-// build/fable_modules/fable-library.3.7.17/Reflection.js
+// build/fable_modules/fable-library-js.4.24.0/Reflection.js
 var TypeInfo = class {
   constructor(fullname, generics, construct, parent, fields, cases, enumCases) {
     this.fullname = fullname;
@@ -605,9 +637,17 @@ var int16_type = new TypeInfo("System.Int16");
 var uint16_type = new TypeInfo("System.UInt16");
 var int32_type = new TypeInfo("System.Int32");
 var uint32_type = new TypeInfo("System.UInt32");
+var int64_type = new TypeInfo("System.Int64");
+var uint64_type = new TypeInfo("System.UInt64");
+var int128_type = new TypeInfo("System.Int128");
+var uint128_type = new TypeInfo("System.UInt128");
+var nativeint_type = new TypeInfo("System.IntPtr");
+var unativeint_type = new TypeInfo("System.UIntPtr");
+var float16_type = new TypeInfo("System.Half");
 var float32_type = new TypeInfo("System.Single");
 var float64_type = new TypeInfo("System.Double");
 var decimal_type = new TypeInfo("System.Decimal");
+var bigint_type = new TypeInfo("System.Numerics.BigInteger");
 function name(info) {
   if (Array.isArray(info)) {
     return info[0];
@@ -634,8 +674,7 @@ function fullName(t) {
   }
 }
 function getElementType(t) {
-  var _a;
-  return t.fullname === "[]" && ((_a = t.generics) === null || _a === void 0 ? void 0 : _a.length) === 1 ? t.generics[0] : void 0;
+  return t.fullname === "[]" && t.generics?.length === 1 ? t.generics[0] : void 0;
 }
 function getRecordElements(t) {
   if (t.fields != null) {
@@ -648,148 +687,362 @@ function getValue(propertyInfo, v) {
   return v[propertyInfo[0]];
 }
 
-// build/fable_modules/fable-library.3.7.17/Option.js
-var Some = class {
-  constructor(value2) {
-    this.value = value2;
+// build/fable_modules/fable-library-js.4.24.0/Date.js
+var shortDays = [
+  "Sun",
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat"
+];
+var longDays = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday"
+];
+var shortMonths = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"
+];
+var longMonths = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December"
+];
+function parseRepeatToken(format2, pos, patternChar) {
+  let tokenLength = 0;
+  let internalPos = pos;
+  while (internalPos < format2.length && format2[internalPos] === patternChar) {
+    internalPos++;
+    tokenLength++;
   }
-  toJSON() {
-    return this.value;
+  return tokenLength;
+}
+function parseNextChar(format2, pos) {
+  if (pos >= format2.length - 1) {
+    return -1;
   }
-  toString() {
-    return String(this.value);
-  }
-  GetHashCode() {
-    return structuralHash(this.value);
-  }
-  Equals(other) {
-    if (other == null) {
-      return false;
+  return format2.charCodeAt(pos + 1);
+}
+function parseQuotedString(format2, pos) {
+  let beginPos = pos;
+  const quoteChar = format2[pos];
+  let result = "";
+  let foundQuote = false;
+  while (pos < format2.length) {
+    pos++;
+    const currentChar = format2[pos];
+    if (currentChar === quoteChar) {
+      foundQuote = true;
+      break;
+    } else if (currentChar === "\\") {
+      if (pos < format2.length) {
+        pos++;
+        result += format2[pos];
+      } else {
+        throw new Error("Invalid string format");
+      }
     } else {
-      return equals(this.value, other instanceof Some ? other.value : other);
+      result += currentChar;
     }
   }
-  CompareTo(other) {
-    if (other == null) {
-      return 1;
-    } else {
-      return compare(this.value, other instanceof Some ? other.value : other);
-    }
+  if (!foundQuote) {
+    throw new Error(`Invalid string format could not find matching quote for ${quoteChar}`);
   }
-};
-function some(x) {
-  return x == null || x instanceof Some ? new Some(x) : x;
+  return [result, pos - beginPos + 1];
 }
-function value(x) {
-  if (x == null) {
-    throw new Error("Option has no value");
-  } else {
-    return x instanceof Some ? x.value : x;
-  }
-}
-function flatten(x) {
-  return x == null ? void 0 : value(x);
-}
-function toArray(opt) {
-  return opt == null ? [] : [value(opt)];
-}
-function defaultArg(opt, defaultValue) {
-  return opt != null ? value(opt) : defaultValue;
-}
-function defaultArgWith(opt, defThunk) {
-  return opt != null ? value(opt) : defThunk();
-}
-function map(mapping, opt) {
-  return opt != null ? some(mapping(value(opt))) : void 0;
-}
-function bind(binder, opt) {
-  return opt != null ? binder(value(opt)) : void 0;
-}
-
-// build/fable_modules/Fable.Promise.3.1.3/Promise.fs.js
-var PromiseBuilder = class {
-  constructor() {
-  }
-};
-function PromiseBuilder_$ctor() {
-  return new PromiseBuilder();
-}
-function PromiseBuilder__Delay_62FBFDE1(_, generator) {
-  return {
-    then: (onSuccess, onError) => {
-      try {
-        return generator().then(onSuccess, onError);
-      } catch (er) {
-        if (onError == null) {
-          return Promise.reject(er);
-        } else {
-          try {
-            const a = onError(er);
-            return Promise.resolve(a);
-          } catch (er_1) {
-            return Promise.reject(er_1);
+function dateToStringWithCustomFormat(date, format2, utc) {
+  let cursorPos = 0;
+  let tokenLength = 0;
+  let result = "";
+  const localizedDate = utc ? DateTime(date.getTime(), 1) : date;
+  while (cursorPos < format2.length) {
+    const token = format2[cursorPos];
+    switch (token) {
+      case "d":
+        tokenLength = parseRepeatToken(format2, cursorPos, "d");
+        cursorPos += tokenLength;
+        switch (tokenLength) {
+          case 1:
+            result += day(localizedDate);
+            break;
+          case 2:
+            result += padWithZeros(day(localizedDate), 2);
+            break;
+          case 3:
+            result += shortDays[dayOfWeek(localizedDate)];
+            break;
+          case 4:
+            result += longDays[dayOfWeek(localizedDate)];
+            break;
+          default:
+            break;
+        }
+        break;
+      case "f":
+        tokenLength = parseRepeatToken(format2, cursorPos, "f");
+        cursorPos += tokenLength;
+        if (tokenLength <= 3) {
+          const precision = 10 ** (3 - tokenLength);
+          result += padWithZeros(Math.floor(millisecond(localizedDate) / precision), tokenLength);
+        } else if (tokenLength <= 7) {
+          result += ("" + millisecond(localizedDate)).padEnd(tokenLength, "0");
+        }
+        break;
+      case "F":
+        tokenLength = parseRepeatToken(format2, cursorPos, "F");
+        cursorPos += tokenLength;
+        if (tokenLength <= 3) {
+          const precision = 10 ** (3 - tokenLength);
+          const value2 = Math.floor(millisecond(localizedDate) / precision);
+          if (value2 != 0) {
+            result += padWithZeros(value2, tokenLength);
+          }
+        } else if (tokenLength <= 7) {
+          const value2 = millisecond(localizedDate);
+          if (value2 != 0) {
+            result += padWithZeros(value2, 3);
           }
         }
-      }
-    },
-    catch: (onError_1) => {
-      try {
-        return generator().catch(onError_1);
-      } catch (er_2) {
-        try {
-          const a_1 = onError_1(er_2);
-          return Promise.resolve(a_1);
-        } catch (er_3) {
-          return Promise.reject(er_3);
+        break;
+      case "g":
+        tokenLength = parseRepeatToken(format2, cursorPos, "g");
+        cursorPos += tokenLength;
+        if (tokenLength <= 2) {
+          result += "A.D.";
         }
-      }
+        break;
+      case "h":
+        tokenLength = parseRepeatToken(format2, cursorPos, "h");
+        cursorPos += tokenLength;
+        switch (tokenLength) {
+          case 1:
+            result += hour(localizedDate) % 12;
+            break;
+          case 2:
+            result += padWithZeros(hour(localizedDate) % 12, 2);
+            break;
+          default:
+            break;
+        }
+        break;
+      case "H":
+        tokenLength = parseRepeatToken(format2, cursorPos, "H");
+        cursorPos += tokenLength;
+        switch (tokenLength) {
+          case 1:
+            result += hour(localizedDate);
+            break;
+          case 2:
+            result += padWithZeros(hour(localizedDate), 2);
+            break;
+          default:
+            break;
+        }
+        break;
+      case "K":
+        tokenLength = parseRepeatToken(format2, cursorPos, "K");
+        cursorPos += tokenLength;
+        switch (tokenLength) {
+          case 1:
+            switch (kind(localizedDate)) {
+              case 1:
+                result += "Z";
+                break;
+              case 2:
+                result += dateOffsetToString(localizedDate.getTimezoneOffset() * -6e4);
+                break;
+              case 0:
+                break;
+            }
+            break;
+          default:
+            break;
+        }
+        break;
+      case "m":
+        tokenLength = parseRepeatToken(format2, cursorPos, "m");
+        cursorPos += tokenLength;
+        switch (tokenLength) {
+          case 1:
+            result += minute(localizedDate);
+            break;
+          case 2:
+            result += padWithZeros(minute(localizedDate), 2);
+            break;
+          default:
+            break;
+        }
+        break;
+      case "M":
+        tokenLength = parseRepeatToken(format2, cursorPos, "M");
+        cursorPos += tokenLength;
+        switch (tokenLength) {
+          case 1:
+            result += month(localizedDate);
+            break;
+          case 2:
+            result += padWithZeros(month(localizedDate), 2);
+            break;
+          case 3:
+            result += shortMonths[month(localizedDate) - 1];
+            break;
+          case 4:
+            result += longMonths[month(localizedDate) - 1];
+            break;
+          default:
+            break;
+        }
+        break;
+      case "s":
+        tokenLength = parseRepeatToken(format2, cursorPos, "s");
+        cursorPos += tokenLength;
+        switch (tokenLength) {
+          case 1:
+            result += second(localizedDate);
+            break;
+          case 2:
+            result += padWithZeros(second(localizedDate), 2);
+            break;
+          default:
+            break;
+        }
+        break;
+      case "t":
+        tokenLength = parseRepeatToken(format2, cursorPos, "t");
+        cursorPos += tokenLength;
+        switch (tokenLength) {
+          case 1:
+            result += localizedDate.getHours() < 12 ? "A" : "P";
+            break;
+          case 2:
+            result += localizedDate.getHours() < 12 ? "AM" : "PM";
+            break;
+          default:
+            break;
+        }
+        break;
+      case "y":
+        tokenLength = parseRepeatToken(format2, cursorPos, "y");
+        cursorPos += tokenLength;
+        switch (tokenLength) {
+          case 1:
+            result += localizedDate.getFullYear() % 100;
+            break;
+          case 2:
+            result += padWithZeros(localizedDate.getFullYear() % 100, 2);
+            break;
+          case 3:
+            result += padWithZeros(localizedDate.getFullYear(), 3);
+            break;
+          case 4:
+            result += padWithZeros(localizedDate.getFullYear(), 4);
+            break;
+          case 5:
+            result += padWithZeros(localizedDate.getFullYear(), 5);
+            break;
+          default:
+            break;
+        }
+        break;
+      case "z":
+        tokenLength = parseRepeatToken(format2, cursorPos, "z");
+        cursorPos += tokenLength;
+        let utcOffsetText = "";
+        switch (kind(localizedDate)) {
+          case 1:
+            utcOffsetText = "+00:00";
+            break;
+          case 2:
+            utcOffsetText = dateOffsetToString(localizedDate.getTimezoneOffset() * -6e4);
+            break;
+          case 0:
+            utcOffsetText = dateOffsetToString(toLocalTime(localizedDate).getTimezoneOffset() * -6e4);
+            break;
+        }
+        const sign = utcOffsetText[0] === "-" ? "-" : "+";
+        const hours = parseInt(utcOffsetText.substring(1, 3), 10);
+        const minutes = parseInt(utcOffsetText.substring(4, 6), 10);
+        switch (tokenLength) {
+          case 1:
+            result += `${sign}${hours}`;
+            break;
+          case 2:
+            result += `${sign}${padWithZeros(hours, 2)}`;
+            break;
+          default:
+            result += `${sign}${padWithZeros(hours, 2)}:${padWithZeros(minutes, 2)}`;
+            break;
+        }
+        break;
+      case ":":
+        result += ":";
+        cursorPos++;
+        break;
+      case "/":
+        result += "/";
+        cursorPos++;
+        break;
+      case "'":
+      case '"':
+        const [quotedString, quotedStringLenght] = parseQuotedString(format2, cursorPos);
+        result += quotedString;
+        cursorPos += quotedStringLenght;
+        break;
+      case "%":
+        const nextChar = parseNextChar(format2, cursorPos);
+        if (nextChar >= 0 && nextChar !== "%".charCodeAt(0)) {
+          cursorPos += 2;
+          result += dateToStringWithCustomFormat(localizedDate, String.fromCharCode(nextChar), utc);
+        } else {
+          throw new Error("Invalid format string");
+        }
+        break;
+      case "\\":
+        const nextChar2 = parseNextChar(format2, cursorPos);
+        if (nextChar2 >= 0) {
+          cursorPos += 2;
+          result += String.fromCharCode(nextChar2);
+        } else {
+          throw new Error("Invalid format string");
+        }
+        break;
+      default:
+        cursorPos++;
+        result += token;
+        break;
     }
-  };
-}
-function PromiseBuilder__Run_212F1D4B(_, p) {
-  return p.then((x) => x);
-}
-
-// build/fable_modules/Fable.Promise.3.1.3/PromiseImpl.fs.js
-var promise = PromiseBuilder_$ctor();
-
-// build/Settings.js
-var PluginSettings = class extends Record {
-  constructor(defaultCodeBlockLanguage, defaultCalloutType, use3BackticksForCodeBlock, defaultModalCommand) {
-    super();
-    this.defaultCodeBlockLanguage = defaultCodeBlockLanguage;
-    this.defaultCalloutType = defaultCalloutType;
-    this.use3BackticksForCodeBlock = use3BackticksForCodeBlock;
-    this.defaultModalCommand = defaultModalCommand;
   }
-};
-function PluginSettings$reflection() {
-  return record_type("Fs.Obsidian.PluginSettings", [], PluginSettings, () => [["defaultCodeBlockLanguage", string_type], ["defaultCalloutType", string_type], ["use3BackticksForCodeBlock", bool_type], ["defaultModalCommand", string_type]]);
+  return result;
 }
-function PluginSettings_get_Default() {
-  return new PluginSettings("bash", "info", false, "obsidian-another-quick-switcher:search-command_recent-search");
+function kind(value2) {
+  return value2.kind || 0;
 }
-function Gen_PluginSettings_setFieldByName(key, value2, x) {
-  switch (key) {
-    case "defaultCodeBlockLanguage": {
-      return new PluginSettings(value2, x.defaultCalloutType, x.use3BackticksForCodeBlock, x.defaultModalCommand);
-    }
-    case "defaultCalloutType": {
-      return new PluginSettings(x.defaultCodeBlockLanguage, value2, x.use3BackticksForCodeBlock, x.defaultModalCommand);
-    }
-    case "use3BackticksForCodeBlock": {
-      return new PluginSettings(x.defaultCodeBlockLanguage, x.defaultCalloutType, value2, x.defaultModalCommand);
-    }
-    case "defaultModalCommand": {
-      return new PluginSettings(x.defaultCodeBlockLanguage, x.defaultCalloutType, x.use3BackticksForCodeBlock, value2);
-    }
-    default: {
-      throw new Error(`unimplemented case ${key}`);
-    }
-  }
-}
-
-// build/fable_modules/fable-library.3.7.17/Date.js
 function dateOffsetToString(offset) {
   const isMinus = offset < 0;
   offset = Math.abs(offset);
@@ -813,49 +1066,10 @@ function dateToISOStringWithOffset(dateWithOffset, offset) {
   const str = dateWithOffset.toISOString();
   return str.substring(0, str.length - 1) + dateOffsetToString(offset);
 }
-function dateToStringWithCustomFormat(date, format2, utc) {
-  return format2.replace(/(\w)\1*/g, (match2) => {
-    let rep = Number.NaN;
-    switch (match2.substring(0, 1)) {
-      case "y":
-        const y = utc ? date.getUTCFullYear() : date.getFullYear();
-        rep = match2.length < 4 ? y % 100 : y;
-        break;
-      case "M":
-        rep = (utc ? date.getUTCMonth() : date.getMonth()) + 1;
-        break;
-      case "d":
-        rep = utc ? date.getUTCDate() : date.getDate();
-        break;
-      case "H":
-        rep = utc ? date.getUTCHours() : date.getHours();
-        break;
-      case "h":
-        const h = utc ? date.getUTCHours() : date.getHours();
-        rep = h > 12 ? h % 12 : h;
-        break;
-      case "m":
-        rep = utc ? date.getUTCMinutes() : date.getMinutes();
-        break;
-      case "s":
-        rep = utc ? date.getUTCSeconds() : date.getSeconds();
-        break;
-      case "f":
-        rep = utc ? date.getUTCMilliseconds() : date.getMilliseconds();
-        break;
-    }
-    if (Number.isNaN(rep)) {
-      return match2;
-    } else {
-      return rep < 10 && match2.length > 1 ? "0" + rep : "" + rep;
-    }
-  });
-}
 function dateToStringWithOffset(date, format2) {
-  var _a, _b, _c;
-  const d = new Date(date.getTime() + ((_a = date.offset) !== null && _a !== void 0 ? _a : 0));
+  const d = new Date(date.getTime() + (date.offset ?? 0));
   if (typeof format2 !== "string") {
-    return d.toISOString().replace(/\.\d+/, "").replace(/[A-Z]|\.\d+/g, " ") + dateOffsetToString((_b = date.offset) !== null && _b !== void 0 ? _b : 0);
+    return d.toISOString().replace(/\.\d+/, "").replace(/[A-Z]|\.\d+/g, " ") + dateOffsetToString(date.offset ?? 0);
   } else if (format2.length === 1) {
     switch (format2) {
       case "D":
@@ -866,7 +1080,7 @@ function dateToStringWithOffset(date, format2) {
         return dateToHalfUTCString(d, "second");
       case "O":
       case "o":
-        return dateToISOStringWithOffset(d, (_c = date.offset) !== null && _c !== void 0 ? _c : 0);
+        return dateToISOStringWithOffset(d, date.offset ?? 0);
       default:
         throw new Error("Unrecognized Date print format");
     }
@@ -899,8 +1113,37 @@ function dateToStringWithKind(date, format2) {
 function toString2(date, format2, _provider) {
   return date.offset != null ? dateToStringWithOffset(date, format2) : dateToStringWithKind(date, format2);
 }
+function DateTime(value2, kind2) {
+  const d = new Date(value2);
+  d.kind = (kind2 == null ? 0 : kind2) | 0;
+  return d;
+}
+function toLocalTime(date) {
+  return date.kind === 2 ? date : DateTime(date.getTime(), 2);
+}
+function day(d) {
+  return d.kind === 1 ? d.getUTCDate() : d.getDate();
+}
+function hour(d) {
+  return d.kind === 1 ? d.getUTCHours() : d.getHours();
+}
+function millisecond(d) {
+  return d.kind === 1 ? d.getUTCMilliseconds() : d.getMilliseconds();
+}
+function minute(d) {
+  return d.kind === 1 ? d.getUTCMinutes() : d.getMinutes();
+}
+function month(d) {
+  return (d.kind === 1 ? d.getUTCMonth() : d.getMonth()) + 1;
+}
+function second(d) {
+  return d.kind === 1 ? d.getUTCSeconds() : d.getSeconds();
+}
+function dayOfWeek(d) {
+  return d.kind === 1 ? d.getUTCDay() : d.getDay();
+}
 
-// build/fable_modules/fable-library.3.7.17/RegExp.js
+// build/fable_modules/fable-library-js.4.24.0/RegExp.js
 function escape(str) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
@@ -909,17 +1152,150 @@ function match(reg, input, startAt = 0) {
   return reg.exec(input);
 }
 
-// build/fable_modules/fable-library.3.7.17/String.js
+// build/fable_modules/fable-library-js.4.24.0/String.js
+var fsFormatRegExp = /(^|[^%])%([0+\- ]*)(\*|\d+)?(?:\.(\d+))?(\w)/g;
 var formatRegExp = /\{(\d+)(,-?\d+)?(?:\:([a-zA-Z])(\d{0,2})|\:(.+?))?\}/g;
 function isLessThan(x, y) {
   return compare2(x, y) < 0;
 }
-function format(str, ...args) {
-  if (typeof str === "object" && args.length > 0) {
-    str = args[0];
-    args.shift();
+function printf(input) {
+  return {
+    input,
+    cont: fsFormat(input)
+  };
+}
+function continuePrint(cont, arg) {
+  return typeof arg === "string" ? cont(arg) : arg.cont(cont);
+}
+function toConsole(arg) {
+  return continuePrint((x) => console.log(x), arg);
+}
+function formatReplacement(rep, flags, padLength, precision, format2) {
+  let sign = "";
+  flags = flags || "";
+  format2 = format2 || "";
+  if (isNumeric(rep)) {
+    if (format2.toLowerCase() !== "x") {
+      if (isLessThan(rep, 0)) {
+        rep = multiply(rep, -1);
+        sign = "-";
+      } else {
+        if (flags.indexOf(" ") >= 0) {
+          sign = " ";
+        } else if (flags.indexOf("+") >= 0) {
+          sign = "+";
+        }
+      }
+    }
+    precision = precision == null ? null : parseInt(precision, 10);
+    switch (format2) {
+      case "f":
+      case "F":
+        precision = precision != null ? precision : 6;
+        rep = toFixed(rep, precision);
+        break;
+      case "g":
+      case "G":
+        rep = precision != null ? toPrecision(rep, precision) : toPrecision(rep);
+        break;
+      case "e":
+      case "E":
+        rep = precision != null ? toExponential(rep, precision) : toExponential(rep);
+        break;
+      case "x":
+        rep = toHex(rep);
+        break;
+      case "X":
+        rep = toHex(rep).toUpperCase();
+        break;
+      default:
+        rep = String(rep);
+        break;
+    }
+  } else if (rep instanceof Date) {
+    rep = toString2(rep);
+  } else {
+    rep = toString(rep);
   }
-  return str.replace(formatRegExp, (_, idx, padLength, format2, precision, pattern) => {
+  padLength = typeof padLength === "number" ? padLength : parseInt(padLength, 10);
+  if (!isNaN(padLength)) {
+    const zeroFlag = flags.indexOf("0") >= 0;
+    const minusFlag = flags.indexOf("-") >= 0;
+    const ch = minusFlag || !zeroFlag ? " " : "0";
+    if (ch === "0") {
+      rep = pad(rep, padLength - sign.length, ch, minusFlag);
+      rep = sign + rep;
+    } else {
+      rep = pad(sign + rep, padLength, ch, minusFlag);
+    }
+  } else {
+    rep = sign + rep;
+  }
+  return rep;
+}
+function createPrinter(cont, _strParts, _matches, _result = "", padArg = -1) {
+  return (...args) => {
+    let result = _result;
+    const strParts = _strParts.slice();
+    const matches = _matches.slice();
+    for (const arg of args) {
+      const [, , flags, _padLength, precision, format2] = matches[0];
+      let padLength = _padLength;
+      if (padArg >= 0) {
+        padLength = padArg;
+        padArg = -1;
+      } else if (padLength === "*") {
+        if (arg < 0) {
+          throw new Error("Non-negative number required");
+        }
+        padArg = arg;
+        continue;
+      }
+      result += strParts[0];
+      result += formatReplacement(arg, flags, padLength, precision, format2);
+      strParts.splice(0, 1);
+      matches.splice(0, 1);
+    }
+    if (matches.length === 0) {
+      result += strParts[0];
+      return cont(result);
+    } else {
+      return createPrinter(cont, strParts, matches, result, padArg);
+    }
+  };
+}
+function fsFormat(str) {
+  return (cont) => {
+    fsFormatRegExp.lastIndex = 0;
+    const strParts = [];
+    const matches = [];
+    let strIdx = 0;
+    let match2 = fsFormatRegExp.exec(str);
+    while (match2) {
+      const matchIndex = match2.index + (match2[1] || "").length;
+      strParts.push(str.substring(strIdx, matchIndex).replace(/%%/g, "%"));
+      matches.push(match2);
+      strIdx = fsFormatRegExp.lastIndex;
+      fsFormatRegExp.lastIndex -= 1;
+      match2 = fsFormatRegExp.exec(str);
+    }
+    if (strParts.length === 0) {
+      return cont(str.replace(/%%/g, "%"));
+    } else {
+      strParts.push(str.substring(strIdx).replace(/%%/g, "%"));
+      return createPrinter(cont, strParts, matches);
+    }
+  };
+}
+function format(str, ...args) {
+  let str2;
+  if (typeof str === "object") {
+    str2 = String(args[0]);
+    args.shift();
+  } else {
+    str2 = str;
+  }
+  return str2.replace(formatRegExp, (_, idx, padLength, format2, precision, pattern) => {
     if (idx < 0 || idx >= args.length) {
       throw new Error("Index must be greater or equal to zero and less than the arguments' length.");
     }
@@ -1002,10 +1378,6 @@ function format(str, ...args) {
     return rep;
   });
 }
-function endsWith(str, search) {
-  const idx = str.lastIndexOf(search);
-  return idx >= 0 && idx === str.length - search.length;
-}
 function isNullOrEmpty(str) {
   return typeof str !== "string" || str.length === 0;
 }
@@ -1078,59 +1450,65 @@ function substring(str, startIndex, length3) {
   return length3 != null ? str.substr(startIndex, length3) : str.substr(startIndex);
 }
 
-// build/fable_modules/fable-library.3.7.17/System.Text.js
-var StringBuilder = class {
-  constructor(value2, capacity) {
-    this.buf = [];
-    if (!isNullOrEmpty(value2)) {
-      void this.buf.push(value2);
-    }
+// build/fable_modules/fable-library-js.4.24.0/Option.js
+var Some = class {
+  constructor(value2) {
+    this.value = value2;
+  }
+  toJSON() {
+    return this.value;
   }
   toString() {
-    const __ = this;
-    return join("", __.buf);
+    return String(this.value);
+  }
+  GetHashCode() {
+    return structuralHash(this.value);
+  }
+  Equals(other) {
+    if (other == null) {
+      return false;
+    } else {
+      return equals(this.value, other instanceof Some ? other.value : other);
+    }
+  }
+  CompareTo(other) {
+    if (other == null) {
+      return 1;
+    } else {
+      return compare(this.value, other instanceof Some ? other.value : other);
+    }
   }
 };
-function StringBuilder_$ctor_Z18115A39(value2, capacity) {
-  return new StringBuilder(value2, capacity);
+function value(x) {
+  if (x == null) {
+    throw new Error("Option has no value");
+  } else {
+    return x instanceof Some ? x.value : x;
+  }
 }
-function StringBuilder_$ctor_Z721C83C5(value2) {
-  return StringBuilder_$ctor_Z18115A39(value2, 16);
+function unwrap(opt) {
+  return opt instanceof Some ? opt.value : opt;
 }
-function StringBuilder__Append_Z721C83C5(x, s) {
-  void x.buf.push(s);
-  return x;
+function some(x) {
+  return x == null || x instanceof Some ? new Some(x) : x;
 }
-function StringBuilder__Append_244C7CD6(x, c) {
-  void x.buf.push(c);
-  return x;
+function flatten(x) {
+  return x == null ? void 0 : value(x);
+}
+function defaultArg(opt, defaultValue) {
+  return opt != null ? value(opt) : defaultValue;
+}
+function map(mapping, opt) {
+  return opt != null ? some(mapping(value(opt))) : void 0;
+}
+function bind(binder, opt) {
+  return opt != null ? binder(value(opt)) : void 0;
 }
 
-// build/fable_modules/fable-library.3.7.17/FSharp.Core.js
-var LanguagePrimitives_GenericEqualityComparer = {
-  ["System.Collections.IEqualityComparer.Equals541DA560"](x, y) {
-    return equals(x, y);
-  },
-  ["System.Collections.IEqualityComparer.GetHashCode4E60E31B"](x_1) {
-    return structuralHash(x_1);
-  }
-};
-var LanguagePrimitives_GenericEqualityERComparer = {
-  ["System.Collections.IEqualityComparer.Equals541DA560"](x, y) {
-    return equals(x, y);
-  },
-  ["System.Collections.IEqualityComparer.GetHashCode4E60E31B"](x_1) {
-    return structuralHash(x_1);
-  }
-};
-function Operators_NullArg(x) {
-  throw new Error(x);
-}
-
-// build/fable_modules/fable-library.3.7.17/Global.js
+// build/fable_modules/fable-library-js.4.24.0/Global.js
 var SR_inputWasEmpty = "Collection was empty.";
 
-// build/fable_modules/fable-library.3.7.17/Array.js
+// build/fable_modules/fable-library-js.4.24.0/Native.js
 function Helpers_allocateArrayFromCons(cons2, len) {
   if (typeof cons2 === "function") {
     return new cons2(len);
@@ -1138,13 +1516,20 @@ function Helpers_allocateArrayFromCons(cons2, len) {
     return new Array(len);
   }
 }
+
+// build/fable_modules/fable-library-js.4.24.0/Double.js
+function min(x, y) {
+  return x < y ? x : y;
+}
+
+// build/fable_modules/fable-library-js.4.24.0/Array.js
 function fill(target, targetIndex, count, value2) {
   const start = targetIndex | 0;
   return target.fill(value2, start, start + count);
 }
 function singleton(value2, cons2) {
   const ar = Helpers_allocateArrayFromCons(cons2, 1);
-  ar[0] = value2;
+  setItem(ar, 0, value2);
   return ar;
 }
 function pairwise(array) {
@@ -1154,7 +1539,7 @@ function pairwise(array) {
     const count = array.length - 1 | 0;
     const result = new Array(count);
     for (let i = 0; i <= count - 1; i++) {
-      result[i] = [array[i], array[i + 1]];
+      setItem(result, i, [item(i, array), item(i + 1, array)]);
     }
     return result;
   }
@@ -1163,8 +1548,22 @@ function reverse(array) {
   const array_2 = array.slice();
   return array_2.reverse();
 }
+function item(index, array) {
+  if (index < 0 ? true : index >= array.length) {
+    throw new Error("Index was outside the bounds of the array.\\nParameter name: index");
+  } else {
+    return array[index];
+  }
+}
+function setItem(array, index, value2) {
+  if (index < 0 ? true : index >= array.length) {
+    throw new Error("Index was outside the bounds of the array.\\nParameter name: index");
+  } else {
+    array[index] = value2;
+  }
+}
 
-// build/fable_modules/fable-library.3.7.17/List.js
+// build/fable_modules/fable-library-js.4.24.0/List.js
 var FSharpList = class extends Record {
   constructor(head2, tail2) {
     super();
@@ -1184,11 +1583,12 @@ var FSharpList = class extends Record {
         loop:
           while (true) {
             const xs_1 = xs_1_mut, ys_1 = ys_1_mut;
-            const matchValue = [xs_1.tail, ys_1.tail];
-            if (matchValue[0] != null) {
-              if (matchValue[1] != null) {
-                const xt = matchValue[0];
-                const yt = matchValue[1];
+            const matchValue = xs_1.tail;
+            const matchValue_1 = ys_1.tail;
+            if (matchValue != null) {
+              if (matchValue_1 != null) {
+                const xt = value(matchValue);
+                const yt = value(matchValue_1);
                 if (equals(xs_1.head, ys_1.head)) {
                   xs_1_mut = xt;
                   ys_1_mut = yt;
@@ -1199,7 +1599,7 @@ var FSharpList = class extends Record {
               } else {
                 return false;
               }
-            } else if (matchValue[1] != null) {
+            } else if (matchValue_1 != null) {
               return false;
             } else {
               return true;
@@ -1218,7 +1618,7 @@ var FSharpList = class extends Record {
           const i = i_mut, h = h_mut, xs_1 = xs_1_mut;
           const matchValue = xs_1.tail;
           if (matchValue != null) {
-            const t = matchValue;
+            const t = value(matchValue);
             if (i > 18) {
               return h | 0;
             } else {
@@ -1235,7 +1635,7 @@ var FSharpList = class extends Record {
     };
     return loop(0, 0, xs) | 0;
   }
-  toJSON(_key) {
+  toJSON() {
     const this$ = this;
     return Array.from(this$);
   }
@@ -1245,11 +1645,12 @@ var FSharpList = class extends Record {
       loop:
         while (true) {
           const xs_1 = xs_1_mut, ys_1 = ys_1_mut;
-          const matchValue = [xs_1.tail, ys_1.tail];
-          if (matchValue[0] != null) {
-            if (matchValue[1] != null) {
-              const xt = matchValue[0];
-              const yt = matchValue[1];
+          const matchValue = xs_1.tail;
+          const matchValue_1 = ys_1.tail;
+          if (matchValue != null) {
+            if (matchValue_1 != null) {
+              const xt = value(matchValue);
+              const yt = value(matchValue_1);
               const c = compare(xs_1.head, ys_1.head) | 0;
               if (c === 0) {
                 xs_1_mut = xt;
@@ -1261,7 +1662,7 @@ var FSharpList = class extends Record {
             } else {
               return 1;
             }
-          } else if (matchValue[1] != null) {
+          } else if (matchValue_1 != null) {
             return -1;
           } else {
             return 0;
@@ -1276,9 +1677,9 @@ var FSharpList = class extends Record {
     return ListEnumerator$1_$ctor_3002E699(xs);
   }
   [Symbol.iterator]() {
-    return toIterator(this.GetEnumerator());
+    return toIterator(getEnumerator(this));
   }
-  ["System.Collections.IEnumerable.GetEnumerator"]() {
+  "System.Collections.IEnumerable.GetEnumerator"() {
     const xs = this;
     return getEnumerator(xs);
   }
@@ -1287,32 +1688,32 @@ var ListEnumerator$1 = class {
   constructor(xs) {
     this.xs = xs;
     this.it = this.xs;
-    this.current = null;
+    this.current = defaultOf();
   }
-  ["System.Collections.Generic.IEnumerator`1.get_Current"]() {
-    const __ = this;
-    return __.current;
+  "System.Collections.Generic.IEnumerator`1.get_Current"() {
+    const _ = this;
+    return _.current;
   }
-  ["System.Collections.IEnumerator.get_Current"]() {
-    const __ = this;
-    return __.current;
+  "System.Collections.IEnumerator.get_Current"() {
+    const _ = this;
+    return _.current;
   }
-  ["System.Collections.IEnumerator.MoveNext"]() {
-    const __ = this;
-    const matchValue = __.it.tail;
+  "System.Collections.IEnumerator.MoveNext"() {
+    const _ = this;
+    const matchValue = _.it.tail;
     if (matchValue != null) {
-      const t = matchValue;
-      __.current = __.it.head;
-      __.it = t;
+      const t = value(matchValue);
+      _.current = _.it.head;
+      _.it = t;
       return true;
     } else {
       return false;
     }
   }
-  ["System.Collections.IEnumerator.Reset"]() {
-    const __ = this;
-    __.it = __.xs;
-    __.current = null;
+  "System.Collections.IEnumerator.Reset"() {
+    const _ = this;
+    _.it = _.xs;
+    _.current = defaultOf();
   }
   Dispose() {
   }
@@ -1321,7 +1722,7 @@ function ListEnumerator$1_$ctor_3002E699(xs) {
   return new ListEnumerator$1(xs);
 }
 function FSharpList_get_Empty() {
-  return new FSharpList(null, void 0);
+  return new FSharpList(defaultOf(), void 0);
 }
 function FSharpList_Cons_305B8EAC(x, xs) {
   return new FSharpList(x, xs);
@@ -1337,7 +1738,7 @@ function FSharpList__get_Length(xs) {
         const matchValue = xs_1.tail;
         if (matchValue != null) {
           i_mut = i + 1;
-          xs_1_mut = matchValue;
+          xs_1_mut = value(matchValue);
           continue loop;
         } else {
           return i | 0;
@@ -1358,7 +1759,7 @@ function FSharpList__get_Head(xs) {
 function FSharpList__get_Tail(xs) {
   const matchValue = xs.tail;
   if (matchValue != null) {
-    return matchValue;
+    return value(matchValue);
   } else {
     throw new Error(SR_inputWasEmpty + "\\nParameter name: list");
   }
@@ -1381,7 +1782,7 @@ function head(xs) {
 function tail(xs) {
   return FSharpList__get_Tail(xs);
 }
-function toArray2(xs) {
+function toArray(xs) {
   const len = FSharpList__get_Length(xs) | 0;
   const res = fill(new Array(len), 0, len, null);
   const loop = (i_mut, xs_1_mut) => {
@@ -1389,7 +1790,7 @@ function toArray2(xs) {
       while (true) {
         const i = i_mut, xs_1 = xs_1_mut;
         if (!FSharpList__get_IsEmpty(xs_1)) {
-          res[i] = FSharpList__get_Head(xs_1);
+          setItem(res, i, FSharpList__get_Head(xs_1));
           i_mut = i + 1;
           xs_1_mut = FSharpList__get_Tail(xs_1);
           continue loop;
@@ -1404,7 +1805,7 @@ function fold(folder, state, xs) {
   let acc = state;
   let xs_1 = xs;
   while (!FSharpList__get_IsEmpty(xs_1)) {
-    acc = folder(acc, FSharpList__get_Head(xs_1));
+    acc = folder(acc, head(xs_1));
     xs_1 = FSharpList__get_Tail(xs_1);
   }
   return acc;
@@ -1412,7 +1813,7 @@ function fold(folder, state, xs) {
 function ofArrayWithTail(xs, tail_1) {
   let res = tail_1;
   for (let i = xs.length - 1; i >= 0; i--) {
-    res = FSharpList_Cons_305B8EAC(xs[i], res);
+    res = FSharpList_Cons_305B8EAC(item(i, xs), res);
   }
   return res;
 }
@@ -1450,7 +1851,118 @@ function skipWhile(predicate_mut, xs_mut) {
     }
 }
 
-// build/fable_modules/fable-library.3.7.17/Seq.js
+// build/fable_modules/Fable.Promise.3.1.3/Promise.fs.js
+var PromiseBuilder = class {
+  constructor() {
+  }
+};
+function PromiseBuilder_$ctor() {
+  return new PromiseBuilder();
+}
+function PromiseBuilder__Delay_62FBFDE1(_, generator) {
+  return {
+    then: (onSuccess, onError) => {
+      try {
+        return generator().then(onSuccess, onError);
+      } catch (er) {
+        if (onError == null) {
+          return Promise.reject(er);
+        } else {
+          try {
+            const a = onError(er);
+            return Promise.resolve(a);
+          } catch (er_1) {
+            return Promise.reject(er_1);
+          }
+        }
+      }
+    },
+    catch: (onError_1) => {
+      try {
+        return generator().catch(onError_1);
+      } catch (er_2) {
+        try {
+          const a_1 = onError_1(er_2);
+          return Promise.resolve(a_1);
+        } catch (er_3) {
+          return Promise.reject(er_3);
+        }
+      }
+    }
+  };
+}
+function PromiseBuilder__Run_212F1D4B(_, p) {
+  return p.then((x) => x);
+}
+
+// build/fable_modules/Fable.Promise.3.1.3/PromiseImpl.fs.js
+var promise = PromiseBuilder_$ctor();
+
+// build/Settings.js
+var PluginSettings = class extends Record {
+  constructor(defaultCodeBlockLanguage, defaultCalloutType, use3BackticksForCodeBlock, defaultModalCommand) {
+    super();
+    this.defaultCodeBlockLanguage = defaultCodeBlockLanguage;
+    this.defaultCalloutType = defaultCalloutType;
+    this.use3BackticksForCodeBlock = use3BackticksForCodeBlock;
+    this.defaultModalCommand = defaultModalCommand;
+  }
+};
+function PluginSettings_$reflection() {
+  return record_type("Fs.Obsidian.PluginSettings", [], PluginSettings, () => [["defaultCodeBlockLanguage", string_type], ["defaultCalloutType", string_type], ["use3BackticksForCodeBlock", bool_type], ["defaultModalCommand", string_type]]);
+}
+function PluginSettings_get_Default() {
+  return new PluginSettings("bash", "info", false, "obsidian-another-quick-switcher:search-command_recent-search");
+}
+function Gen_PluginSettings_setFieldByName(key, value2, x) {
+  switch (key) {
+    case "defaultCodeBlockLanguage":
+      return new PluginSettings(value2, x.defaultCalloutType, x.use3BackticksForCodeBlock, x.defaultModalCommand);
+    case "defaultCalloutType":
+      return new PluginSettings(x.defaultCodeBlockLanguage, value2, x.use3BackticksForCodeBlock, x.defaultModalCommand);
+    case "use3BackticksForCodeBlock":
+      return new PluginSettings(x.defaultCodeBlockLanguage, x.defaultCalloutType, value2, x.defaultModalCommand);
+    case "defaultModalCommand":
+      return new PluginSettings(x.defaultCodeBlockLanguage, x.defaultCalloutType, x.use3BackticksForCodeBlock, value2);
+    default:
+      throw new Error(`unimplemented case ${key}`);
+  }
+}
+
+// build/fable_modules/fable-library-js.4.24.0/System.Text.js
+var StringBuilder = class {
+  constructor(value2, capacity) {
+    this.buf = [];
+    if (!isNullOrEmpty(value2)) {
+      void this.buf.push(value2);
+    }
+  }
+  toString() {
+    const _ = this;
+    return join("", _.buf);
+  }
+};
+function StringBuilder_$ctor_Z18115A39(value2, capacity) {
+  return new StringBuilder(value2, capacity);
+}
+function StringBuilder_$ctor_Z721C83C5(value2) {
+  return StringBuilder_$ctor_Z18115A39(value2, 16);
+}
+function StringBuilder__Append_Z721C83C5(x, s) {
+  void x.buf.push(s);
+  return x;
+}
+function StringBuilder__Append_244C7CD6(x, c) {
+  void x.buf.push(c);
+  return x;
+}
+
+// build/fable_modules/fable-library-js.4.24.0/FSharp.Core.js
+function Operators_NullArg(x) {
+  throw new Error(x);
+}
+
+// build/fable_modules/fable-library-js.4.24.0/Seq.js
 var SR_enumerationAlreadyFinished = "Enumeration already finished.";
 var SR_enumerationNotStarted = "Enumeration has not started. Call MoveNext.";
 var SR_keyNotFoundAlt2 = "An index satisfying the predicate was not found in the collection.";
@@ -1470,19 +1982,18 @@ var Enumerator_Seq = class {
   }
   toString() {
     const xs = this;
-    const maxCount = 4;
     let i = 0;
     let str = "seq [";
     const e = getEnumerator(xs);
     try {
-      while (i < maxCount && e["System.Collections.IEnumerator.MoveNext"]()) {
+      while (i < 4 && e["System.Collections.IEnumerator.MoveNext"]()) {
         if (i > 0) {
           str = str + "; ";
         }
         str = str + toString(e["System.Collections.Generic.IEnumerator`1.get_Current"]());
         i = i + 1 | 0;
       }
-      if (i === maxCount) {
+      if (i === 4) {
         str = str + "; ...";
       }
       return str + "]";
@@ -1495,9 +2006,9 @@ var Enumerator_Seq = class {
     return x.f();
   }
   [Symbol.iterator]() {
-    return toIterator(this.GetEnumerator());
+    return toIterator(getEnumerator(this));
   }
-  ["System.Collections.IEnumerable.GetEnumerator"]() {
+  "System.Collections.IEnumerable.GetEnumerator"() {
     const x = this;
     return x.f();
   }
@@ -1511,24 +2022,24 @@ var Enumerator_FromFunctions$1 = class {
     this.next = next;
     this.dispose = dispose;
   }
-  ["System.Collections.Generic.IEnumerator`1.get_Current"]() {
-    const __ = this;
-    return __.current();
+  "System.Collections.Generic.IEnumerator`1.get_Current"() {
+    const _ = this;
+    return _.current();
   }
-  ["System.Collections.IEnumerator.get_Current"]() {
-    const __ = this;
-    return __.current();
+  "System.Collections.IEnumerator.get_Current"() {
+    const _ = this;
+    return _.current();
   }
-  ["System.Collections.IEnumerator.MoveNext"]() {
-    const __ = this;
-    return __.next();
+  "System.Collections.IEnumerator.MoveNext"() {
+    const _ = this;
+    return _.next();
   }
-  ["System.Collections.IEnumerator.Reset"]() {
+  "System.Collections.IEnumerator.Reset"() {
     Enumerator_noReset();
   }
   Dispose() {
-    const __ = this;
-    __.dispose();
+    const _ = this;
+    _.dispose();
   }
 };
 function Enumerator_FromFunctions$1_$ctor_58C54629(current, next, dispose) {
@@ -1543,7 +2054,7 @@ function Enumerator_concat(sources) {
   const finish = () => {
     finished = true;
     if (innerOpt != null) {
-      const inner = innerOpt;
+      const inner = value(innerOpt);
       try {
         disposeSafe(inner);
       } finally {
@@ -1551,7 +2062,7 @@ function Enumerator_concat(sources) {
       }
     }
     if (outerOpt != null) {
-      const outer = outerOpt;
+      const outer = value(outerOpt);
       try {
         disposeSafe(outer);
       } finally {
@@ -1580,10 +2091,11 @@ function Enumerator_concat(sources) {
     } else {
       let res = void 0;
       while (res == null) {
-        const matchValue = [outerOpt, innerOpt];
-        if (matchValue[0] != null) {
-          if (matchValue[1] != null) {
-            const inner_1 = matchValue[1];
+        const outerOpt_1 = outerOpt;
+        const innerOpt_1 = innerOpt;
+        if (outerOpt_1 != null) {
+          if (innerOpt_1 != null) {
+            const inner_1 = value(innerOpt_1);
             if (inner_1["System.Collections.IEnumerator.MoveNext"]()) {
               curr = some(inner_1["System.Collections.Generic.IEnumerator`1.get_Current"]());
               res = true;
@@ -1595,7 +2107,7 @@ function Enumerator_concat(sources) {
               }
             }
           } else {
-            const outer_1 = matchValue[0];
+            const outer_1 = value(outerOpt_1);
             if (outer_1["System.Collections.IEnumerator.MoveNext"]()) {
               const ie = outer_1["System.Collections.Generic.IEnumerator`1.get_Current"]();
               innerOpt = (copyOfStruct = ie, getEnumerator(copyOfStruct));
@@ -1685,8 +2197,8 @@ function Enumerator_unfold(f, state) {
   let acc = state;
   return Enumerator_FromFunctions$1_$ctor_58C54629(() => {
     if (curr != null) {
-      const x = curr[0];
-      const st = curr[1];
+      const x = value(curr)[0];
+      const st = value(curr)[1];
       return x;
     } else {
       return Enumerator_notStarted();
@@ -1694,8 +2206,8 @@ function Enumerator_unfold(f, state) {
   }, () => {
     curr = f(acc);
     if (curr != null) {
-      const x_1 = curr[0];
-      const st_1 = curr[1];
+      const x_1 = value(curr)[0];
+      const st_1 = value(curr)[1];
       acc = st_1;
       return true;
     } else {
@@ -1737,9 +2249,10 @@ function singleton2(x) {
 function ofArray2(arr) {
   return arr;
 }
-function toArray3(xs) {
+function toArray2(xs) {
   if (xs instanceof FSharpList) {
-    return toArray2(xs);
+    const a = xs;
+    return toArray(a);
   } else {
     return Array.from(xs);
   }
@@ -1763,7 +2276,7 @@ function choose(chooser, xs) {
 }
 function enumerateUsing(resource, source) {
   const compensation = () => {
-    if (equals(resource, null)) {
+    if (equals(resource, defaultOf())) {
     } else {
       let copyOfStruct = resource;
       disposeSafe(copyOfStruct);
@@ -1875,7 +2388,8 @@ function iterateIndexed(action, xs) {
 }
 function length2(xs) {
   if (isArrayLike(xs)) {
-    return xs.length | 0;
+    const a = xs;
+    return a.length | 0;
   } else if (xs instanceof FSharpList) {
     return length(xs) | 0;
   } else {
@@ -1910,15 +2424,15 @@ var CachedSeq$1 = class {
     return getEnumerator(_.res);
   }
   [Symbol.iterator]() {
-    return toIterator(this.GetEnumerator());
+    return toIterator(getEnumerator(this));
   }
-  ["System.Collections.IEnumerable.GetEnumerator"]() {
+  "System.Collections.IEnumerable.GetEnumerator"() {
     const _ = this;
     return getEnumerator(_.res);
   }
 };
 function reverse2(xs) {
-  return delay(() => ofArray2(reverse(toArray3(xs))));
+  return delay(() => ofArray2(reverse(toArray2(xs))));
 }
 function collect(mapping, xs) {
   return delay(() => concat(map4(mapping, xs)));
@@ -1927,11 +2441,11 @@ function where(predicate, xs) {
   return filter(predicate, xs);
 }
 function pairwise2(xs) {
-  return delay(() => ofArray2(pairwise(toArray3(xs))));
+  return delay(() => ofArray2(pairwise(toArray2(xs))));
 }
 function sortWith(comparer, xs) {
   return delay(() => {
-    const arr = toArray3(xs);
+    const arr = toArray2(xs);
     arr.sort(comparer);
     return ofArray2(arr);
   });
@@ -1940,21 +2454,15 @@ function sortByDescending(projection, xs, comparer) {
   return sortWith((x, y) => comparer.Compare(projection(x), projection(y)) * -1, xs);
 }
 
-// build/fable_modules/fable-library.3.7.17/Unicode.13.0.0.js
+// build/fable_modules/fable-library-js.4.24.0/Unicode.13.0.0.js
 var rangeDeltas = "#C$&$&$$$$$$%-%&%=$$$$$$=$$$$D$$'$$$$$$$$$$$$%$$%$$$$&$:$*;$+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$&%$$$%$&%'$%$&&%$%$$$$$%$$%$$%$&$$$%%$$&'$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$%$$$$$&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*%$%%$$'$$$$$$$$h$>5'/1(*$$$4\x93$$$$$$$$%$&$$'%$$&$$$%$4$,F$%&&$$$$$$$$$$$$$$$$$$$$$$$($$$$$%%VS$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$(%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%$$$$$$$$$$$$%$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$I%$)L$$%%$$P$$$%$%$$+>''%.)&%$%%.$$$%C$-8-'%$\x86$$*$$)%%$'%-&%$1$$$$A>%|.$1-D,%$&$%$%9'$,$&$(%2$<&%$$.X8$5.2$C$Y$$$$&+'$%$*-%%-$$2$%$+%%%9$*$$&'%$$&'%%%%$$+$'%$&%%-%%)$$$$$%%$$)'%%9$*$%$%$%%$$&%'%%&&$*'$$*-%&$$-%$$,$&$9$*$%$(%$$&($%$$%$%$2%%%-$$*$)$$%$+%%%9$*$%$(%$$$$$'%%%%$*%$'%$&%%-$$)-$$$)&&$'&%$$$%&%&&&/'%$%&&$&$%$)$1-&)$$($&$+$&$:$3&$&'$&$'*%$&(%%%-*$*$$$%$+$&$:$-$(%$$$$($$%$%%*%*$$%%%-$%0%%,$&$L%$&'$&$&$$$'&$*&%%-,$)$$%$5&;$,$$%*&$'&&$$$+)-%%$/S$%*'$)$+$-%H%$$$($;$$$-$%,$%($$$)%-%'C$&2$$&%)--$$$$$$$$$$%+$G'1$($%(.$G$+$)$%('%HN%'$)$%%%$-))%%'&$&%*&'0$%%)$$$-&$%I$$($%N$$&\u016C$'%*$$$'%L$'%D$'%*$$$'%2$\\$'%f%&,7&3-)y%)%$\u028F$$4$=$$&n&&+*0$'&.5&%,5%/0$&$%/W%$*+$%.&$&$$$%-)-))$'&$$-)F$X*(%E$$(i-B$&'%&'%$)&'$&%-A%(.O'=)-$&E:%%$%%X$$$*$$$$%+)-%$-)-)*$)%1$%b'$R$$($$($%*'-*-,,&%$A$'%%$&%-O$$%&$$&%+'G++%%&(-&&-A)%,*N%&++&$0$*'$)$%$%$(Ob0$EH]$($$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$,$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$,+)%)%++++)%)%+$$$$$$$$++1%++++++($%'$$$&&$%'$&'%%'$&+(&%&$%'$%$.()%$$$%$$$+$$($,$$'%&$$$.$$$-$($-$$%)&$$$-&$$$0&C30'$&/2%$'$%$&%&$$$%$()$$$$$$'$$'$'$%%%($'$$%$$3F$$'$%'((%'$%$%$*$B%%$$$B\u012F+$$$$7%*$$t$A<K)h<.8_q9\xDA$,$Y+\x92$\u011B$$$$$$$$$$$$$$AO($$B$$$$$$$$$$3\u0123\xA6$$$$$$$$$$$$$$$$$$$$$$b$$$$C$$\u0125S8%)J%C$\x8CR$R$$$&%$$$$$$'$$%$)%&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%)$$$$&$$('$%I$$($%[*$$1$:,*$*$*$*$*$*$*$*$C%$$$$&$$$$$,$%$$$$%$$$$$$$$$$($-%'$$$0%$P=$|/\xF9=/'$&$$$$$$$$$$$$$$%$$$$$$$$$$%$,'%$(%&$$$%$y%%%%$$}$&$(N$\x81$%'-CG/3B$-A+$2C-J2\u0163\u19E3c\u5220&8$\u049A&Z,K)%\u012F$&3-%7$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$&$-$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%%i-%)+:,%$$$$$$$$$$$$$&$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$+$$$$%$$$$$$$$$$%$$$$$$$$&$$$$$$$$$$$$$$$$$$$$($($$$$$$$$$$$%$$'$$$M$$$%$*$&$'$:%%$'$&)%$$)W'+%U3%+%-)5)&$$%$-?+%:.%.$@&&$R$%'%%&0$$-'%($$,-($L)%%%%,&$+$$%-%'3$)&$$$$U$$&%%(%$$$;%$%.$%%%$%$$-)%)%),*$*$N$',$%'sF%$%$%$$$%-)\u2BC7/:'T'\u0823\u1923\u0191%\x8DI*/(($$-$0$($$$%$%$\x8F34\u018E$$3c%YK/$$%3*$$$)3$%%$$$$$$$$$$$$$$$$%$$'&&$'$$$$$$$&$$&$$$%'($\xAA%$$&$&$$$$$$%-%&%=$$$$$$=$$$$$$$$$%-$P%B&)%)%)%&&%$$$%$$'%-&%%/$=$6$%$2%1E\x9E(&'P&,X'4%&$0&$RP$\xA5@&T2$>'C',7$+$(I((A$$G'+$(MKKq%-)G'G'K+W.$\xB3\u015A,9-+\xBB)%$$O$%&$%:$$+:%*B+,S6$%((9)&$=($c['%%3%Q$&$%(''$&$@%&'$,*,*@%$@&C+$?%'(*,Y&*9%+6(+5*'/*slZV0V*)G'+-\u0149B$M$%$%%q@-$+9.'(y8*7:,$$$X2*'7-2&$P&'%%%$'.$%<*-)&G($+$-'$%$+F$%$,%$S&,%'''$$$-$$$&$7.5$<&&%$$%)$d*$$$'$2$-$)R$&+(-)%%$+%%%9$*$%$($%$%$'%%%&%$)$((%%*&(\xAEX&+%&$$'(-%$$$&AS&)$$'%$%%$$+-\xC9R&'%'%$%:'%ES&+%$$%&$.-)06N$$$%)$$$*-Y>%&%'$('-%&$\xE3O&,$%$\x87CC-,/+%$%+$%$;)$%%%$$$$$$$&,-i+%J&'%%'$$$$$>$-K)$$'+$+$)%&Q0$%&$(@\\\u012A,$H$*$)$$$(--6&%A%9$$*$%$%l*$%$I)&$$%$*$$+-))$%$C($%$%$$$$*-\u01596%%%\xDA$28+'40$\u03BD\x89\x92$(.\xE7\u0ADF\u0452$,\u0FEA\u026A\u21DC\u025C*B$-'%\x83A%($-S*(''$$--$*$8(6\u02D3CC:'\x88n'$$Z*'0c%$$$.%1\u181B+\u04F9M,\u231A\u0142T&4'+\u01AF\u0927\x8E(0&,*-%$%$'\u137F\u0119-J%_%&&)++%*A'^:e&$\xBD7/z,<\xAA===*$5==$$%%$%%%'$+'$$$*$.==%$'%+$*$=%$'$($$&*$============?%<$<$)<$<$)<$<$)<$<$)<$<$)$$%U\u0223Z'U+$1$%(2($2\u0573*$4%*$%$(\xF8P&**%-'$$\u0193O'-($\u0523\xE8%,*LEE*$'-'%\u0334^$&$'oP$2\xE5'$>$%$$%$$-$'$$$$)$'$$$$$$&$%$$%$$$$$$$$$$%$$%'$*$'$'$$$-$4(&$($4W%\u0131O'\x87/2%2$2$H-0\xC4[@0O',*%1)\xBD\u011E(\u02FB+0&0&\x97/|*/7/'[+-)K+A%%q\x9C$u$\xAA/1%(&&(*,<**,&0*L\xB6$ZH-\u0429\uA701E\u1058.\u0101%\u16A51\u1D54\u0C42\u0241\u0605\u136E\u{AECD9}$A\x83\xA3\u0113\uFE33\u{10021}%\u{10021}";
 var categories = "1.;=;78;<;6;+;<;#7;8>5>$7<8<1.;=?;>?'9<2?>?<->$;>-':-;#<#$<$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'#$'#%$#%$#%$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#%$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'$&>&>&>&>&>(#$#$&>#$@&$;#@>#;#@#@#$#@#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$<#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$?(*#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#@&;$;6@?=@(6(;(;(;(@'@';@2<;=;?(;2@;'&'(+;'(';'(2?(&(?('+'?';@2'('(@'('@+'(&?;&@(='(&(&(&(@;@'(@;@'@'@'@(2()'()(')()()'('(;+;&'()@'@'@'@'@'@'@(')(@)@)('@)@'@'(@+'=-?=';(@()@'@'@'@'@'@'@'@(@)(@(@(@(@'@'@+('(;@()@'@'@'@'@'@'@(')(@()@)(@'@'(@+;=@'(@()@'@'@'@'@'@'@(')()(@)@)(@()@'@'(@+?'-@('@'@'@'@'@'@'@'@'@'@)()@)@)(@'@)@+-?=?@()('@'@'@'@'()@(@(@(@'@'(@+@;-?'();'@'@'@'@'@(')()@()@)(@)@'@'(@+@'@()'@'@'(')(@)@)('?@')-'(@+-?'@()@'@'@'@'@'@(@)(@(@)@+@);@'('(@='&(;+;@'@'@'@'@'@'('('@'@&@(@+@'@'?;?;?(?+-?(?(?(7878)'@'@()(;('(@(@?(?@?;?;@')()()()('+;')('(')')'('()()(')+)(?#@#@#@$;&$'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@(;-@'?@#@$@6'?;'.'78@';,'@'@'(@'(;@'(@'@'@(@'()()()(;&;='(@+@-@;6;(2@+@'&'@'('('@'@'@()()@)()(@?@;+'@'@'@'@+-@?'()(@;')()(@()()()(@(+@+@;&;@(*(@()'()()()()'@+;?(?@()')()()('+'()()()()@;')()(@;+@'+'&;$@#@#;@(;()('('(')('@$&$&$&(@(#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#@$#$#$@#@$@#@#@#@#$#$@$%$%$%$@$#%>$>$@$#%>$@$#@>$#>@$@$#%>@.26;9:79:79;/02.;9:;5;<78;<;5;.2@2-&@-<78&-<78@&@=@(*(*(@?#?#?$#$#$?#?<#?#?#?#?#?$#$'$?$#<#$?<?$?-,#$,-?@<?<?<?<?<?<?<?<?<?<?7878?<?78?<?<?<?@?@-?-?<?<?<?<?78787878787878-?<78<7878787878<?<7878787878787878787878<7878<78<?<?<?@?@?#@$@#$#$#$#$#$#$#$#$&#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$?#$#$(#$@;-;$@$@$@'@&;@('@'@'@'@'@'@'@'@'@(;9:9:;9:;9:;6;6;9:;9:78787878;&;6;6;7;?;@?@?@?@?@.;?&',7878787878?78787878678?,()6&?,&';?@'@(>&'6';&'@'@'@?-?'?@'?@-?-?-?-?-?'?'@'&'@?@'&;'&;'+'@#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$'(*;(;&#$#$#$#$#$#$#$#$#$#$#$#$#$#$&(',(;@>&>#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$&$#$#$#$#$#$#$#$&>#$#$'#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$#$@#$#$#$@#$'&$'('('(')()?(@-?=?@';@)')(@;+@(';';'(+'(;'()@;'@()'()()();@&+@;'(&'+'@'()()(@'('()@+@;'&'?')()'('('('('('@'&;')();'&)(@'@'@'@'@'@$>&$&>@$')()();)(@+@'@'@'@34'@'@$@$@'('<'@'@'@'@'@'>@'87@'@'@'=?@(;78;@(;657878787878787878;78;5;@;6787878;<6<@;=;@'@'@2@;=;78;<;6;+;<;#7;8>5>$7<8<78;78;'&'&'@'@'@'@'@=<>?=@?<?@2?@'@'@'@'@'@'@'@;@-@?,-?-?@?@?@?(@'@'@(-@'-@',',@'(@'@;'@';,@#$'@+@#@$@'@'@;@'@'@'@'@'@'@'@'@'@;-'?-'@-@'@'@-'-@;'@;@'@-'-@-'(@(@('@'@'@(@(-@;@'-;'-@'?'(@-;@'@;'@-'@-'@;@-@'@#@$@-'(@+@-@'@(6@'@'-'@'(-;@'-@'@)()'(;@-+@()')()(;2;@2@'@+@('()(@+;')'@'(;'@()')()';(;)(+';';@-@'@')()()(;(@'@'@'@'@';@'()(@+@()@'@'@'@'@'@'@(')()@)@)@'@)@')@(@(@')()()(';+;@;('@')()()()(';'@+@')(@)()(;'(@')()()(;'@+@;@'()()()('@+@'@()()(@+-;?@')()(;@#$+-@'@'@'@'@')@)@()(')')(;@+@'@')(@()(';')@'('()'(;(@'()('()(;';@'@'@')(@()(';@+-@;'@(@)()()(@'@'@'(@(@(@('(@+@'@'@')@(@)()('@+@'();@'@-?=?@;'@,@;@'@'@2@'@'@'@+@;@'@(;@'(;?&;?@+@-@'@'@#$-;@'@(')@(&@&;&(@)@'@'@'@'@'@'@'@'@'@'@'@?(;2@?@?@?)(?)2(?(?(?@?(?@-@?@-@#$#$@$#$#@#@#@#@#@#$@$@$@$#$#@#@#@#@$#@#@#@#@#@$#$#$#$#$#$#$@#<$<$#<$<$#<$<$#<$<$#<$<$#$@+?(?(?(?(?;@(@(@(@(@(@(@(@'@(&@+@'?@'(+@=@'@-(@#$(&@+@;@-?-=-@-?-@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@'@<@?@?@?@?@?@?@-?@?@?@?@?@?@?>?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@?@+@'@'@'@'@'@'@'@2@2@(@4@4@";
 
-// build/fable_modules/fable-library.3.7.17/Char.js
+// build/fable_modules/fable-library-js.4.24.0/Char.js
 function getCategoryFunc() {
   const offset = 35;
-  const a1 = [...rangeDeltas].map((ch) => {
-    var _a;
-    return ((_a = ch.codePointAt(0)) !== null && _a !== void 0 ? _a : 0) - offset;
-  });
-  const a2 = [...categories].map((ch) => {
-    var _a;
-    return ((_a = ch.codePointAt(0)) !== null && _a !== void 0 ? _a : 0) - offset;
-  });
+  const a1 = [...rangeDeltas].map((ch) => (ch.codePointAt(0) ?? 0) - offset);
+  const a2 = [...categories].map((ch) => (ch.codePointAt(0) ?? 0) - offset);
   const codepoints = new Uint32Array(a1);
   const categories2 = new Uint8Array(a2);
   for (let i = 1; i < codepoints.length; ++i) {
@@ -2019,27 +2527,25 @@ function System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(str) {
   return toString((source_1 = pairwise2(str.split("")), fold2((sb, tupledArg) => {
     const c2 = tupledArg[1];
     const up = isUpper;
-    const matchValue = [up(tupledArg[0]), up(c2)];
-    let pattern_matching_result;
+    const matchValue = up(tupledArg[0]);
+    const matchValue_1 = up(c2);
+    let matchResult;
     if (isDigit(c2)) {
-      pattern_matching_result = 0;
-    } else if (matchValue[0]) {
-      pattern_matching_result = 2;
-    } else if (matchValue[1]) {
-      pattern_matching_result = 1;
+      matchResult = 0;
+    } else if (matchValue) {
+      matchResult = 2;
+    } else if (matchValue_1) {
+      matchResult = 1;
     } else {
-      pattern_matching_result = 2;
+      matchResult = 2;
     }
-    switch (pattern_matching_result) {
-      case 0: {
+    switch (matchResult) {
+      case 0:
         return StringBuilder__Append_Z721C83C5(sb, ` ${c2} `);
-      }
-      case 1: {
+      case 1:
         return StringBuilder__Append_Z721C83C5(sb, ` ${c2.toLocaleLowerCase()}`);
-      }
-      case 2: {
+      default:
         return StringBuilder__Append_244C7CD6(sb, c2);
-      }
     }
   }, StringBuilder_$ctor_Z721C83C5(`${str[0].toLocaleUpperCase()}`), source_1)));
 }
@@ -2047,8 +2553,8 @@ function createSettingForProperty(plugin, settingTab, propName, propType) {
   const setting = new obsidian.Setting(settingTab.containerEl).setName(System_String__String_camelcaseToHumanReadable_Static_Z721C83C5(propName));
   if (equals2(propType, bool_type)) {
     setting.addToggle((toggle) => {
-      let arg_3;
-      arg_3 = getValue(find((f) => name(f) === propName, getRecordElements(PluginSettings$reflection())), plugin.settings), toggle.setValue(arg_3);
+      let on;
+      on = getValue(find((f) => name(f) === propName, getRecordElements(PluginSettings_$reflection())), plugin.settings), toggle.setValue(on);
       toggle.onChange((value_1) => {
         plugin.settings = Gen_PluginSettings_setFieldByName(propName, value_1, plugin.settings);
         return void 0;
@@ -2057,10 +2563,10 @@ function createSettingForProperty(plugin, settingTab, propName, propType) {
     });
   } else if (equals2(propType, string_type)) {
     setting.addText((txt) => {
-      let arg_5;
-      arg_5 = getValue(find((f_1) => name(f_1) === propName, getRecordElements(PluginSettings$reflection())), plugin.settings), txt.setValue(arg_5);
-      txt.onChange((value_5) => {
-        plugin.settings = Gen_PluginSettings_setFieldByName(propName, value_5, plugin.settings);
+      let value_4;
+      value_4 = getValue(find((f_1) => name(f_1) === propName, getRecordElements(PluginSettings_$reflection())), plugin.settings), txt.setValue(value_4);
+      txt.onChange((value_6) => {
+        plugin.settings = Gen_PluginSettings_setFieldByName(propName, value_6, plugin.settings);
         return void 0;
       });
       return void 0;
@@ -2070,12 +2576,12 @@ function createSettingForProperty(plugin, settingTab, propName, propType) {
 function createSettingDisplay(plugin, settingtab, unitVar) {
   const containerEl = settingtab.containerEl;
   containerEl.empty();
-  containerEl.createEl("h2", some(((arg) => arg)({
+  containerEl.createEl("h2", ((Item) => Item)({
     text: "Quick snippets and navigation"
-  })));
-  const fields = getRecordElements(PluginSettings$reflection());
+  }));
+  const fields = getRecordElements(PluginSettings_$reflection());
   for (let idx = 0; idx <= fields.length - 1; idx++) {
-    const field = fields[idx];
+    const field = item(idx, fields);
     createSettingForProperty(plugin, settingtab, name(field), field[1]);
   }
   return void 0;
@@ -2102,31 +2608,31 @@ function Command_defaultCommand() {
   let _editorCheckCallback = void 0;
   return new class {
     get callback() {
-      return _cb;
+      return unwrap(_cb);
     }
     set callback(v) {
       _cb = v;
     }
     get checkCallback() {
-      return _ccb;
+      return unwrap(_ccb);
     }
     set checkCallback(v_1) {
       _ccb = v_1;
     }
     get editorCallback() {
-      return uncurry(2, _editorCallback);
+      return unwrap(map(uncurry2, _editorCallback));
     }
     set editorCallback(v_2) {
-      _editorCallback = curry(2, v_2);
+      _editorCallback = map(curry2, v_2);
     }
     get editorCheckCallback() {
-      return uncurry(3, _editorCheckCallback);
+      return unwrap(map(uncurry3, _editorCheckCallback));
     }
     set editorCheckCallback(v_3) {
-      _editorCheckCallback = curry(3, v_3);
+      _editorCheckCallback = map(curry3, v_3);
     }
     get hotkeys() {
-      return _hotkeys;
+      return unwrap(_hotkeys);
     }
     set hotkeys(v_4) {
       _hotkeys = v_4;
@@ -2155,23 +2661,25 @@ function Command_defaultCommand() {
     }
   }();
 }
-function Command_forMenu(id, name2, callback) {
+function Command_forMenu(id, name2, icon, callback) {
   const cmd = Command_defaultCommand();
   cmd.id = id;
   cmd.name = name2;
+  cmd.icon = icon;
   cmd.callback = callback;
   return cmd;
 }
-function Command_forEditor(id, name2, callback) {
+function Command_forEditor(id, name2, icon, callback) {
   const cmd = Command_defaultCommand();
   cmd.id = id;
   cmd.name = name2;
+  cmd.icon = icon;
   cmd.editorCallback = callback;
   return cmd;
 }
 function ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(this$) {
   const values = this$.chooser.values;
-  return values[this$.chooser.selectedItem];
+  return item(this$.chooser.selectedItem, values);
 }
 var SuggestModal_SuggestModalKeyboardShortcut$1 = class extends Record {
   constructor(modifiers, key, action) {
@@ -2190,8 +2698,8 @@ function SuggestModal_withGetSuggestions(query, sm) {
 }
 function SuggestModal_withGetSuggestions2(query, sm) {
   sm.getSuggestions = (f) => {
-    const arg = query(f);
-    return Array.from(arg);
+    const collection = query(f);
+    return Array.from(collection);
   };
   return sm;
 }
@@ -2232,11 +2740,11 @@ function SuggestModal_map(mapping, sm) {
 }
 function SuggestModal_withInstructions(instructions, sm) {
   let instructions$0027;
-  const arg = map3((tupledArg) => ({
+  const collection = map3((tupledArg) => ({
     command: tupledArg[0],
     purpose: tupledArg[1]
   }), instructions);
-  instructions$0027 = Array.from(arg);
+  instructions$0027 = Array.from(collection);
   sm.setInstructions(instructions$0027);
   return sm;
 }
@@ -2248,50 +2756,47 @@ function Notice_show(text) {
   objectArg = obsidian2.Notice, new objectArg(text);
 }
 var Content_CodeBlockContent = class extends Record {
-  constructor(startLine, content) {
+  constructor(startLine, endLine, content) {
     super();
     this.startLine = startLine | 0;
+    this.endLine = endLine | 0;
     this.content = content;
   }
 };
-function Content_getTags(app) {
-  let option, objectArg;
-  return bind((f) => f.tags, (option = app.workspace.getActiveFile(), bind((objectArg = app.metadataCache, (arg) => objectArg.getFileCache(arg)), option)));
-}
 function Content_getCodeBlocks(app) {
   let option, objectArg_1;
   let view;
-  const arg = obsidian2.MarkdownView;
+  const type = obsidian2.MarkdownView;
   const objectArg = app.workspace;
-  view = objectArg.getActiveViewOfType(arg);
+  view = objectArg.getActiveViewOfType(type);
   if (view == null) {
     return void 0;
   } else {
     const view_1 = value(view);
-    const lines = split(view_1.getViewData(), ["\n"], null, 0);
-    return map((optionalCodeblockSections) => toArray3(map4((f_1) => {
+    const lines = split(view_1.getViewData(), ["\n"], void 0, 0);
+    return map((optionalCodeblockSections) => toArray2(map4((f_1) => {
       const startLine = ~~f_1.position.start.line + 1 | 0;
       const endLine = ~~f_1.position.end.line - 1 | 0;
-      return new Content_CodeBlockContent(startLine, join("\n", lines.slice(startLine, endLine + 1)));
-    }, optionalCodeblockSections)), flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option))))));
+      return new Content_CodeBlockContent(startLine, endLine, join("\n", lines.slice(startLine, endLine + 1)));
+    }, optionalCodeblockSections)), flatten(map((f) => map((d) => where((d_1) => d_1.type === "code", d), f.sections), flatten((option = app.workspace.getActiveFile(), map((objectArg_1 = app.metadataCache, (file) => objectArg_1.getFileCache(file)), option))))));
   }
 }
 function Content_getHeadings(app) {
   let option, objectArg_1;
   let view;
-  const arg = obsidian2.MarkdownView;
+  const type = obsidian2.MarkdownView;
   const objectArg = app.workspace;
-  view = objectArg.getActiveViewOfType(arg);
+  view = objectArg.getActiveViewOfType(type);
   if (view == null) {
     return void 0;
   } else {
     const view_1 = value(view);
-    const lines = split(view_1.getViewData(), ["\n"], null, 0);
-    return map((headingCaches) => toArray3(map4((f_1) => {
+    const lines = split(view_1.getViewData(), ["\n"], void 0, 0);
+    return map((headingCaches) => toArray2(map4((f_1) => {
       const startLine = ~~f_1.position.start.line + 1 | 0;
       const endLine = ~~f_1.position.end.line - 1 | 0;
-      return new Content_CodeBlockContent(startLine, join("\n", where((f_2) => !(f_2.indexOf("title:") === 0), lines.slice(startLine, endLine + 1))));
-    }, headingCaches)), bind((f) => map((d) => d.slice(), f.headings), (option = app.workspace.getActiveFile(), bind((objectArg_1 = app.metadataCache, (arg_1) => objectArg_1.getFileCache(arg_1)), option))));
+      return new Content_CodeBlockContent(startLine, endLine, join("\n", where((f_2) => !f_2.startsWith("title:"), lines.slice(startLine, endLine + 1))));
+    }, headingCaches)), bind((f) => map((d) => d.slice(), f.headings), (option = app.workspace.getActiveFile(), bind((objectArg_1 = app.metadataCache, (file) => objectArg_1.getFileCache(file)), option))));
   }
 }
 function Seq_skipSafe(num, source) {
@@ -2352,7 +2857,7 @@ function ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(this$, file) {
     const cache = fileCacheOpt;
     return append(defaultArg(map((source) => map4((f) => f.tag, source), cache.tags), empty2()), map4((f_2) => `#${f_2}`, defaultArg(map((f_1) => {
       const tags = f_1["tags"];
-      if (equals(tags, null)) {
+      if (equals(tags, defaultOf())) {
         return empty2();
       } else {
         return tags;
@@ -2362,29 +2867,11 @@ function ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(this$, file) {
     return empty2();
   }
 }
-function EditorPosition_create(ch, line) {
-  let _ch = ch;
-  let _line = line;
-  return new class {
-    get ch() {
-      return ch;
-    }
-    set ch(v) {
-      _ch = v;
-    }
-    get line() {
-      return _line;
-    }
-    set line(v_1) {
-      _line = v_1;
-    }
-  }();
-}
 
 // build/Commands.js
 var obsidian3 = __toModule(require("obsidian"));
 
-// build/fable_modules/fable-library.3.7.17/MapUtil.js
+// build/fable_modules/fable-library-js.4.24.0/MapUtil.js
 function tryGetValue(map5, key, defaultValue) {
   if (map5.has(key)) {
     defaultValue.contents = map5.get(key);
@@ -2406,14 +2893,14 @@ function getItemFromDict(map5, key) {
   }
 }
 
-// build/fable_modules/fable-library.3.7.17/MutableMap.js
+// build/fable_modules/fable-library-js.4.24.0/MutableMap.js
 var Dictionary = class {
   constructor(pairs, comparer) {
-    const this$ = new FSharpRef(null);
+    const this$ = new FSharpRef(defaultOf());
     this.comparer = comparer;
     this$.contents = this;
     this.hashMap = new Map([]);
-    this["init@8-1"] = 1;
+    this["init@9"] = 1;
     const enumerator = getEnumerator(pairs);
     try {
       while (enumerator["System.Collections.IEnumerator.MoveNext"]()) {
@@ -2427,11 +2914,11 @@ var Dictionary = class {
   get [Symbol.toStringTag]() {
     return "Dictionary";
   }
-  toJSON(_key) {
+  toJSON() {
     const this$ = this;
     return Array.from(this$);
   }
-  ["System.Collections.IEnumerable.GetEnumerator"]() {
+  "System.Collections.IEnumerable.GetEnumerator"() {
     const this$ = this;
     return getEnumerator(this$);
   }
@@ -2440,101 +2927,100 @@ var Dictionary = class {
     return getEnumerator(concat(this$.hashMap.values()));
   }
   [Symbol.iterator]() {
-    return toIterator(this.GetEnumerator());
+    return toIterator(getEnumerator(this));
   }
-  ["System.Collections.Generic.ICollection`1.Add2B595"](item) {
+  "System.Collections.Generic.ICollection`1.Add2B595"(item2) {
     const this$ = this;
-    Dictionary__Add_5BDDA1(this$, item[0], item[1]);
+    Dictionary__Add_5BDDA1(this$, item2[0], item2[1]);
   }
-  ["System.Collections.Generic.ICollection`1.Clear"]() {
+  "System.Collections.Generic.ICollection`1.Clear"() {
     const this$ = this;
     Dictionary__Clear(this$);
   }
-  ["System.Collections.Generic.ICollection`1.Contains2B595"](item) {
+  "System.Collections.Generic.ICollection`1.Contains2B595"(item2) {
     const this$ = this;
-    const matchValue = Dictionary__TryFind_2B595(this$, item[0]);
-    let pattern_matching_result;
+    const matchValue = Dictionary__TryFind_2B595(this$, item2[0]);
+    let matchResult, p_1;
     if (matchValue != null) {
-      if (equals(matchValue[1], item[1])) {
-        pattern_matching_result = 0;
+      if (equals(value(matchValue)[1], item2[1])) {
+        matchResult = 0;
+        p_1 = value(matchValue);
       } else {
-        pattern_matching_result = 1;
+        matchResult = 1;
       }
     } else {
-      pattern_matching_result = 1;
+      matchResult = 1;
     }
-    switch (pattern_matching_result) {
-      case 0: {
+    switch (matchResult) {
+      case 0:
         return true;
-      }
-      case 1: {
+      default:
         return false;
-      }
     }
   }
-  ["System.Collections.Generic.ICollection`1.CopyToZ2E171D71"](array, arrayIndex) {
+  "System.Collections.Generic.ICollection`1.CopyToZ3B4C077E"(array, arrayIndex) {
     const this$ = this;
     iterateIndexed((i, e) => {
-      array[arrayIndex + i] = e;
+      setItem(array, arrayIndex + i, e);
     }, this$);
   }
-  ["System.Collections.Generic.ICollection`1.get_Count"]() {
+  "System.Collections.Generic.ICollection`1.get_Count"() {
     const this$ = this;
     return Dictionary__get_Count(this$) | 0;
   }
-  ["System.Collections.Generic.ICollection`1.get_IsReadOnly"]() {
+  "System.Collections.Generic.ICollection`1.get_IsReadOnly"() {
     return false;
   }
-  ["System.Collections.Generic.ICollection`1.Remove2B595"](item) {
+  "System.Collections.Generic.ICollection`1.Remove2B595"(item2) {
     const this$ = this;
-    const matchValue = Dictionary__TryFind_2B595(this$, item[0]);
+    const matchValue = Dictionary__TryFind_2B595(this$, item2[0]);
     if (matchValue != null) {
-      if (equals(matchValue[1], item[1])) {
-        Dictionary__Remove_2B595(this$, item[0]);
+      if (equals(value(matchValue)[1], item2[1])) {
+        Dictionary__Remove_2B595(this$, item2[0]);
       }
       return true;
     } else {
       return false;
     }
   }
-  ["System.Collections.Generic.IDictionary`2.Add5BDDA1"](key, value2) {
+  "System.Collections.Generic.IDictionary`2.Add5BDDA1"(key, value2) {
     const this$ = this;
     Dictionary__Add_5BDDA1(this$, key, value2);
   }
-  ["System.Collections.Generic.IDictionary`2.ContainsKey2B595"](key) {
+  "System.Collections.Generic.IDictionary`2.ContainsKey2B595"(key) {
     const this$ = this;
     return Dictionary__ContainsKey_2B595(this$, key);
   }
-  ["System.Collections.Generic.IDictionary`2.get_Item2B595"](key) {
+  "System.Collections.Generic.IDictionary`2.get_Item2B595"(key) {
     const this$ = this;
     return Dictionary__get_Item_2B595(this$, key);
   }
-  ["System.Collections.Generic.IDictionary`2.set_Item5BDDA1"](key, v) {
+  "System.Collections.Generic.IDictionary`2.set_Item5BDDA1"(key, v) {
     const this$ = this;
     Dictionary__set_Item_5BDDA1(this$, key, v);
   }
-  ["System.Collections.Generic.IDictionary`2.get_Keys"]() {
+  "System.Collections.Generic.IDictionary`2.get_Keys"() {
     const this$ = this;
-    return toArray3(delay(() => map4((pair) => pair[0], this$)));
+    return toArray2(delay(() => map4((pair) => pair[0], this$)));
   }
-  ["System.Collections.Generic.IDictionary`2.Remove2B595"](key) {
+  "System.Collections.Generic.IDictionary`2.Remove2B595"(key) {
     const this$ = this;
     return Dictionary__Remove_2B595(this$, key);
   }
-  ["System.Collections.Generic.IDictionary`2.TryGetValue23A0B95A"](key, value2) {
+  "System.Collections.Generic.IDictionary`2.TryGetValue6DC89625"(key, value2) {
     const this$ = this;
     const matchValue = Dictionary__TryFind_2B595(this$, key);
     if (matchValue != null) {
-      const pair = matchValue;
+      const pair = value(matchValue);
       value2.contents = pair[1];
       return true;
     } else {
       return false;
     }
   }
-  ["System.Collections.Generic.IDictionary`2.get_Values"]() {
+  "System.Collections.Generic.IDictionary`2.get_Values"() {
     const this$ = this;
-    return toArray3(delay(() => map4((pair) => pair[1], this$)));
+    return toArray2(delay(() => map4((pair) => pair[1], this$)));
   }
   get size() {
     const this$ = this;
@@ -2583,7 +3069,7 @@ var Dictionary = class {
 function Dictionary__TryFindIndex_2B595(this$, k) {
   const h = this$.comparer.GetHashCode(k) | 0;
   let matchValue;
-  let outArg = null;
+  let outArg = defaultOf();
   matchValue = [tryGetValue(this$.hashMap, h, new FSharpRef(() => outArg, (v) => {
     outArg = v;
   })), outArg];
@@ -2595,23 +3081,21 @@ function Dictionary__TryFindIndex_2B595(this$, k) {
 }
 function Dictionary__TryFind_2B595(this$, k) {
   const matchValue = Dictionary__TryFindIndex_2B595(this$, k);
-  let pattern_matching_result;
+  let matchResult;
   if (matchValue[0]) {
     if (matchValue[2] > -1) {
-      pattern_matching_result = 0;
+      matchResult = 0;
     } else {
-      pattern_matching_result = 1;
+      matchResult = 1;
     }
   } else {
-    pattern_matching_result = 1;
+    matchResult = 1;
   }
-  switch (pattern_matching_result) {
-    case 0: {
+  switch (matchResult) {
+    case 0:
       return getItemFromDict(this$.hashMap, matchValue[1])[matchValue[2]];
-    }
-    case 1: {
+    default:
       return void 0;
-    }
   }
 }
 function Dictionary__Clear(this$) {
@@ -2633,7 +3117,7 @@ function Dictionary__get_Count(this$) {
 function Dictionary__get_Item_2B595(this$, k) {
   const matchValue = Dictionary__TryFind_2B595(this$, k);
   if (matchValue != null) {
-    return matchValue[1];
+    return value(matchValue)[1];
   } else {
     throw new Error("The item was not found in collection");
   }
@@ -2654,8 +3138,7 @@ function Dictionary__Add_5BDDA1(this$, k, v) {
   const matchValue = Dictionary__TryFindIndex_2B595(this$, k);
   if (matchValue[0]) {
     if (matchValue[2] > -1) {
-      const msg = format("An item with the same key has already been added. Key: {0}", k);
-      throw new Error(msg);
+      throw new Error(format("An item with the same key has already been added. Key: {0}", k));
     } else {
       const value2 = void getItemFromDict(this$.hashMap, matchValue[1]).push([k, v]);
     }
@@ -2665,49 +3148,46 @@ function Dictionary__Add_5BDDA1(this$, k, v) {
 }
 function Dictionary__ContainsKey_2B595(this$, k) {
   const matchValue = Dictionary__TryFindIndex_2B595(this$, k);
-  let pattern_matching_result;
+  let matchResult;
   if (matchValue[0]) {
     if (matchValue[2] > -1) {
-      pattern_matching_result = 0;
+      matchResult = 0;
     } else {
-      pattern_matching_result = 1;
+      matchResult = 1;
     }
   } else {
-    pattern_matching_result = 1;
+    matchResult = 1;
   }
-  switch (pattern_matching_result) {
-    case 0: {
+  switch (matchResult) {
+    case 0:
       return true;
-    }
-    case 1: {
+    default:
       return false;
-    }
   }
 }
 function Dictionary__Remove_2B595(this$, k) {
   const matchValue = Dictionary__TryFindIndex_2B595(this$, k);
-  let pattern_matching_result;
+  let matchResult;
   if (matchValue[0]) {
     if (matchValue[2] > -1) {
-      pattern_matching_result = 0;
+      matchResult = 0;
     } else {
-      pattern_matching_result = 1;
+      matchResult = 1;
     }
   } else {
-    pattern_matching_result = 1;
+    matchResult = 1;
   }
-  switch (pattern_matching_result) {
+  switch (matchResult) {
     case 0: {
       getItemFromDict(this$.hashMap, matchValue[1]).splice(matchValue[2], 1);
       return true;
     }
-    case 1: {
+    default:
       return false;
-    }
   }
 }
 
-// build/fable_modules/fable-library.3.7.17/Seq2.js
+// build/fable_modules/fable-library-js.4.24.0/Seq2.js
 function groupBy(projection, xs, comparer) {
   return delay(() => {
     const dict = new Dictionary([], comparer);
@@ -2718,7 +3198,7 @@ function groupBy(projection, xs, comparer) {
         const x = enumerator["System.Collections.Generic.IEnumerator`1.get_Current"]();
         const key = projection(x);
         let matchValue;
-        let outArg = null;
+        let outArg = defaultOf();
         matchValue = [tryGetValue(dict, key, new FSharpRef(() => outArg, (v) => {
           outArg = v;
         })), outArg];
@@ -2737,11 +3217,8 @@ function groupBy(projection, xs, comparer) {
 }
 
 // build/Commands.js
-function doNone(f) {
-  return void 0;
-}
 function goToPrevHeading(plugin) {
-  return Command_forEditor("goToPrevHeading", "Go to previous heading", uncurry(2, (editor) => {
+  return Command_forEditor("goToPrevHeading", "Go to previous heading", "square-chevron-up", uncurry2((editor) => {
     const cursor = editor.getCursor();
     const matchValue = Content_getHeadings(plugin.app);
     if (matchValue != null) {
@@ -2753,11 +3230,11 @@ function goToPrevHeading(plugin) {
     } else {
       Notice_show("no headings found");
     }
-    return doNone;
+    return (arg00$0040) => void 0;
   }));
 }
 function goToNextHeading(plugin) {
-  return Command_forEditor("goToNextHeading", "Go to next heading", uncurry(2, (editor) => {
+  return Command_forEditor("goToNextHeading", "Go to next heading", "square-chevron-down", uncurry2((editor) => {
     const cursor = editor.getCursor();
     const matchValue = Content_getHeadings(plugin.app);
     if (matchValue != null) {
@@ -2769,34 +3246,14 @@ function goToNextHeading(plugin) {
     } else {
       Notice_show("no headings found");
     }
-    return doNone;
-  }));
-}
-function selectCurrentBlock(plugin) {
-  return Command_forEditor("selectCurrentBlock", "Select current heading block", uncurry(2, (editor) => {
-    const cursor = editor.getCursor();
-    const matchValue = Content_getHeadings(plugin.app);
-    if (matchValue != null) {
-      const headings = matchValue;
-      iterate((topHeading) => {
-        defaultArgWith(map((bottomHeading) => {
-          const endlineText = editor.getLine(bottomHeading.startLine - 2);
-          editor.setSelection(EditorPosition_create(0, topHeading.startLine - 1), EditorPosition_create(endlineText.length, bottomHeading.startLine - 2));
-        }, tryFind((v_1) => v_1.startLine > topHeading.startLine, headings)), () => {
-          editor.setSelection(EditorPosition_create(0, topHeading.startLine - 1), EditorPosition_create(0, editor.lastLine()));
-        });
-      }, toArray(tryFind((v) => v.startLine <= ~~cursor.line + 1, reverse2(headings))));
-    } else {
-      Notice_show("no headings found");
-    }
-    return doNone;
+    return (arg00$0040) => void 0;
   }));
 }
 function goToPrevEmptyLine(plugin) {
-  return Command_forEditor("goToPrevEmptyLine", "Go to previous empty line", uncurry(2, (editor) => {
+  return Command_forEditor("goToPrevEmptyLine", "Go to previous empty line", "panel-top-close", uncurry2((editor) => {
     let x_1;
     const cursor = editor.getCursor();
-    const linesbefore = reverse(split(editor.getValue(), ["\n"], null, 0).slice(void 0, ~~cursor.line + 1));
+    const linesbefore = reverse(split(editor.getValue(), ["\n"], void 0, 0).slice(void 0, ~~cursor.line + 1));
     let foundOpt;
     if (!(match(/^\s*$/gu, editor.getLine(~~cursor.line)) != null)) {
       foundOpt = tryFindIndex((f) => match(/^\s*$/gu, f) != null, Seq_skipSafe(1, linesbefore));
@@ -2808,17 +3265,17 @@ function goToPrevEmptyLine(plugin) {
       const moveby = foundOpt | 0;
       const newpos = ~~cursor.line - moveby - 1;
       editor.setCursor(newpos);
-      return doNone;
+      return (arg00$0040_1) => void 0;
     } else {
-      return doNone;
+      return (arg00$0040) => void 0;
     }
   }));
 }
 function goToNextEmptyLine(plugin) {
-  return Command_forEditor("goToNextEmptyLine", "Go to next empty line", uncurry(2, (editor) => {
+  return Command_forEditor("goToNextEmptyLine", "Go to next empty line", "panel-bottom-close", uncurry2((editor) => {
     let x_1;
     const cursor = editor.getCursor();
-    const linesafter = split(editor.getValue(), ["\n"], null, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], null, 0).length);
+    const linesafter = split(editor.getValue(), ["\n"], void 0, 0).slice(~~cursor.line, split(editor.getValue(), ["\n"], void 0, 0).length);
     let foundOpt;
     if (!(match(/^\s*$/gu, editor.getLine(~~cursor.line)) != null)) {
       foundOpt = tryFindIndex((f) => match(/^\s*$/gu, f) != null, Seq_skipSafe(1, linesafter));
@@ -2830,104 +3287,72 @@ function goToNextEmptyLine(plugin) {
       const moveby = foundOpt | 0;
       const newpos = ~~cursor.line + moveby + 1;
       editor.setCursor(newpos);
-      return doNone;
+      return (arg00$0040_1) => void 0;
     } else {
-      return doNone;
+      return (arg00$0040) => void 0;
     }
   }));
 }
 function copyNextCodeBlock(plugin) {
-  return Command_forEditor("copyNextCodeBlock", "Copy Next Code Block", uncurry(2, (edit) => {
-    let arg_1, objectArg;
+  return Command_forEditor("copyNextCodeBlock", "Copy Next Code Block", "book-check", uncurry2((edit) => {
+    let message, objectArg;
     const matchValue = Content_getCodeBlocks(plugin.app);
     if (matchValue != null) {
       const blocks = matchValue;
       const cursor = edit.getCursor();
-      const _arg = tryFind((f_1) => f_1.startLine > ~~cursor.line, blocks);
-      if (_arg != null) {
-        const v = _arg;
-        arg_1 = `copied:
-${substring(v.content, 0, min(comparePrimitives, v.content.length, 50))}`, objectArg = obsidian3.Notice, new objectArg(arg_1);
+      const _arg_1 = tryFind((f) => f.endLine + 1 >= ~~cursor.line, blocks);
+      if (_arg_1 != null) {
+        const v = _arg_1;
+        message = `copied:
+${substring(v.content, 0, min(v.content.length, 50))}`, objectArg = obsidian3.Notice, new objectArg(message);
         Clipboard_write(v.content);
       } else {
         new obsidian3.Notice("could not find a code block");
       }
-      return doNone;
+      return (arg00$0040_1) => void 0;
     } else {
-      return doNone;
+      return (arg00$0040) => void 0;
     }
   }));
 }
 function copyCodeBlock(plugin) {
-  return Command_forMenu("copyCodeBlock", "Copy Code Block", () => {
+  return Command_forMenu("copyCodeBlock", "Copy Code Block", "book-copy", () => {
     const codeblocks = Content_getCodeBlocks(plugin.app);
     if (codeblocks == null) {
       return void 0;
     } else {
       const codeblocks_1 = value(codeblocks);
       const modal = SuggestModal_withOnChooseSuggestion((tupledArg) => {
-        let arg_2, objectArg;
+        let message, objectArg;
         const f_3 = tupledArg[0];
-        arg_2 = `copied:
-${substring(f_3.content, 0, min(comparePrimitives, f_3.content.length, 50))}`, objectArg = obsidian3.Notice, new objectArg(arg_2);
+        message = `copied:
+${substring(f_3.content, 0, min(f_3.content.length, 50))}`, objectArg = obsidian3.Notice, new objectArg(message);
         Clipboard_write(f_3.content);
       }, SuggestModal_withRenderSuggestion((f_2, elem) => {
         elem.innerText = f_2.content;
       }, SuggestModal_withGetSuggestions((queryInput) => {
         const query = obsidian3.prepareQuery(queryInput);
-        const arg = map4((tuple) => tuple[0], where((f_1) => f_1[1] != null, map4((f) => [f, obsidian3.fuzzySearch(query, f.content)], codeblocks_1)));
-        return Array.from(arg);
+        const collection = map4((tuple) => tuple[0], where((f_1) => f_1[1] != null, map4((f) => [f, obsidian3.fuzzySearch(query, f.content)], codeblocks_1)));
+        return Array.from(collection);
       }, SuggestModal_create(plugin.app))));
       modal.open();
       return void 0;
     }
   });
 }
-function openSwitcherWithTag1(plugin) {
-  return Command_forMenu("openSwitcherWithTag1", "Open Switcher with Tag 1", () => {
-    let tags;
-    const matchValue = Content_getTags(plugin.app);
-    if (matchValue != null) {
-      if (tags = matchValue, tags.length === 0) {
-        const tags_1 = matchValue;
-        Notice_show("no tags found");
-      } else {
-        const tags_2 = matchValue;
-        const cmd = plugin.settings.defaultModalCommand;
-        const matchValue_1 = plugin.app.commands.executeCommandById(cmd);
-        if (matchValue_1) {
-          const matchValue_2 = document.querySelector("input.prompt-input");
-          if (equals(matchValue_2, null)) {
-            Notice_show("plugin outdated");
-          } else {
-            const modalInput = matchValue_2;
-            modalInput.value = `${tags_2[0].tag} `;
-            const ev = new Event("input", null);
-            modalInput.dispatchEvent(ev);
-          }
-        } else {
-          Notice_show(`failed to run command: ${cmd}, configure Default modal command in settings`);
-        }
-      }
-    } else {
-      Notice_show("no tags found");
-    }
-    return void 0;
-  });
-}
 function tagSearch(plugin) {
-  return Command_forMenu("tagSearch", "Search by Tag", () => {
+  return Command_forMenu("tagSearch", "Search by Tag", "text-search", () => {
     SuggestModal_openModal(SuggestModal_withOnChooseSuggestion((tupledArg_2) => {
       const cmd = plugin.settings.defaultModalCommand;
       const matchValue = plugin.app.commands.executeCommandById(cmd);
       if (matchValue) {
         const matchValue_1 = document.querySelector("input.prompt-input");
-        if (equals(matchValue_1, null)) {
+        if (equals(matchValue_1, defaultOf())) {
           Notice_show("plugin outdated");
         } else {
           const modalInput = matchValue_1;
           modalInput.value = `${tupledArg_2[0].tag} `;
-          const ev = new Event("input", null);
+          const ev = new Event("input", defaultOf());
           modalInput.dispatchEvent(ev);
         }
       } else {
@@ -2938,10 +3363,10 @@ function tagSearch(plugin) {
     }, SuggestModal_withGetSuggestions((queryInput) => {
       let results, source, objectArg;
       const query = obsidian3.prepareQuery(queryInput);
-      const arg_1 = map4((tuple_1) => tuple_1[0], (results = choose((f) => map((search) => [f, search.score], obsidian3.fuzzySearch(query, f.tag)), map4((tupledArg_1) => ({
+      const collection = map4((tuple_1) => tuple_1[0], (results = choose((f) => map((search) => [f, search.score], obsidian3.fuzzySearch(query, f.tag)), map4((tupledArg_1) => ({
         count: tupledArg_1[1],
         tag: tupledArg_1[0]
-      }), map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((x) => x, (source = plugin.app.vault.getMarkdownFiles(), collect((objectArg = plugin.app, (arg) => ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(objectArg, arg)), source)), {
+      }), map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((x) => x, (source = plugin.app.vault.getMarkdownFiles(), collect((objectArg = plugin.app, (file) => ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(objectArg, file)), source)), {
         Equals: (x_1, y) => x_1 === y,
         GetHashCode: stringHash
       })))), queryInput === "" ? sortByDescending((f_1) => f_1[0].count, results, {
@@ -2949,15 +3374,15 @@ function tagSearch(plugin) {
       }) : sortByDescending((tuple) => tuple[1], results, {
         Compare: comparePrimitives
       })));
-      return Array.from(arg_1);
+      return Array.from(collection);
     }, SuggestModal_create(plugin.app)))));
     return void 0;
   });
 }
 var FoldedTagSearchAction = class extends Union {
-  constructor(tag, ...fields) {
+  constructor(tag, fields) {
     super();
-    this.tag = tag | 0;
+    this.tag = tag;
     this.fields = fields;
   }
   cases() {
@@ -2977,10 +3402,10 @@ function FoldedTagSearchState_get_Default() {
   return new FoldedTagSearchState(1, "", empty(), empty());
 }
 function foldedTagSearch(plugin) {
-  return Command_forMenu("foldedTagSearch", "Folded search by Tag", () => {
+  return Command_forMenu("foldedTagSearch", "Folded search by Tag", "search-slash", () => {
     const createModal = (state_1) => {
       const undoLastAction = (tupledArg_1) => {
-        let inputRecord;
+        let bind$0040;
         const modal = tupledArg_1[1];
         const matchValue = state_1.Actions;
         if (!isEmpty(matchValue)) {
@@ -2991,7 +3416,7 @@ function foldedTagSearch(plugin) {
           } else if (isEmpty(state_1.Filters)) {
           } else {
             modal.close();
-            createModal((inputRecord = FoldedTagSearchState_get_Default(), new FoldedTagSearchState(inputRecord.Level, inputRecord.Query, tail(state_1.Filters), skipWhile((f_4) => !equals(f_4, new FoldedTagSearchAction(1)), tail(matchValue)))));
+            createModal((bind$0040 = FoldedTagSearchState_get_Default(), new FoldedTagSearchState(bind$0040.Level, bind$0040.Query, tail(state_1.Filters), skipWhile((f_4) => !equals(f_4, new FoldedTagSearchAction(1, [])), tail(matchValue)))));
           }
         }
       };
@@ -3000,13 +3425,13 @@ function foldedTagSearch(plugin) {
         const matchValue_3 = ObsidianBindings_App__App_executeCommandById_Z721C83C5(plugin.app, cmd);
         if (matchValue_3) {
           const matchValue_4 = document.querySelector("input.prompt-input");
-          if (equals(matchValue_4, null)) {
+          if (equals(matchValue_4, defaultOf())) {
             Notice_show("plugin outdated");
           } else {
             const modalInput = matchValue_4;
             const searchString = join(" ", cons(tupledArg_5[0].tag, state_1.Filters)) + " ";
             modalInput.value = searchString;
-            const ev = new Event("input", null);
+            const ev = new Event("input", defaultOf());
             modalInput.dispatchEvent(ev);
           }
         } else {
@@ -3015,20 +3440,20 @@ function foldedTagSearch(plugin) {
       }, SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1([], "Tab", (tupledArg_4) => {
         const modal_2 = tupledArg_4[1];
         const currSelection_1 = ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_2);
-        const matchValue_2 = endsWith(ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_2).tag, "/");
+        const matchValue_2 = ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_2).tag.endsWith("/");
         if (matchValue_2) {
-          const newState = new FoldedTagSearchState(state_1.Level + 1, currSelection_1.tag, state_1.Filters, cons(new FoldedTagSearchAction(0), state_1.Actions));
+          const newState = new FoldedTagSearchState(state_1.Level + 1, currSelection_1.tag, state_1.Filters, cons(new FoldedTagSearchAction(0, []), state_1.Actions));
           modal_2.close();
           createModal(newState);
         }
       }), SuggestModal_withCtrlKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1([], "Enter", (tupledArg_3) => {
-        let inputRecord_1;
+        let bind$0040_1;
         const modal_1 = tupledArg_3[1];
         const current = ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_1).tag;
         if (exists((f_8) => f_8 === current, state_1.Filters)) {
         } else {
           modal_1.close();
-          createModal((inputRecord_1 = FoldedTagSearchState_get_Default(), new FoldedTagSearchState(inputRecord_1.Level, inputRecord_1.Query, cons(ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_1).tag, state_1.Filters), cons(new FoldedTagSearchAction(1), state_1.Actions))));
+          createModal((bind$0040_1 = FoldedTagSearchState_get_Default(), new FoldedTagSearchState(bind$0040_1.Level, bind$0040_1.Query, cons(ObsidianBindings_SuggestModal$1__SuggestModal$1_get_currentSelection(modal_1).tag, state_1.Filters), cons(new FoldedTagSearchAction(1, []), state_1.Actions))));
         }
       }), SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Shift"], "Tab", undoLastAction), SuggestModal_withKeyboardShortcut(new SuggestModal_SuggestModalKeyboardShortcut$1(["Shift"], "Enter", undoLastAction), SuggestModal_withRenderSuggestion((f_7, elem) => {
         elem.innerText = `${f_7.count}:	${f_7.tag}`;
@@ -3038,13 +3463,13 @@ function foldedTagSearch(plugin) {
         return map4((tuple_1) => tuple_1[0], (results = choose((f_5) => map((search) => [f_5, search.score], obsidian3.fuzzySearch(query, f_5.tag)), map4((tupledArg_2) => ({
           count: tupledArg_2[1],
           tag: tupledArg_2[0]
-        }), (state = state_1, map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_3) => String_untilNthOccurrence(state.Level, "/", f_3), collect((tags_1) => where((f_2) => f_2.indexOf(state.Query) === 0, tags_1), where((tags) => {
-          if (forAll((filter2) => tags.some((f) => f.indexOf(filter2) === 0), state.Filters)) {
-            return tags.some((f_1) => f_1.indexOf(state.Query) === 0);
+        }), (state = state_1, map4((tupledArg) => [tupledArg[0], length2(tupledArg[1])], groupBy((f_3) => String_untilNthOccurrence(state.Level, "/", f_3), collect((tags_1) => where((f_2) => f_2.startsWith(state.Query), tags_1), where((tags) => {
+          if (forAll((filter2) => tags.some((f) => f.startsWith(filter2)), state.Filters)) {
+            return tags.some((f_1) => f_1.startsWith(state.Query));
           } else {
             return false;
           }
-        }, (source_1 = plugin.app.vault.getMarkdownFiles(), map4((f1 = (objectArg = plugin.app, (arg) => ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(objectArg, arg)), (arg_1) => toArray3(f1(arg_1))), source_1)))), {
+        }, (source_1 = plugin.app.vault.getMarkdownFiles(), map4((f1 = (objectArg = plugin.app, (file) => ObsidianBindings_App__App_getTagsOfFile_Z585EFF42(objectArg, file)), (arg) => toArray2(f1(arg))), source_1)))), {
           Equals: (x, y) => x === y,
           GetHashCode: stringHash
         }))))), queryInput === "" ? sortByDescending((f_6) => f_6[0].count, results, {
@@ -3053,73 +3478,61 @@ function foldedTagSearch(plugin) {
           Compare: comparePrimitives
         })));
       }, SuggestModal_withInstructions(ofArray([["Tab", "Expand tag"], ["Ctrl+Enter", "Add another tag"], ["Shift+Enter/Shift+Tab", "Undo last action"], ["Enter", "Search"]]), SuggestModal_map((sm) => {
-        const arg_2 = join(" AND ", cons(state_1.Query, state_1.Filters));
-        sm.setPlaceholder(arg_2);
+        const placeholder = join(" AND ", cons(state_1.Query, state_1.Filters));
+        sm.setPlaceholder(placeholder);
       }, SuggestModal_create(plugin.app)))))))))));
     };
     createModal(FoldedTagSearchState_get_Default());
     return void 0;
   });
 }
-function insertHeading4(plugin) {
-  return Command_forEditor("insertHeading4", "Insert heading 4", uncurry(2, (edit) => {
-    edit.replaceSelection("#### ");
-    return doNone;
-  }));
-}
-function insertHeading5(plugin) {
-  return Command_forEditor("insertHeading5", "Insert heading 5", uncurry(2, (edit) => {
-    edit.replaceSelection("##### ");
-    return doNone;
-  }));
-}
 function increaseHeading(plugin) {
-  return Command_forEditor("increaseHeading", "Increase Heading level", uncurry(2, (edit) => {
+  return Command_forEditor("increaseHeading", "Increase Heading level", "arrow-up-wide-narrow", uncurry2((edit) => {
     const lineIdx = edit.getCursor().line;
     const currLine = edit.getLine(lineIdx);
-    const matchValue = [currLine.indexOf("#") === 0, currLine.indexOf("######") === 0];
-    let pattern_matching_result;
-    if (matchValue[0]) {
-      if (matchValue[1]) {
-        pattern_matching_result = 0;
+    const matchValue = currLine.startsWith("#");
+    const matchValue_1 = currLine.startsWith("######");
+    let matchResult;
+    if (matchValue) {
+      if (matchValue_1) {
+        matchResult = 0;
       } else {
-        pattern_matching_result = 1;
+        matchResult = 1;
       }
     } else {
-      pattern_matching_result = 0;
+      matchResult = 0;
     }
-    switch (pattern_matching_result) {
-      case 0: {
-        return doNone;
-      }
-      case 1: {
+    switch (matchResult) {
+      case 0:
+        return (arg00$0040) => void 0;
+      default: {
         edit.setLine(lineIdx, `#${currLine}`);
-        return doNone;
+        return (arg00$0040_1) => void 0;
       }
     }
   }));
 }
 function decreaseHeading(plugin) {
-  return Command_forEditor("decreaseHeading", "Decrease Heading level", uncurry(2, (edit) => {
+  return Command_forEditor("decreaseHeading", "Decrease Heading level", "arrow-down-narrow-wide", uncurry2((edit) => {
     const lineIdx = edit.getCursor().line;
     const currLine = edit.getLine(lineIdx);
-    const matchValue = currLine.indexOf("##") === 0;
+    const matchValue = currLine.startsWith("##");
     if (matchValue) {
       edit.setLine(lineIdx, currLine.slice(1, currLine.length));
-      return doNone;
+      return (arg00$0040_1) => void 0;
     } else {
-      return doNone;
+      return (arg00$0040) => void 0;
     }
   }));
 }
 function insertDefaultCallout(plugin) {
-  return Command_forEditor("insertDefaultCallout", "Insert Default Callout", uncurry(2, (edit) => {
+  return Command_forEditor("insertDefaultCallout", "Insert Default Callout", "square-square", uncurry2((edit) => {
     edit.replaceSelection(`> [!${plugin.settings.defaultCalloutType}] `);
-    return doNone;
+    return (arg00$0040) => void 0;
   }));
 }
 function insertCodeBlock(plugin) {
-  return Command_forEditor("insertCodeBlock", "Insert Code Block", uncurry(2, (edit) => {
+  return Command_forEditor("insertCodeBlock", "Insert Code Block", "heading-5", uncurry2((edit) => {
     const newBlock = plugin.settings.use3BackticksForCodeBlock ? `\`\`\`${plugin.settings.defaultCodeBlockLanguage}
 
 \`\`\`` : `\`\`\`\`${plugin.settings.defaultCodeBlockLanguage}
@@ -3128,7 +3541,7 @@ function insertCodeBlock(plugin) {
     edit.replaceSelection(newBlock);
     const cursor = edit.getCursor();
     edit.setCursor(cursor.line - 1);
-    return doNone;
+    return (arg00$0040) => void 0;
   }));
 }
 
@@ -3136,18 +3549,18 @@ function insertCodeBlock(plugin) {
 var Plugin2 = class extends import_obsidian.Plugin {
   constructor(app, manifest) {
     super(app, manifest);
-    const instance = new FSharpRef(null);
+    const instance = new FSharpRef(defaultOf());
     this.app = app;
     instance.contents = this;
     this.plugin = instance.contents;
     Plugin2__init(this);
-    this["init@15"] = 1;
+    this["init@14"] = 1;
     this.plugin.onload = () => {
       Plugin2__onload(this);
     };
   }
 };
-function Plugin2$reflection() {
+function Plugin2_$reflection() {
   return class_type("Main.Plugin2", void 0, Plugin2, class_type("Main.BasePlugin", void 0, import_obsidian.Plugin));
 }
 function Plugin2_$ctor_Z7F5F6E8A(app, manifest) {
@@ -3175,13 +3588,30 @@ function Plugin2__init(this$) {
     return this$.plugin.saveData(some(settings)).then(() => Promise.resolve(void 0));
   }));
 }
+function Plugin2__commandById_Z721C83C5(this$, id) {
+  return this$.plugin.app.commands.executeCommandById(id);
+}
 function Plugin2__onload(this$) {
+  toConsole(printf("loaded:"));
   this$.plugin.settings = this$.plugin.loadSettings();
-  const arg = create(this$.app, this$.plugin);
-  this$.plugin.addSettingTab(arg);
-  iterate((cmd) => {
-    let arg_1;
-    arg_1 = cmd(this$.plugin), this$.plugin.addCommand(arg_1);
-  }, [copyCodeBlock, copyNextCodeBlock, goToPrevEmptyLine, goToNextEmptyLine, selectCurrentBlock, goToPrevHeading, goToNextHeading, increaseHeading, decreaseHeading, insertHeading4, insertHeading5, insertDefaultCallout, insertCodeBlock, openSwitcherWithTag1, foldedTagSearch, tagSearch]);
+  const settingsTab = create(this$.app, this$.plugin);
+  this$.plugin.addSettingTab(settingsTab);
+  const tagSearch2 = this$.plugin.addCommand(tagSearch(this$.plugin));
+  const copyCodeBlock2 = this$.plugin.addCommand(copyCodeBlock(this$.plugin));
+  const copyNextCodeBlock2 = this$.plugin.addCommand(copyNextCodeBlock(this$.plugin));
+  const goToPrevEmptyLine2 = this$.plugin.addCommand(goToPrevEmptyLine(this$.plugin));
+  const goToNextEmptyLine2 = this$.plugin.addCommand(goToNextEmptyLine(this$.plugin));
+  const goToPrevHeading2 = this$.plugin.addCommand(goToPrevHeading(this$.plugin));
+  const goToNextHeading2 = this$.plugin.addCommand(goToNextHeading(this$.plugin));
+  const increaseHeading2 = this$.plugin.addCommand(increaseHeading(this$.plugin));
+  const decreaseHeading2 = this$.plugin.addCommand(decreaseHeading(this$.plugin));
+  const insertDefaultCallout2 = this$.plugin.addCommand(insertDefaultCallout(this$.plugin));
+  const insertCodeBlock2 = this$.plugin.addCommand(insertCodeBlock(this$.plugin));
+  const foldedTagSearch2 = this$.plugin.addCommand(foldedTagSearch(this$.plugin));
+  this$.plugin.addRibbonIcon("layers-2", "Quick snippets and navigation: Search tags", (v) => {
+    console.log(some(settingsTab));
+    this$.plugin.app.commands.executeCommandById(tagSearch2.id);
+    return void 0;
+  });
 }
 module.exports = Plugin2;

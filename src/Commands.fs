@@ -2,29 +2,21 @@
 
 open System.Text.RegularExpressions
 open Browser
-open Browser.Types
 open Fable.Core
 open ObsidianBindings
 open Fable.Core.JsInterop
-open Fable.Import
-open Fable.Core.Extensions
 
-[<Literal>]
-let headingregex = """^(#{1,6}) """
-
-let doNone = (fun f -> None)
+let inline ret _ = None
 
 let rec goToPrevHeading (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         (nameof goToPrevHeading)
         "Go to previous heading"
+        "square-chevron-up"
         (fun editor ->
             let cursor = editor.getCursor ()
 
-            match
-                plugin.app
-                |> Content.getHeadings
-            with
+            match plugin.app |> Content.getHeadings with
             | None ->
                 Notice.show "no headings found"
                 ()
@@ -40,7 +32,7 @@ let rec goToPrevHeading (plugin: ExtendedPlugin<PluginSettings>) =
                     let headingLine = heading.startLine
                     editor.setCursor (U2.Case2(float (headingLine - 1)))
 
-            doNone
+            ret
         )
 
 
@@ -49,20 +41,17 @@ let rec goToNextHeading (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         (nameof goToNextHeading)
         "Go to next heading"
+        "square-chevron-down"
         (fun editor ->
             let cursor = editor.getCursor ()
 
-            match
-                plugin.app
-                |> Content.getHeadings
-            with
+            match plugin.app |> Content.getHeadings with
             | None ->
                 Notice.show "no headings found"
                 ()
             | Some headings ->
                 let targetHeading =
-                    headings
-                    |> Seq.tryFind (fun v -> v.startLine > (int cursor.line + 1))
+                    headings |> Seq.tryFind (fun v -> v.startLine > (int cursor.line + 1))
 
                 match targetHeading with
                 | None -> ()
@@ -70,7 +59,7 @@ let rec goToNextHeading (plugin: ExtendedPlugin<PluginSettings>) =
                     let headingLine = heading.startLine
                     editor.setCursor (U2.Case2(float (headingLine - 1)))
 
-            doNone
+            ret
         )
 
 
@@ -78,13 +67,11 @@ let rec selectCurrentBlock (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         (nameof selectCurrentBlock)
         "Select current heading block"
+        "text-select"
         (fun editor ->
             let cursor = editor.getCursor ()
 
-            match
-                plugin.app
-                |> Content.getHeadings
-            with
+            match plugin.app |> Content.getHeadings with
             | None ->
                 Notice.show "no headings found"
                 ()
@@ -97,27 +84,28 @@ let rec selectCurrentBlock (plugin: ExtendedPlugin<PluginSettings>) =
                 topHeadingOpt
                 |> Option.iter (fun topHeading ->
                     headings
-                    |> Seq.tryFind (fun v ->
-                        v.startLine > (int topHeading.startLine)
-                    )
+                    |> Seq.tryFind (fun v -> v.startLine > (int topHeading.startLine))
                     |> Option.map (fun bottomHeading ->
-                        let headingLine = topHeading.startLine
-                        let endlineText = editor.getLine(float bottomHeading.startLine - 2.)
-                        editor.setSelection(
+                        let endlineText =
+                            editor.getLine (float bottomHeading.startLine - 2.)
+
+                        editor.setSelection (
                             EditorPosition.create 0 (float topHeading.startLine - 1.),
-                            EditorPosition.create (float endlineText.Length ) (float bottomHeading.startLine - 2.)
+                            EditorPosition.create
+                                (float endlineText.Length)
+                                (float bottomHeading.startLine - 2.)
                         )
                     )
                     |> Option.defaultWith (fun _ ->
                         // no bottom heading
-                        editor.setSelection(
+                        editor.setSelection (
                             EditorPosition.create 0 (float topHeading.startLine - 1.),
-                            EditorPosition.create (0.) (editor.lastLine())
+                            EditorPosition.create 0. (editor.lastLine ())
                         )
                     )
                 )
 
-            doNone
+            ret
         )
 
 
@@ -125,14 +113,14 @@ let rec goToPrevEmptyLine (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         (nameof goToPrevEmptyLine)
         "Go to previous empty line"
+        "panel-top-close"
         (fun editor ->
             let cursor = editor.getCursor ()
 
-            let linesbefore =
-                editor.getValue().Split('\n').[.. int cursor.line]
-                |> Array.rev
+            let linesbefore = editor.getValue().Split('\n').[.. int cursor.line] |> Array.rev
 
-            let currentIsEmpty = Regex.Match(editor.getLine (int cursor.line), "^\\s*$").Success
+            let currentIsEmpty =
+                Regex.Match(editor.getLine (int cursor.line), "^\\s*$").Success
 
             let foundOpt =
                 if not currentIsEmpty then
@@ -149,24 +137,15 @@ let rec goToPrevEmptyLine (plugin: ExtendedPlugin<PluginSettings>) =
                     linesbefore
                     |> Seq.skipSafe nToSkip
                     |> Seq.tryFindIndex (fun f -> Regex.Match(f, "^\\s*$").Success)
-                    |> Option.map (
-                        (+) (
-                            nToSkip
-                            - 1
-                        )
-                    )
+                    |> Option.map ((+) (nToSkip - 1))
 
             match foundOpt with
-            | None -> doNone
+            | None -> ret
             | Some moveby ->
-                let newpos =
-                    int cursor.line
-                    - moveby
-                    - 1
-                    |> float
+                let newpos = int cursor.line - moveby - 1 |> float
 
                 editor.setCursor (U2.Case2 newpos)
-                doNone
+                ret
         )
 
 
@@ -174,12 +153,14 @@ let rec goToNextEmptyLine (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         (nameof goToNextEmptyLine)
         "Go to next empty line"
+        "panel-bottom-close"
         (fun editor ->
             let cursor = editor.getCursor ()
 
             let linesafter = editor.getValue().Split('\n').[int cursor.line ..]
 
-            let currentIsEmpty = Regex.Match(editor.getLine (int cursor.line), "^\\s*$").Success
+            let currentIsEmpty =
+                Regex.Match(editor.getLine (int cursor.line), "^\\s*$").Success
 
             let foundOpt =
                 if not currentIsEmpty then
@@ -196,67 +177,55 @@ let rec goToNextEmptyLine (plugin: ExtendedPlugin<PluginSettings>) =
                     linesafter
                     |> Seq.skipSafe nToSkip
                     |> Seq.tryFindIndex (fun f -> Regex.Match(f, "^\\s*$").Success)
-                    |> Option.map (
-                        (+) (
-                            nToSkip
-                            - 1
-                        )
-                    )
+                    |> Option.map ((+) (nToSkip - 1))
 
             match foundOpt with
-            | None -> doNone
+            | None -> ret
             | Some moveby ->
-                let newpos =
-                    int cursor.line
-                    + moveby
-                    + 1
-                    |> float
+                let newpos = int cursor.line + moveby + 1 |> float
 
                 editor.setCursor (U2.Case2 newpos)
-                doNone
+                ret
         )
+
 
 
 let rec copyNextCodeBlock (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         (nameof copyNextCodeBlock)
         "Copy Next Code Block"
+        "book-check"
         (fun edit ->
-            match
-                plugin.app
-                |> Content.getCodeBlocks
-            with
-            | None -> doNone
+            match plugin.app |> Content.getCodeBlocks with
+            | None -> ret
             | Some blocks ->
                 let cursor = edit.getCursor ()
 
                 blocks
-                |> Seq.tryFind (fun f -> f.startLine > (int cursor.line))
+                |> Seq.tryFind (fun f -> f.endLine + 1 >= int cursor.line)
                 |> function
                     | None ->
                         obsidian.Notice.Create(U2.Case1 "could not find a code block")
                         |> ignore
                     | Some v ->
-                        $"copied:\n{v.content.Substring(0, min (v.content.Length) 50)}"
+                        $"copied:\n{v.content.Substring(0, min v.content.Length 50)}"
                         |> U2.Case1
                         |> obsidian.Notice.Create
                         |> ignore
 
-                        Clipboard.write v.content
-                        |> ignore
+                        Clipboard.write v.content |> ignore
 
 
-                doNone
+                ret
         )
 
 let rec copyCodeBlock (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forMenu
         (nameof copyCodeBlock)
         "Copy Code Block"
+        "book-copy"
         (fun _ ->
-            let codeblocks =
-                plugin.app
-                |> Content.getCodeBlocks
+            let codeblocks = plugin.app |> Content.getCodeBlocks
 
             if codeblocks.IsNone then
                 None
@@ -276,14 +245,10 @@ let rec copyCodeBlock (plugin: ExtendedPlugin<PluginSettings>) =
                                 let text = f.content
                                 f, obsidian.fuzzySearch (query, text)
                             )
-                            |> Seq.where (fun f ->
-                                snd f
-                                |> Option.isSome
-                            )
+                            |> Seq.where (fun f -> snd f |> Option.isSome)
                             |> Seq.map fst
 
-                        matches
-                        |> ResizeArray
+                        matches |> ResizeArray
                     )
                     |> SuggestModal.withRenderSuggestion (fun f elem ->
                         elem.innerText <- f.content
@@ -294,60 +259,25 @@ let rec copyCodeBlock (plugin: ExtendedPlugin<PluginSettings>) =
                         |> obsidian.Notice.Create
                         |> ignore
 
-                        Clipboard.write f.content
-                        |> ignore
+                        Clipboard.write f.content |> ignore
                     )
 
                 modal.``open`` ()
                 None
         )
 
-let rec openSwitcherWithTag1 (plugin: ExtendedPlugin<PluginSettings>) =
-    Command.forMenu
-        (nameof openSwitcherWithTag1)
-        "Open Switcher with Tag 1"
-        (fun _ ->
-            match
-                plugin.app
-                |> Content.getTags
-            with
-            | None -> Notice.show "no tags found"
-            | Some tags when tags.Count = 0 -> Notice.show "no tags found"
-            | Some tags ->
-                let cmd = plugin.settings.defaultModalCommand
-
-                match plugin.app?commands?executeCommandById (cmd) with
-                | false ->
-                    Notice.show
-                        $"failed to run command: {cmd}, configure Default modal command in settings"
-                | true ->
-                    match document.querySelector ("input.prompt-input") with
-                    | null -> Notice.show "plugin outdated"
-                    | modalInput ->
-                        modalInput?value <- $"%s{tags[0].tag} "
-                        let ev = Browser.Event.Event.Create("input", null)
-
-                        modalInput.dispatchEvent (ev)
-                        |> ignore
-
-            None
-        )
-
 let rec tagSearch (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forMenu
         (nameof tagSearch)
         "Search by Tag"
+        "text-search"
         (fun _ ->
 
             let getVaultTags () =
                 plugin.app.vault.getMarkdownFiles ()
                 |> Seq.collect plugin.app.getTagsOfFile
                 |> Seq.groupBy id
-                |> Seq.map (fun (tag, tags) ->
-                    tag,
-                    tags
-                    |> Seq.length
-                )
+                |> Seq.map (fun (tag, tags) -> tag, tags |> Seq.length)
 
             plugin.app
             |> SuggestModal.create
@@ -363,17 +293,12 @@ let rec tagSearch (plugin: ExtendedPlugin<PluginSettings>) =
                     )
                     |> (fun results ->
                         match queryInput with
-                        | "" ->
-                            results
-                            |> Seq.sortByDescending (fun f -> (fst f).count)
-                        | _ ->
-                            results
-                            |> Seq.sortByDescending snd
+                        | "" -> results |> Seq.sortByDescending (fun f -> (fst f).count)
+                        | _ -> results |> Seq.sortByDescending snd
                     )
                     |> Seq.map fst
 
-                matches
-                |> ResizeArray
+                matches |> ResizeArray
             )
             |> SuggestModal.withRenderSuggestion (fun f elem ->
                 elem.innerText <- $"{f.count}:\t{f.tag}"
@@ -385,6 +310,7 @@ let rec tagSearch (plugin: ExtendedPlugin<PluginSettings>) =
                 | false ->
                     Notice.show
                         $"failed to run command: {cmd}, configure Default modal command in settings"
+
                 | true ->
                     match document.querySelector ("input.prompt-input") with
                     | null -> Notice.show "plugin outdated"
@@ -392,8 +318,7 @@ let rec tagSearch (plugin: ExtendedPlugin<PluginSettings>) =
                         modalInput?value <- $"{chosenResult.tag} "
                         let ev = Browser.Event.Event.Create("input", null)
 
-                        modalInput.dispatchEvent (ev)
-                        |> ignore
+                        modalInput.dispatchEvent (ev) |> ignore
             )
             |> SuggestModal.openModal
 
@@ -423,44 +348,32 @@ let rec foldedTagSearch (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forMenu
         (nameof foldedTagSearch)
         "Folded search by Tag"
+        "search-slash"
         (fun _ ->
 
             let startState = FoldedTagSearchState.Default
 
             let getVaultTags (state: FoldedTagSearchState) =
                 plugin.app.vault.getMarkdownFiles ()
-                |> Seq.map (
-                    plugin.app.getTagsOfFile
-                    >> Seq.toArray
-                )
+                |> Seq.map (plugin.app.getTagsOfFile >> Seq.toArray)
                 |> Seq.where (fun tags ->
                     state.Filters
                     |> List.forall (fun filter ->
-                        tags
-                        |> Array.exists (fun f -> f.StartsWith filter)
+                        tags |> Array.exists (fun f -> f.StartsWith filter)
                     )
-                    && tags
-                       |> Array.exists (fun f -> f.StartsWith state.Query)
+                    && tags |> Array.exists (fun f -> f.StartsWith state.Query)
                 )
                 |> Seq.collect (fun tags ->
-                    tags
-                    |> Seq.where (fun f -> f.StartsWith state.Query)
+                    tags |> Seq.where (fun f -> f.StartsWith state.Query)
                 )
-                |> Seq.groupBy (fun f ->
-                    f
-                    |> String.untilNthOccurrence state.Level '/'
-                )
-                |> Seq.map (fun (tag, tags) ->
-                    tag,
-                    tags
-                    |> Seq.length
-                )
+                |> Seq.groupBy (fun f -> f |> String.untilNthOccurrence state.Level '/')
+                |> Seq.map (fun (tag, tags) -> tag, tags |> Seq.length)
 
 
             let rec createModal (state: FoldedTagSearchState) =
 
                 let undoLastAction =
-                    (fun (evt, (modal: SuggestModal<{| count: int; tag: string |}>)) ->
+                    fun (_, modal: SuggestModal<{| count: int; tag: string |}>) ->
                         match state.Actions with
                         | [] -> () // no actions taken
                         | AddAnotherTag :: tail ->
@@ -471,34 +384,24 @@ let rec foldedTagSearch (plugin: ExtendedPlugin<PluginSettings>) =
 
                                 {
                                     FoldedTagSearchState.Default with
-                                        Filters =
-                                            state.Filters
-                                            |> List.tail
+                                        Filters = state.Filters |> List.tail
                                         Actions =
                                             tail
-                                            |> List.skipWhile (fun f ->
-                                                f
-                                                <> AddAnotherTag
-                                            )
+                                            |> List.skipWhile (fun f -> f <> AddAnotherTag)
                                 }
                                 |> createModal
                         | ExpandTag :: tail ->
                             modal.close ()
                             let currSelection = modal.currentSelection
 
-                            let prevLevel =
-                                state.Level
-                                - 1
+                            let prevLevel = state.Level - 1
 
                             let newQuery =
                                 match prevLevel with
                                 | 1 -> ""
                                 | _ ->
                                     currSelection.tag
-                                    |> String.untilNthOccurrence
-                                        (prevLevel
-                                         - 1)
-                                        '/'
+                                    |> String.untilNthOccurrence (prevLevel - 1) '/'
 
                             {
                                 state with
@@ -507,14 +410,12 @@ let rec foldedTagSearch (plugin: ExtendedPlugin<PluginSettings>) =
                                     Actions = tail
                             }
                             |> createModal
-                    )
 
 
                 plugin.app
                 |> SuggestModal.create
                 |> SuggestModal.map (fun sm ->
-                    state.Query
-                    :: state.Filters
+                    state.Query :: state.Filters
                     |> String.concat " AND "
                     |> sm.setPlaceholder
                 )
@@ -536,12 +437,8 @@ let rec foldedTagSearch (plugin: ExtendedPlugin<PluginSettings>) =
                         )
                         |> (fun results ->
                             match queryInput with
-                            | "" ->
-                                results
-                                |> Seq.sortByDescending (fun f -> (fst f).count)
-                            | _ ->
-                                results
-                                |> Seq.sortByDescending snd
+                            | "" -> results |> Seq.sortByDescending (fun f -> (fst f).count)
+                            | _ -> results |> Seq.sortByDescending snd
                         )
                         |> Seq.map fst
 
@@ -567,9 +464,7 @@ let rec foldedTagSearch (plugin: ExtendedPlugin<PluginSettings>) =
                         (fun (evt, modal) ->
                             let current = modal.currentSelection.tag
 
-                            let exists =
-                                state.Filters
-                                |> Seq.exists (fun f -> f = current)
+                            let exists = state.Filters |> Seq.exists (fun f -> f = current)
 
                             match exists with
                             | true -> () // filter already exists
@@ -578,12 +473,8 @@ let rec foldedTagSearch (plugin: ExtendedPlugin<PluginSettings>) =
 
                                 {
                                     FoldedTagSearchState.Default with
-                                        Filters =
-                                            modal.currentSelection.tag
-                                            :: state.Filters
-                                        Actions =
-                                            AddAnotherTag
-                                            :: state.Actions
+                                        Filters = modal.currentSelection.tag :: state.Filters
+                                        Actions = AddAnotherTag :: state.Actions
                                 }
                                 |> createModal
                         )
@@ -600,13 +491,9 @@ let rec foldedTagSearch (plugin: ExtendedPlugin<PluginSettings>) =
                             | true ->
                                 let newState = {
                                     state with
-                                        Level =
-                                            state.Level
-                                            + 1
+                                        Level = state.Level + 1
                                         Query = currSelection.tag
-                                        Actions =
-                                            ExpandTag
-                                            :: state.Actions
+                                        Actions = ExpandTag :: state.Actions
                                 }
 
                                 modal.close ()
@@ -625,16 +512,14 @@ let rec foldedTagSearch (plugin: ExtendedPlugin<PluginSettings>) =
                         | null -> Notice.show "plugin outdated"
                         | modalInput ->
                             let searchString =
-                                chosenResult.tag
-                                :: state.Filters
+                                chosenResult.tag :: state.Filters
                                 |> String.concat " "
-                                |> (fun f -> f + " ")
+                                |> fun f -> f + " "
 
                             modalInput?value <- searchString
-                            let ev = Browser.Event.Event.Create("input", null)
+                            let ev = Event.Create("input", null)
 
-                            modalInput.dispatchEvent (ev)
-                            |> ignore
+                            modalInput.dispatchEvent (ev) |> ignore
                 )
                 |> SuggestModal.openModal
 
@@ -643,91 +528,68 @@ let rec foldedTagSearch (plugin: ExtendedPlugin<PluginSettings>) =
             None
         )
 
-let rec insertHeading4 (plugin: ExtendedPlugin<PluginSettings>) =
-    Command.forEditor
-        (nameof insertHeading4)
-        "Insert heading 4"
-        (fun edit ->
-            edit.replaceSelection ("#### ")
-            doNone
-        )
-
-let rec insertHeading5 (plugin: ExtendedPlugin<PluginSettings>) =
-    Command.forEditor
-        (nameof insertHeading5)
-        "Insert heading 5"
-        (fun edit ->
-            edit.replaceSelection ("##### ")
-            doNone
-        )
-
 let rec increaseHeading (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         (nameof increaseHeading)
         "Increase Heading level"
+        "arrow-up-wide-narrow"
         (fun edit ->
             let lineIdx = edit.getCursor().line
 
-            let currLine =
-                lineIdx
-                |> edit.getLine
+            let currLine = lineIdx |> edit.getLine
 
-            match currLine.StartsWith("#"), currLine.StartsWith("######") with
+            match currLine.StartsWith "#", currLine.StartsWith("######") with
             | false, _
-            | _, true -> doNone
+            | _, true -> ret
             | _ ->
                 edit.setLine (lineIdx, $"#{currLine}")
-                doNone
+                ret
         )
 
 let rec decreaseHeading (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         (nameof decreaseHeading)
         "Decrease Heading level"
+        "arrow-down-narrow-wide"
         (fun edit ->
             let lineIdx = edit.getCursor().line
 
-            let currLine =
-                lineIdx
-                |> edit.getLine
+            let currLine = lineIdx |> edit.getLine
 
             match currLine.StartsWith("##") with
-            | false -> doNone
+            | false -> ret
             | _ ->
                 edit.setLine (lineIdx, currLine[1..])
-                doNone
+                ret
         )
 
 let rec insertDefaultCallout (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         (nameof insertDefaultCallout)
         "Insert Default Callout"
+        "square-square"
         (fun edit ->
-            edit.replaceSelection ($"> [!{plugin.settings.defaultCalloutType}] ")
-            doNone
+            edit.replaceSelection $"> [!{plugin.settings.defaultCalloutType}] "
+            ret
         )
 
 let rec insertCodeBlock (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         (nameof insertCodeBlock)
         "Insert Code Block"
+        "heading-5"
         (fun edit ->
             let newBlock =
                 match plugin.settings.use3BackticksForCodeBlock with
-                | true -> ($"```{plugin.settings.defaultCodeBlockLanguage}\n\n```")
-                | false -> ($"````{plugin.settings.defaultCodeBlockLanguage}\n\n````")
+                | true -> $"```{plugin.settings.defaultCodeBlockLanguage}\n\n```"
+                | false -> $"````{plugin.settings.defaultCodeBlockLanguage}\n\n````"
 
             edit.replaceSelection newBlock
             let cursor = edit.getCursor ()
 
-            edit.setCursor (
-                U2.Case2(
-                    cursor.line
-                    - 1.
-                )
-            )
+            edit.setCursor (U2.Case2(cursor.line - 1.))
 
-            doNone
+            ret
         )
 
 let rec insertTest (plugin: ExtendedPlugin<PluginSettings>) =
@@ -735,15 +597,14 @@ let rec insertTest (plugin: ExtendedPlugin<PluginSettings>) =
     Command.forEditor
         "debug-test"
         "debug-test"
+        "book"
         (fun edit ->
             let tags = plugin.app.getAllTags ()
             let keys = JS.Constructors.Object.keys (tags)
 
             let currFile = plugin.app.workspace.getActiveFile().Value
 
-            let tags2 =
-                plugin.app.getTagsOfFile (currFile)
-                |> Seq.toArray
+            let tags2 = plugin.app.getTagsOfFile (currFile) |> Seq.toArray
 
             let fm1 =
                 plugin.app.vault.getMarkdownFiles ()
@@ -757,5 +618,5 @@ let rec insertTest (plugin: ExtendedPlugin<PluginSettings>) =
             console.log fm1
             console.log tags2
 
-            doNone
+            ret
         )

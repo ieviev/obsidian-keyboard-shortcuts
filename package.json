@@ -2,8 +2,6 @@
   "name": "quick-snippets-and-navigation",
   "displayName": "quick snippets and navigation",
   "description": "Quick snippets and navigation",
-  "version": "1.0.3",
-  "publisher": "aciq",
   "type": "commonjs",
   "private": true,
   "scripts": {

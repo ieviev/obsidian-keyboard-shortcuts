@@ -3,9 +3,8 @@ module Main
 open Fable.Core
 open Fs.Obsidian
 open Microsoft.FSharp.Core
-open Microsoft.FSharp.Reflection
-open ObsidianBindings
 open Fable.Core.JsInterop
+open Fable.Core.JS
 
 
 [<Import("Plugin", from = "obsidian")>]
@@ -19,63 +18,68 @@ type Plugin2(app, manifest) as instance =
         instance :> obj :?> ExtendedPlugin<PluginSettings>
 
     let init () =
-        plugin?loadSettings <- (fun _ ->
-            promise {
-                let! data = plugin.loadData ()
+        plugin?loadSettings <-
+            (fun _ ->
+                promise {
+                    let! data = plugin.loadData ()
 
-                match data with
-                | None -> plugin.settings <- PluginSettings.Default
-                | Some v ->
-                    try
-                        plugin.settings <- v :?> PluginSettings
-                    with
-                    | e -> plugin.settings <- PluginSettings.Default
-            })
+                    match data with
+                    | None -> plugin.settings <- PluginSettings.Default
+                    | Some v ->
+                        try
+                            plugin.settings <- v :?> PluginSettings
+                        with e ->
+                            plugin.settings <- PluginSettings.Default
+                }
+            )
 
-        plugin?saveSettings <- (fun settings ->
-            promise {
-                plugin.settings <- settings
-                do! plugin.saveData (Some(!!settings))
-            })
+        plugin?saveSettings <-
+            (fun settings ->
+                promise {
+                    plugin.settings <- settings
+                    do! plugin.saveData (Some(!!settings))
+                }
+            )
 
     do init ()
 
+    let commandById (id: string) =
+        plugin.app?commands?executeCommandById id
+
     let onload: unit -> unit =
-        (fun _ ->
-            // printJson "aciq:quick-snippets-and-navigation loaded"
+        fun _ ->
+            printfn "loaded:"
             plugin.settings <- plugin.loadSettings ()
-
-            SettingTab.create app plugin
-            |> plugin.addSettingTab
+            let settingsTab = SettingTab.create app plugin
 
 
-            [|
-                Commands.copyCodeBlock
-                Commands.copyNextCodeBlock
+            settingsTab |> plugin.addSettingTab
 
-                Commands.goToPrevEmptyLine
-                Commands.goToNextEmptyLine
+            let tagSearch = plugin.addCommand (Commands.tagSearch plugin)
+            let copyCodeBlock = plugin.addCommand (Commands.copyCodeBlock plugin)
+            let copyNextCodeBlock = plugin.addCommand (Commands.copyNextCodeBlock plugin)
 
-                Commands.selectCurrentBlock
+            let goToPrevEmptyLine = plugin.addCommand (Commands.goToPrevEmptyLine plugin)
+            let goToNextEmptyLine = plugin.addCommand (Commands.goToNextEmptyLine plugin)
 
-                Commands.goToPrevHeading
-                Commands.goToNextHeading
+            let goToPrevHeading = plugin.addCommand (Commands.goToPrevHeading plugin)
+            let goToNextHeading = plugin.addCommand (Commands.goToNextHeading plugin)
+            let increaseHeading = plugin.addCommand (Commands.increaseHeading plugin)
+            let decreaseHeading = plugin.addCommand (Commands.decreaseHeading plugin)
+            let insertDefaultCallout = plugin.addCommand (Commands.insertDefaultCallout plugin)
+            let insertCodeBlock = plugin.addCommand (Commands.insertCodeBlock plugin)
+            let foldedTagSearch = plugin.addCommand (Commands.foldedTagSearch plugin)
 
-                Commands.increaseHeading
-                Commands.decreaseHeading
-
-                Commands.insertHeading4
-                Commands.insertHeading5
-                Commands.insertDefaultCallout
-                Commands.insertCodeBlock
-
-                Commands.openSwitcherWithTag1
-                Commands.foldedTagSearch
-                Commands.tagSearch
-                // Commands.insertTest
-            |]
-            |> Seq.iter (fun cmd -> plugin |> cmd |> plugin.addCommand |> ignore)
-
+            plugin.addRibbonIcon (
+                "layers-2",
+                "Quick snippets and navigation: Search tags",
+                (fun v ->
+                    console.log settingsTab
+                    plugin.app?commands?executeCommandById (tagSearch.id)
+                    None
+                )
             )
+            |> ignore
+           
 
     do plugin?onload <- onload

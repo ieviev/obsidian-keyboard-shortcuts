@@ -66,25 +66,20 @@ module Command =
                 with set (v: string): unit = mname <- v
         }
 
-    let forMenu id name callback =
+    let forMenu id name icon callback =
         let cmd = defaultCommand ()
         cmd.id <- id
         cmd.name <- name
+        cmd.icon <- Some icon
         cmd.callback <- Some callback
         cmd
 
-    let forEditor id name callback =
+    let forEditor id name icon callback =
         let cmd = defaultCommand ()
         cmd.id <- id
         cmd.name <- name
-        cmd.editorCallback <- Some(callback)
-        cmd
-
-    let forEditorCheck id name callback =
-        let cmd = defaultCommand ()
-        cmd.id <- id
-        cmd.name <- name
-        cmd.editorCheckCallback <- Some callback
+        cmd.icon <- Some icon
+        cmd.editorCallback <- Some callback
         cmd
 
 
@@ -257,7 +252,7 @@ module Notice =
 module Content =
     open System.Collections.Generic
 
-    type CodeBlockContent = { startLine: int; content: string }
+    type CodeBlockContent = { startLine: int; endLine: int; content: string }
 
     let private om fn x = Option.map fn x
 
@@ -311,6 +306,7 @@ module Content =
 
                         {
                             startLine = startLine
+                            endLine = endLine
                             content =
                                 blockContent
                                 |> String.concat "\n"
@@ -359,6 +355,7 @@ module Content =
 
                         {
                             startLine = startLine
+                            endLine = endLine
                             content =
                                 blockContent
                                 |> Seq.where (fun f -> not (f.StartsWith "title:"))

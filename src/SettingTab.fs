@@ -85,7 +85,7 @@ let createSettingDisplay (plugin:ExtendedPlugin<PluginSettings>) (settingtab:Plu
     
 let create (app:App) (plugin:ExtendedPlugin<PluginSettings>) =
     let settingtab = obsidian.PluginSettingTab.Create(app,plugin)
-    settingtab?display <- (createSettingDisplay plugin settingtab)
+    settingtab?display <- createSettingDisplay plugin settingtab
     settingtab?hide <- (fun f ->
         // printJson "saving settings"
         plugin.saveSettings(plugin.settings) |> ignore

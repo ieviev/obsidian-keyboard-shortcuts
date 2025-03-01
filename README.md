@@ -102,7 +102,7 @@ app.commands.listCommands().map(x => x.id);
 
 ### dependencies
 
-- dotnet 6.0 sdk
+- dotnet sdk
 - npm
 
 ### ---
