@@ -229,50 +229,68 @@ let rec copyNextCodeBlock (plugin: ExtendedPlugin<PluginSettings>) =
         )
 
 let rec copyCodeBlock (plugin: ExtendedPlugin<PluginSettings>) =
-    Command.forMenu
+    Command.forEditor
         (nameof copyCodeBlock)
         "Copy Code Block"
         "book-copy"
-        (fun _ ->
+        (fun editor ->
             let codeblocks = plugin.app |> Content.getCodeBlocks
 
             if codeblocks.IsNone then
-                None
+                ret
             else
-
                 let codeblocks = codeblocks.Value
+                let cursor = editor.getCursor ()
+                let cursorLine = int cursor.line
 
-                let modal =
-                    plugin.app
-                    |> SuggestModal.create
-                    |> SuggestModal.withGetSuggestions (fun queryInput ->
-                        let query = obsidian.prepareQuery queryInput
+                // Check if cursor is inside a code block
+                let blockAtCursor =
+                    codeblocks
+                    |> Seq.tryFind (fun b ->
+                        cursorLine >= b.startLine && cursorLine <= b.endLine)
 
-                        let matches =
-                            codeblocks
-                            |> Seq.map (fun f ->
-                                let text = f.content
-                                f, obsidian.fuzzySearch (query, text)
-                            )
-                            |> Seq.where (fun f -> snd f |> Option.isSome)
-                            |> Seq.map fst
+                match blockAtCursor with
+                | Some block ->
+                    // Cursor is inside a code block - copy it automatically
+                    $"copied:\n{block.content.Substring(0, min (block.content.Length) 50)}"
+                    |> U2.Case1
+                    |> obsidian.Notice.Create
+                    |> ignore
+                    Clipboard.write block.content |> ignore
+                    ret
+                | None ->
+                    // Cursor is not in a code block - show modal
+                    let modal =
+                        plugin.app
+                        |> SuggestModal.create
+                        |> SuggestModal.withGetSuggestions (fun queryInput ->
+                            let query = obsidian.prepareQuery queryInput
 
-                        matches |> ResizeArray
-                    )
-                    |> SuggestModal.withRenderSuggestion (fun f elem ->
-                        elem.innerText <- f.content
-                    )
-                    |> SuggestModal.withOnChooseSuggestion (fun (f, args) ->
-                        $"copied:\n{f.content.Substring(0, min (f.content.Length) 50)}"
-                        |> U2.Case1
-                        |> obsidian.Notice.Create
-                        |> ignore
+                            let matches =
+                                codeblocks
+                                |> Seq.map (fun f ->
+                                    let text = f.content
+                                    f, obsidian.fuzzySearch (query, text)
+                                )
+                                |> Seq.where (fun f -> snd f |> Option.isSome)
+                                |> Seq.map fst
 
-                        Clipboard.write f.content |> ignore
-                    )
+                            matches |> ResizeArray
+                        )
+                        |> SuggestModal.withRenderSuggestion (fun f elem ->
+                            elem.innerText <- f.content
+                        )
+                        |> SuggestModal.withOnChooseSuggestion (fun (f, args) ->
+                            $"copied:\n{f.content.Substring(0, min (f.content.Length) 50)}"
+                            |> U2.Case1
+                            |> obsidian.Notice.Create
+                            |> ignore
 
-                modal.``open`` ()
-                None
+                            Clipboard.write f.content |> ignore
+                        )
+
+                    modal.``open`` ()
+                    ret
         )
 
 let rec tagSearch (plugin: ExtendedPlugin<PluginSettings>) =
